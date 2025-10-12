@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useTenants } from '../tenants/tenant-provider';
+import { parseISO, startOfMonth } from 'date-fns';
 
 // Helper to get past 6 months
 const getPastSixMonths = () => {
@@ -35,7 +36,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             Collected: ZMW {payload[1].value.toLocaleString()}
           </p>
           <p style={{ color: 'hsl(var(--chart-1))' }}>
-            Due: ZMW {payload[0].value.toLocaleString()}
+            Outstanding: ZMW {payload[0].value.toLocaleString()}
           </p>
         </Card>
       );
@@ -51,31 +52,33 @@ export function RentStatusChart() {
   // Aggregate rent data
   const aggregateRentData = () => {
     const months = getPastSixMonths();
-    const allPayments = tenants.flatMap(t => t.paymentHistory);
+    const allPayments = tenants.flatMap(t => t.paymentHistory.map(p => ({...p, tenantId: t.id, rentAmount: t.rentAmount})));
     
     return months.map(month => {
       const monthKey = month.toLocaleString('default', { month: 'short' });
-      const year = month.getFullYear();
-      
-      const totalRentDue = tenants
-        .filter(t => {
-            const leaseStart = new Date(t.leaseStartDate);
-            const leaseEnd = new Date(t.leaseEndDate);
-            // Check if the lease is active during the month
-            return leaseStart < new Date(year, month.getMonth() + 1, 1) && leaseEnd >= month;
-        })
-        .reduce((acc, tenant) => acc + tenant.rentAmount, 0);
+      const currentMonthStart = startOfMonth(month);
 
-      const collectedForMonth = allPayments
-        .filter(p => {
-          const paymentDate = new Date(p.date);
-          return paymentDate.getMonth() === month.getMonth() && paymentDate.getFullYear() === year;
+      const paymentsInMonth = allPayments.filter(p => {
+        const paymentDate = parseISO(p.date);
+        return paymentDate.getMonth() === month.getMonth() && paymentDate.getFullYear() === month.getFullYear();
+      });
+      
+      const collectedForMonth = paymentsInMonth.reduce((sum, p) => sum + p.amount, 0);
+
+      // Get total due from tenants active in this month
+      const totalDueInMonth = tenants
+        .filter(t => {
+            const leaseStart = parseISO(t.leaseStartDate);
+            const leaseEnd = parseISO(t.leaseEndDate);
+            return leaseStart < new Date(month.getFullYear(), month.getMonth() + 1, 1) && leaseEnd >= month;
         })
-        .reduce((sum, p) => sum + p.amount, 0);
+        .reduce((sum, t) => sum + t.rentAmount, 0);
+        
+      const outstandingForMonth = totalDueInMonth - collectedForMonth;
 
       return {
         month: monthKey,
-        due: totalRentDue,
+        outstanding: outstandingForMonth > 0 ? outstandingForMonth : 0,
         collected: collectedForMonth,
       };
     });
@@ -91,7 +94,7 @@ export function RentStatusChart() {
     <Card className="shadow-none h-full cursor-pointer hover:border-primary/50 transition-colors" onClick={handleChartClick}>
       <CardHeader>
         <CardTitle>Rent Collection Trend</CardTitle>
-        <CardDescription>A comparison of rent collected versus the total rent scheduled for collection each month.</CardDescription>
+        <CardDescription>A comparison of rent collected versus the outstanding rent for each month.</CardDescription>
       </CardHeader>
       <CardContent className='h-[300px]'>
         <ResponsiveContainer width="100%" height="100%">
@@ -112,7 +115,7 @@ export function RentStatusChart() {
             />
              <Tooltip cursor={{ fill: 'hsla(var(--card-foreground) / 0.1)' }} content={<CustomTooltip />} />
             <Legend wrapperStyle={{fontSize: "0.8rem"}}/>
-            <Bar dataKey="due" fill="hsl(var(--chart-1))" name="Rent Due" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="outstanding" fill="hsl(var(--chart-1))" name="Outstanding Rent" radius={[4, 4, 0, 0]} />
             <Bar dataKey="collected" fill="hsl(var(--chart-2))" name="Rent Collected" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -120,4 +123,3 @@ export function RentStatusChart() {
     </Card>
   );
 }
-

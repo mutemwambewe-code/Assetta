@@ -34,7 +34,7 @@ export function OverviewCards() {
         })
         .reduce((sum, p) => sum + p.amount, 0);
 
-    const rentPending = tenants
+    const outstandingRent = tenants
         .filter(t => t.rentStatus === 'Pending' || t.rentStatus === 'Overdue')
         .reduce((sum, t) => sum + t.rentAmount, 0);
 
@@ -84,15 +84,15 @@ export function OverviewCards() {
         title: 'Rent Collected (Month)',
         value: `ZMW ${rentCollected.toLocaleString()}`,
         icon: DollarSign,
-        description: `ZMW ${rentPending.toLocaleString()} outstanding`,
+        description: `ZMW ${outstandingRent.toLocaleString()} outstanding`,
         href: '/reports',
         reportHref: '/reports'
     },
     {
-        title: 'Rent Due (Month)',
-        value: `ZMW ${rentDueThisMonth.toLocaleString()}`,
+        title: 'Outstanding Rent (Month)',
+        value: `ZMW ${outstandingRent.toLocaleString()}`,
         icon: FileText,
-        description: 'From all active leases',
+        description: 'From all unpaid tenants',
         href: '/tenants?filter=Overdue,Pending',
         reportHref: '/reports'
     },
