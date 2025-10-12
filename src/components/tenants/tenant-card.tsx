@@ -1,3 +1,6 @@
+
+'use client';
+
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -5,11 +8,25 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Tenant } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Phone, Mail, MoreVertical } from 'lucide-react';
+import { Phone, Mail, MoreVertical, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { EditTenant } from './edit-tenant';
 import { LogPayment } from './log-payment';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useTenants } from './tenant-provider';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface TenantCardProps {
   tenant: Tenant;
@@ -22,6 +39,19 @@ const statusStyles = {
 };
 
 export function TenantCard({ tenant }: TenantCardProps) {
+  const { deleteTenant } = useTenants();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteTenant(tenant.id);
+    toast({
+        title: "Tenant Deleted",
+        description: `${tenant.name} has been removed from your records.`,
+    });
+    // No need to redirect if we are on the list page already
+  }
 
   return (
     <Card className="flex flex-col transition-all hover:shadow-md">
@@ -73,13 +103,14 @@ export function TenantCard({ tenant }: TenantCardProps) {
                 Log Payment
             </Button>
         </LogPayment>
+        <AlertDialog>
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className='h-10 w-10'>
                     <MoreVertical className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                  <DropdownMenuItem asChild>
                     <Link href={`/communication?tenantId=${tenant.id}`}>
                         Send Reminder
@@ -89,11 +120,28 @@ export function TenantCard({ tenant }: TenantCardProps) {
                 <EditTenant tenant={tenant}>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
                 </EditTenant>
-                <DropdownMenuItem className="text-destructive">
-                    Delete Tenant
-                </DropdownMenuItem>
+                <AlertDialogTrigger asChild>
+                    <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </DropdownMenuItem>
+                </AlertDialogTrigger>
             </DropdownMenuContent>
         </DropdownMenu>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete {tenant.name} and all associated data.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                Yes, delete tenant
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );
