@@ -15,6 +15,18 @@ import { EditTenant } from '@/components/tenants/edit-tenant';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 const statusStyles = {
   Paid: 'bg-accent text-accent-foreground border-transparent',
@@ -24,7 +36,7 @@ const statusStyles = {
 
 function TenantDetailPage({ title }: { title?: string }) {
   const params = useParams();
-  const { tenants } = useTenants();
+  const { tenants, deleteTenant } = useTenants();
   const { toast } = useToast();
   const router = useRouter();
   
@@ -50,13 +62,14 @@ function TenantDetailPage({ title }: { title?: string }) {
     );
   }
 
-    const handleDelete = () => {
-        toast({
-            variant: "destructive",
-            title: "Feature coming soon!",
-            description: "The ability to delete tenants is not yet implemented.",
-        })
-    }
+  const handleDelete = () => {
+    deleteTenant(tenant.id);
+    toast({
+        title: "Tenant Deleted",
+        description: `${tenant.name} has been removed from your records.`,
+    });
+    router.push('/tenants');
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
@@ -136,10 +149,28 @@ function TenantDetailPage({ title }: { title?: string }) {
                         <Edit className='mr-2' /> Edit
                     </Button>
                 </EditTenant>
-                <Button variant="destructive" className="w-full" onClick={handleDelete}>
-                    <Trash2 className="mr-2" />
-                    Delete
-                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full">
+                            <Trash2 className="mr-2" />
+                            Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete {tenant.name} and all associated data from our servers.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                            Yes, delete tenant
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
           </Card>
         </div>
