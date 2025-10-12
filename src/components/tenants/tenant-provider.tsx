@@ -1,11 +1,13 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import type { Tenant, Payment } from '@/lib/types';
 import { isAfter, startOfMonth, parseISO, isWithinInterval } from 'date-fns';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useUser } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type TenantContextType = {
   tenants: Tenant[];
@@ -99,10 +101,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     await setDoc(docRef, tenantWithStatus, { merge: true });
   }, [tenantsCollection]);
 
-  const deleteTenant = useCallback(async (tenantId: string) => {
+  const deleteTenant = useCallback((tenantId: string) => {
     if (!tenantsCollection) return;
     const docRef = doc(tenantsCollection, tenantId);
-    await deleteDoc(docRef);
+    deleteDoc(docRef).catch(async (serverError) => {
+      const permissionError = new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'delete',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
   }, [tenantsCollection]);
 
   const logPayment = useCallback(async (tenantId: string, payment: Omit<Payment, 'id'>) => {
