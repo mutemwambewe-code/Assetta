@@ -7,10 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 function SettingsPage({ title }: { title?: string }) {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleReplayTutorial = () => {
     toast({
@@ -21,10 +24,18 @@ function SettingsPage({ title }: { title?: string }) {
 
   return (
     <div className="max-w-2xl mx-auto grid gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-      <p className="text-muted-foreground -mt-4">
-        Manage your account settings, preferences, and more.
-      </p>
+       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground">
+                Manage your account settings, preferences, and more.
+            </p>
+        </div>
+         <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>

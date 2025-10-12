@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useTenants } from '@/components/tenants/tenant-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ function TenantDetailPage({ title }: { title?: string }) {
   const params = useParams();
   const { tenants } = useTenants();
   const { toast } = useToast();
+  const router = useRouter();
   
   const tenantId = params.tenantId as string;
   const tenant = tenants.find((t) => t.id === tenantId);
@@ -66,23 +67,17 @@ function TenantDetailPage({ title }: { title?: string }) {
                     Tenant details and payment history.
                 </p>
             </div>
-            <Link href="/tenants">
-                <Button variant="outline">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Tenants
-                </Button>
-            </Link>
+            <Button variant="outline" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+            </Button>
         </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 flex flex-col gap-6">
           <Card>
             <CardHeader className="items-center text-center">
               <Avatar className="h-24 w-24 mb-2">
-                  {tenant.avatarUrl && (
-                    <AvatarImage asChild src={tenant.avatarUrl}>
-                        <Image src={tenant.avatarUrl} alt={tenant.name} width={96} height={96} />
-                    </AvatarImage>
-                  )}
+                  <AvatarImage src={tenant.avatarUrl} alt={tenant.name} />
                 <AvatarFallback className="text-3xl">
                   {tenant.name.split(' ').map((n) => n[0]).join('')}
                 </AvatarFallback>

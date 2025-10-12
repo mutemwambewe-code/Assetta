@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { useTenants } from '@/components/tenants/tenant-provider';
 import { useProperties } from '@/components/properties/property-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Home, Users, FileText, Download } from 'lucide-react';
+import { DollarSign, Home, Users, FileText, Download, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,10 +27,12 @@ import { FinancialReport } from '@/components/reports/financial-report';
 import { OccupancyReport } from '@/components/reports/occupancy-report';
 import { TenantReportTable } from '@/components/reports/tenant-report-table';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 function ReportsPage({ title }: { title?: string }) {
   const { tenants, isInitialized: tenantsInitialized } = useTenants();
   const { properties, isInitialized: propertiesInitialized } = useProperties();
+  const router = useRouter();
 
   const reportData = useMemo(() => {
     if (!tenantsInitialized || !propertiesInitialized) return null;
@@ -87,31 +89,37 @@ function ReportsPage({ title }: { title?: string }) {
             In-depth insights into your property performance.
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button>
-              <Download className="mr-2" />
-              Download Report
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Tenant Reports</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => handleDownload('tenantList', 'pdf')}>
-              Download Tenant List (PDF)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDownload('tenantList', 'excel')}>
-              Download Tenant List (Excel)
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>Financial Reports</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => handleDownload('paymentHistory', 'pdf')}>
-              Download Payment History (PDF)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDownload('paymentHistory', 'excel')}>
-              Download Payment History (Excel)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button>
+                <Download className="mr-2" />
+                Download Report
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Tenant Reports</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleDownload('tenantList', 'pdf')}>
+                Download Tenant List (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownload('tenantList', 'excel')}>
+                Download Tenant List (Excel)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Financial Reports</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleDownload('paymentHistory', 'pdf')}>
+                Download Payment History (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownload('paymentHistory', 'excel')}>
+                Download Payment History (Excel)
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

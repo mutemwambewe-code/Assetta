@@ -4,19 +4,28 @@
 import { AutomatedReminder } from "@/components/communication/automated-reminder";
 import { MessageLogs } from "@/components/communication/message-logs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, MessagesSquare } from "lucide-react";
+import { History, MessagesSquare, ArrowLeft } from "lucide-react";
 import { useState, Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 function CommunicationPage({ title }: { title?: string }) {
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Messaging</h1>
-        <p className="text-muted-foreground">
-          Compose, view, and manage your tenant communications.
-        </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Messaging</h1>
+          <p className="text-muted-foreground">
+            Compose, view, and manage your tenant communications.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+        </Button>
       </div>
 
       <Tabs defaultValue="compose" className="w-full">
