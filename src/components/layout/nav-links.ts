@@ -8,8 +8,8 @@ export type NavLink = {
 
 export const navLinks: NavLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/tenants', label: 'Tenants', icon: Users },
   { href: '/properties', label: 'Properties', icon: Building },
+  { href: '/tenants', label: 'Tenants', icon: Users },
   { href: '/communication', label: 'Communication', icon: MessageSquare },
   { href: '/reports', label: 'Reports', icon: BarChart },
 ];

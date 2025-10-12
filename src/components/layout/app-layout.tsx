@@ -91,7 +91,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                           : 'text-muted-foreground'
                       )}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className={cn("h-5 w-5", href === '/properties' && 'h-6 w-6')} />
                       <span className="sr-only">{label}</span>
                     </Link>
                   </TooltipTrigger>
