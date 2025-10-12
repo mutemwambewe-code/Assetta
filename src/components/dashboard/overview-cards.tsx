@@ -120,7 +120,11 @@ export function OverviewCards() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {cardData.map((card) => (
-          <Card key={card.title} className="hover:shadow-lg transition-shadow">
+          <Card 
+            key={card.title} 
+            className="hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => router.push(card.href)}
+          >
             <CardContent className="p-4 flex items-start gap-4">
               <div className={cn("p-3 rounded-lg bg-secondary", card.iconClassName)}>
                   <card.icon className={cn('h-6 w-6 text-muted-foreground', card.className)} />
@@ -134,7 +138,12 @@ export function OverviewCards() {
               </div>
                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className='h-8 w-8 -mr-2 -mt-2'>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className='h-8 w-8 -mr-2 -mt-2'
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <MoreVertical className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
