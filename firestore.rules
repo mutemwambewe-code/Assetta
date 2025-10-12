@@ -3,98 +3,108 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Root-level read protection. No direct reads allowed.
-     * @path /
-     * @allow (get, list) if false - no one can read root
-     * @deny (create, update, delete) - no one can write to the root.
-     * @principle Root level protection.
+     * @description Checks if the request is authenticated.
      */
-    match /{document=**} {
-        allow read: if false;
-      allow write: if false;
-    }
-
-    // Helper function to check if the authenticated user's UID matches the requested user ID.
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-
-    //Helper function to check if the document exists and the authenticated user's UID matches the requested user ID.
-    function isExistingOwner(userId) {
-      return isOwner(userId) && exists(resource);
-    }
-
-    //Helper function to determine is signed in
     function isSignedIn() {
-        return request.auth != null;
+      return request.auth != null;
     }
 
     /**
-     * @description Secures the /users/{userId}/properties/{propertyId} collection.
-     * @path /users/{userId}/properties/{propertyId}
-     * @allow (create) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can create if they are logged in and {userId} == request.auth.uid.
-     * @allow (get, list) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can read if they are logged in and {userId} == request.auth.uid.
-     * @allow (update, delete) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can update/delete if they are logged in and {userId} == request.auth.uid and the document exists.
-     * @deny (create) User with mismatched userId attempts to create.
-     * @principle Enforces document ownership for all operations.
+     * @description Checks if the requested user ID matches the authenticated user's ID.
      */
-    match /users/{userId}/properties/{propertyId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
 
     /**
-     * @description Secures the /users/{userId}/tenants/{tenantId} collection.
-     * @path /users/{userId}/tenants/{tenantId}
-     * @allow (create) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can create if they are logged in and {userId} == request.auth.uid.
-     * @allow (get, list) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can read if they are logged in and {userId} == request.auth.uid.
-     * @allow (update, delete) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can update/delete if they are logged in and {userId} == request.auth.uid and the document exists.
-     * @deny (create) User with mismatched userId attempts to create.
-     * @principle Enforces document ownership for all operations.
+     * @description Checks if the user is the owner of the existing document.
      */
-    match /users/{userId}/tenants/{tenantId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource.data != null && resource.data.userId == request.auth.uid;
     }
 
     /**
-     * @description Secures the /users/{userId}/messagelogs/{messagelogId} collection.
-     * @path /users/{userId}/messagelogs/{messagelogId}
-     * @allow (create) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can create if they are logged in and {userId} == request.auth.uid.
-     * @allow (get, list) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can read if they are logged in and {userId} == request.auth.uid.
-     * @allow (update, delete) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can update/delete if they are logged in and {userId} == request.auth.uid and the document exists.
-     * @deny (create) User with mismatched userId attempts to create.
-     * @principle Enforces document ownership for all operations.
+     * @description Rules for user-specific data.
+     * @path /users/{userId}
+     * @allow (create) - A user can create their own user document if the userId matches their auth.uid.
+     * @allow (get, list, update, delete) - Only the user can read, update, or delete their own user document.
+     * @deny (create) - A user cannot create a document with a userId that does not match their auth.uid.
+     * @principle Enforces user-ownership for all operations.
      */
-    match /users/{userId}/messagelogs/{messagelogId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
-    }
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
 
-        /**
-     * @description Secures the /users/{userId}/templates/{templateId} collection.
-     * @path /users/{userId}/templates/{templateId}
-     * @allow (create) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can create if they are logged in and {userId} == request.auth.uid.
-     * @allow (get, list) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can read if they are logged in and {userId} == request.auth.uid.
-     * @allow (update, delete) User AUvNYg10hoXIAkcBxgsnsPnBzYo1 can update/delete if they are logged in and {userId} == request.auth.uid and the document exists.
-     * @deny (create) User with mismatched userId attempts to create.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/templates/{templateId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      /**
+       * @description Rules for properties owned by a user.
+       * @path /users/{userId}/properties/{propertyId}
+       * @allow (create) - A user can create a property under their user ID.
+       * @allow (get, list) - A user can read (get and list) properties under their user ID.
+       * @allow (update, delete) - Only the user can update or delete properties under their user ID.
+       * @deny (create) - A user cannot create a property under another user's ID.
+       * @principle Enforces user-ownership for all operations on properties.
+       */
+      match /properties/{propertyId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      /**
+       * @description Rules for tenants associated with a user.
+       * @path /users/{userId}/tenants/{tenantId}
+       * @allow (create) - A user can create a tenant under their user ID.
+       * @allow (get, list) - A user can read (get and list) tenants under their user ID.
+       * @allow (update, delete) - Only the user can update or delete tenants under their user ID.
+       * @deny (create) - A user cannot create a tenant under another user's ID.
+       * @principle Enforces user-ownership for all operations on tenants.
+       */
+      match /tenants/{tenantId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      /**
+       * @description Rules for message logs associated with a user.
+       * @path /users/{userId}/messagelogs/{messagelogId}
+       * @allow (create) - A user can create a messagelog under their user ID.
+       * @allow (get, list) - A user can read (get and list) messagelogs under their user ID.
+       * @allow (update, delete) - Only the user can update or delete messagelogs under their user ID.
+       * @deny (create) - A user cannot create a messagelog under another user's ID.
+       * @principle Enforces user-ownership for all operations on message logs.
+       */
+      match /messagelogs/{messagelogId} {
+          allow get: if isOwner(userId);
+          allow list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update: if isOwner(userId);
+          allow delete: if isOwner(userId);
+      }
+
+      /**
+       * @description Rules for templates associated with a user.
+       * @path /users/{userId}/templates/{templateId}
+       * @allow (create) - A user can create a template under their user ID.
+       * @allow (get, list) - A user can read (get and list) templates under their user ID.
+       * @allow (update, delete) - Only the user can update or delete templates under their user ID.
+       * @deny (create) - A user cannot create a template under another user's ID.
+       * @principle Enforces user-ownership for all operations on templates.
+       */
+      match /templates/{templateId} {
+          allow get: if isOwner(userId);
+          allow list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update: if isOwner(userId);
+          allow delete: if isOwner(userId);
+      }
     }
   }
 }
