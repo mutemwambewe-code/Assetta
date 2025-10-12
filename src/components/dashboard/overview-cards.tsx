@@ -122,7 +122,7 @@ export function OverviewCards() {
       {cardData.map((card) => (
           <Card 
             key={card.title} 
-            className="hover:shadow-lg transition-shadow cursor-pointer"
+            className="transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer"
             onClick={() => router.push(card.href)}
           >
             <CardContent className="p-4 flex items-start gap-4">
