@@ -3,16 +3,19 @@
 
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Home, Users, AlertTriangle, FileText, Clock } from 'lucide-react';
+import { DollarSign, Home, Users, AlertTriangle, FileText, Clock, MoreVertical, TrendingUp, Eye, FileSpreadsheet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TrendingUp } from 'lucide-react';
 import { useTenants } from '../tenants/tenant-provider';
 import { isWithinInterval, addDays, startOfMonth, parseISO, isBefore, endOfMonth, getMonth, getYear } from 'date-fns';
 import { useProperties } from '../properties/property-provider';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Button } from '../ui/button';
+import { useRouter } from 'next/navigation';
 
 export function OverviewCards() {
     const { tenants } = useTenants();
     const { properties } = useProperties();
+    const router = useRouter();
     const totalUnits = properties.reduce((sum, prop) => sum + prop.units, 0);
 
     const occupiedUnits = tenants.length;
@@ -62,12 +65,14 @@ export function OverviewCards() {
         icon: Home,
         description: 'Across all properties',
         href: '/properties',
+        reportHref: '/reports'
     },
     {
         title: 'Occupied Units',
         value: occupiedUnits,
         icon: Users,
         href: '/tenants',
+        reportHref: '/reports',
         description: (
         <span className="flex items-center gap-1">
             <TrendingUp className="h-4 w-4 text-accent" />
@@ -81,6 +86,7 @@ export function OverviewCards() {
         icon: DollarSign,
         description: `ZMW ${rentPending.toLocaleString()} outstanding`,
         href: '/reports',
+        reportHref: '/reports'
     },
     {
         title: 'Rent Due (Month)',
@@ -88,6 +94,7 @@ export function OverviewCards() {
         icon: FileText,
         description: 'From all active leases',
         href: '/tenants?filter=Overdue,Pending',
+        reportHref: '/reports'
     },
     {
         title: 'Tenants in Arrears',
@@ -97,6 +104,7 @@ export function OverviewCards() {
         className: 'text-yellow-600 dark:text-yellow-400',
         iconClassName: 'bg-yellow-500/10',
         href: '/tenants?filter=Overdue',
+        reportHref: '/reports'
     },
     {
         title: 'Lease Expirations (30d)',
@@ -106,27 +114,43 @@ export function OverviewCards() {
         className: 'text-blue-600 dark:text-blue-400',
         iconClassName: 'bg-blue-500/10',
         href: '/tenants',
+        reportHref: '/reports'
     },
     ];
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {cardData.map((card) => (
-        <Link href={card.href} key={card.title} className="hover:scale-105 transition-transform">
-          <Card>
+          <Card key={card.title} className="hover:shadow-lg transition-shadow">
             <CardContent className="p-4 flex items-start gap-4">
               <div className={cn("p-3 rounded-lg bg-secondary", card.iconClassName)}>
                   <card.icon className={cn('h-6 w-6 text-muted-foreground', card.className)} />
               </div>
-              <div>
+              <div className='flex-1'>
                   <p className="text-sm text-muted-foreground">{card.title}</p>
                   <p className={cn('text-2xl font-bold', card.className)}>
                     {card.value}
                   </p>
                   <p className="text-xs text-muted-foreground">{card.description}</p>
               </div>
+               <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className='h-8 w-8 -mr-2 -mt-2'>
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => router.push(card.href)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>View Details</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => router.push(card.reportHref)}>
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            <span>View in Report</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </CardContent>
           </Card>
-        </Link>
       ))}
     </div>
   );
