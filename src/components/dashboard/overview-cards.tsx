@@ -87,7 +87,7 @@ export function OverviewCards() {
         value: `ZMW ${rentDueThisMonth.toLocaleString()}`,
         icon: FileText,
         description: 'From all active leases',
-        href: '/reports',
+        href: '/tenants?filter=Overdue',
     },
     {
         title: 'Tenants in Arrears',
@@ -131,4 +131,3 @@ export function OverviewCards() {
     </div>
   );
 }
-
