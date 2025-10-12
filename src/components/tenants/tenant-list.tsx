@@ -1,16 +1,21 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { TenantCard } from './tenant-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Search, Check as CheckIcon } from 'lucide-react';
 import { useTenants } from './tenant-provider';
 import { AddTenant } from './add-tenant';
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
-type FilterStatus = 'All' | 'Paid' | 'Pending' | 'Overdue';
+type FilterStatus = 'Paid' | 'Pending' | 'Overdue';
+const ALL_STATUSES: FilterStatus[] = ['Paid', 'Pending', 'Overdue'];
 
 function TenantListSkeleton() {
     return (
@@ -18,10 +23,9 @@ function TenantListSkeleton() {
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <Skeleton className="h-10 sm:w-64" />
                 <div className="flex items-center gap-2">
-                    <Skeleton className="h-10 w-16" />
-                    <Skeleton className="h-10 w-16" />
-                    <Skeleton className="h-10 w-20" />
                     <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 w-28" />
                     <Skeleton className="h-10 w-32" />
                 </div>
             </div>
@@ -43,7 +47,6 @@ function CardSkeleton() {
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
             </div>
-            <Skeleton className="h-8 w-8" />
         </div>
         <div className="space-y-3">
             <Skeleton className="h-5 w-1/2" />
@@ -58,7 +61,7 @@ function CardSkeleton() {
         </div>
         <div className="flex gap-2 pt-2">
             <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-10" />
         </div>
       </div>
     );
@@ -70,36 +73,40 @@ export function TenantList() {
   const pathname = usePathname();
   const { tenants, isInitialized } = useTenants();
   
-  const getFilterFromURL = (): FilterStatus => {
-    const filter = searchParams.get('filter');
-    if (filter === 'Paid' || filter === 'Pending' || filter === 'Overdue') {
-      return filter;
-    }
-    return 'All';
+  const getFiltersFromURL = (): FilterStatus[] => {
+    const filterParam = searchParams.get('filter');
+    if (!filterParam) return [];
+    const filters = filterParam.split(',') as FilterStatus[];
+    return filters.filter(f => ALL_STATUSES.includes(f));
   };
-
-  const [filter, setFilter] = useState<FilterStatus>(getFilterFromURL());
+  
+  const [activeFilters, setActiveFilters] = useState<FilterStatus[]>(getFiltersFromURL());
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    setFilter(getFilterFromURL());
+    setActiveFilters(getFiltersFromURL());
   }, [searchParams]);
 
-  const handleFilterChange = (status: FilterStatus) => {
-    setFilter(status);
+  const handleFilterToggle = (status: FilterStatus) => {
+    const newFilters = activeFilters.includes(status)
+      ? activeFilters.filter(f => f !== status)
+      : [...activeFilters, status];
+      
+    setActiveFilters(newFilters);
+
     const params = new URLSearchParams(searchParams.toString());
-    if (status === 'All') {
-      params.delete('filter');
+    if (newFilters.length > 0) {
+      params.set('filter', newFilters.join(','));
     } else {
-      params.set('filter', status);
+      params.delete('filter');
     }
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const filteredTenants = tenants
     .filter((tenant) => {
-      if (filter === 'All') return true;
-      return tenant.rentStatus === filter;
+      if (activeFilters.length === 0) return true;
+      return activeFilters.includes(tenant.rentStatus);
     })
     .filter((tenant) =>
       tenant.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -114,7 +121,9 @@ export function TenantList() {
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h2 className="text-xl font-semibold">No tenants yet</h2>
             <p className="text-muted-foreground mt-2">Add your first tenant to get started.</p>
-            <AddTenant />
+            <AddTenant>
+              <Button className='mt-4'>Add Tenant</Button>
+            </AddTenant>
         </div>
     )
   }
@@ -132,18 +141,28 @@ export function TenantList() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2">
-          {(['All', 'Paid', 'Pending', 'Overdue'] as FilterStatus[]).map(
-            (status) => (
-              <Button
-                key={status}
-                variant={filter === status ? 'default' : 'outline'}
-                onClick={() => handleFilterChange(status)}
-                className="capitalize"
-              >
-                {status}
-              </Button>
-            )
+        <div className="flex items-center gap-2 flex-wrap">
+          {(ALL_STATUSES).map(
+            (status) => {
+              const isSelected = activeFilters.includes(status);
+              return (
+              <div key={status} className="flex items-center">
+                <Button
+                  variant={isSelected ? 'default' : 'outline'}
+                  onClick={() => handleFilterToggle(status)}
+                  className="capitalize h-10 pl-3 pr-4 rounded-md"
+                  aria-pressed={isSelected}
+                >
+                    <div className={cn(
+                        "w-4 h-4 mr-2 border border-primary-foreground rounded-sm flex items-center justify-center",
+                        isSelected ? "bg-primary-foreground" : "bg-transparent"
+                    )}>
+                       {isSelected && <CheckIcon className="h-3 w-3 text-primary" />}
+                    </div>
+                  {status}
+                </Button>
+              </div>
+            )}
           )}
           <AddTenant />
         </div>
