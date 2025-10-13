@@ -20,19 +20,19 @@ export function AddEntityButton() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline">
-          <Plus className="mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Add New...
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
          <AddTenant asChild>
-            <DropdownMenuItem>
-              <UserPlus className="mr-2" /> Add Tenant
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <UserPlus className="mr-2 h-4 w-4" /> Add Tenant
             </DropdownMenuItem>
         </AddTenant>
         <AddProperty>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Building className="mr-2" /> Add Property
+                <Building className="mr-2 h-4 w-4" /> Add Property
             </DropdownMenuItem>
         </AddProperty>
       </DropdownMenuContent>
