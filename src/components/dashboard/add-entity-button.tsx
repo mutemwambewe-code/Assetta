@@ -19,15 +19,9 @@ export function AddEntityButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-[150px]">
+        <Button variant="outline">
           <Plus className="mr-2" />
-          <div className="relative h-5 overflow-hidden">
-            <div className="absolute inset-0 animate-scroll-up">
-              <span className="flex h-5 items-center">Add Tenant</span>
-              <span className="flex h-5 items-center">Add Property</span>
-              <span className="flex h-5 items-center">Add Tenant</span>
-            </div>
-          </div>
+          Add New...
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
