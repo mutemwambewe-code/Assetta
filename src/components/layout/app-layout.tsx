@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Building, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
+import { Separator } from '../ui/separator';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -65,6 +66,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const propertyLinks = navLinks.slice(0, 2);
+  const toolLinks = navLinks.slice(2);
+
 
   return (
     <div className="flex min-h-screen w-full">
@@ -79,24 +83,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <span className="sr-only">PropBot</span>
             </Link>
             <TooltipProvider>
-              {navLinks.map(({ href, label, icon: Icon }) => (
-                <Tooltip key={href}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={href}
-                      className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        pathname.startsWith(href)
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-muted-foreground'
-                      )}
-                    >
-                      <Icon className={cn("h-5 w-5", href === '/properties' && 'h-6 w-6')} />
-                      <span className="sr-only">{label}</span>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{label}</TooltipContent>
-                </Tooltip>
+              {navLinks.map(({ href, label, icon: Icon, isPrimary }, index) => (
+                <React.Fragment key={href}>
+                 {index === 2 && <Separator className="my-2" />}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={href}
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                          pathname.startsWith(href)
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                            : 'text-muted-foreground'
+                        )}
+                      >
+                        <Icon className={cn("h-5 w-5", isPrimary && "h-6 w-6")} />
+                        <span className="sr-only">{label}</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{label}</TooltipContent>
+                  </Tooltip>
+                </React.Fragment>
               ))}
             </TooltipProvider>
           </nav>
