@@ -5,6 +5,8 @@ import type { Property } from '@/lib/types';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useUser } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type PropertyContextType = {
   properties: Property[];
@@ -50,7 +52,13 @@ export function PropertyProvider({ children }: { children: ReactNode }) {
   const deleteProperty = useCallback(async (propertyId: string) => {
     if (!propertiesCollection) return;
     const docRef = doc(propertiesCollection, propertyId);
-    await deleteDoc(docRef);
+    deleteDoc(docRef).catch(async (serverError) => {
+      const permissionError = new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'delete',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
   }, [propertiesCollection]);
 
   const isInitialized = !isUserLoading && !isPropertiesLoading;

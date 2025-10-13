@@ -9,13 +9,25 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
-import { ArrowLeft, Building, MapPin, Users, Tag, Edit } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Users, Tag, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { AddTenant } from '@/components/tenants/add-tenant';
 import { useProperties } from '@/components/properties/property-provider';
 import { EditProperty } from '@/components/properties/edit-property';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const statusStyles = {
   Paid: 'bg-accent text-accent-foreground border-transparent',
@@ -27,7 +39,8 @@ function PropertyDetailPage({ title }: { title?: string }) {
   const params = useParams();
   const router = useRouter();
   const { tenants } = useTenants();
-  const { properties } = useProperties();
+  const { properties, deleteProperty } = useProperties();
+  const { toast } = useToast();
   
   const propertyId = params.propertyId as string;
   const property = properties.find((p) => p.id === propertyId);
@@ -58,6 +71,15 @@ function PropertyDetailPage({ title }: { title?: string }) {
     router.push(`/tenants/${tenantId}`);
   };
 
+  const handleDelete = () => {
+    deleteProperty(property.id);
+    toast({
+        title: "Property Deleted",
+        description: `${property.name} has been removed from your records.`,
+    });
+    router.push('/properties');
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto">
        <div className='flex justify-between items-start flex-col sm:flex-row sm:items-center gap-4'>
@@ -87,9 +109,31 @@ function PropertyDetailPage({ title }: { title?: string }) {
                 <EditProperty property={property}>
                     <Button>
                         <Edit className="mr-2 h-4 w-4" />
-                        Edit Property
+                        Edit
                     </Button>
                 </EditProperty>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete {property.name} and all associated data from our servers.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                            Yes, delete property
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
         

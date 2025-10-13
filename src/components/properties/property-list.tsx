@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import type { Property } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Plus, Search } from 'lucide-react';
+import { MoreHorizontal, Plus, Search, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { Input } from '../ui/input';
 import { Progress } from '../ui/progress';
 import { useTenants } from '../tenants/tenant-provider';
@@ -15,11 +15,23 @@ import Link from 'next/link';
 import { useProperties } from './property-provider';
 import { useToast } from '@/hooks/use-toast';
 import { AddProperty } from './add-property';
+import { EditProperty } from './edit-property';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function PropertyList() {
   const [searchTerm, setSearchTerm] = useState('');
   const { tenants } = useTenants();
-  const { properties, isInitialized } = useProperties();
+  const { properties, isInitialized, deleteProperty } = useProperties();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -32,11 +44,11 @@ export function PropertyList() {
     property.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleRemoveProperty = (id: string) => {
+  const handleRemoveProperty = (property: Property) => {
+    deleteProperty(property.id);
     toast({
-        variant: 'destructive',
-        title: 'Feature coming soon!',
-        description: 'The ability to delete properties is not yet implemented.',
+        title: "Property Deleted",
+        description: `${property.name} has been removed from your list.`,
     });
   };
   
@@ -123,25 +135,47 @@ export function PropertyList() {
                               </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                  <MoreHorizontal />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                    <Link href={`/properties/${property.id}`}>View Details</Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); alert('Edit functionality coming soon!')}}>Edit</DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={(e) => {e.stopPropagation(); handleRemoveProperty(property.id)}}
-                                  className="text-destructive"
-                                >
-                                  Remove
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                             <AlertDialog>
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                                    <MoreHorizontal />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem asChild>
+                                        <Link href={`/properties/${property.id}`}>View Details</Link>
+                                    </DropdownMenuItem>
+                                    <EditProperty property={property}>
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
+                                    </EditProperty>
+                                    <DropdownMenuSeparator />
+                                     <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem
+                                        className="text-destructive"
+                                        onSelect={(e) => e.preventDefault()}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete {property.name} and all associated data.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleRemoveProperty(property)} className="bg-destructive hover:bg-destructive/90">
+                                            Yes, delete property
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                       </TableRow>
                   )
