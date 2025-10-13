@@ -6,6 +6,7 @@ import TenantActivity from '@/components/dashboard/tenant-activity';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Receipt } from 'lucide-react';
 import Link from 'next/link';
+import { AddEntityButton } from '@/components/dashboard/add-entity-button';
 
 export default function DashboardPage({ title }: { title?: string }) {
   return (
@@ -18,7 +19,7 @@ export default function DashboardPage({ title }: { title?: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            <AddTenant />
+            <AddEntityButton />
             <Link href="/communication">
                 <Button variant="outline">
                     <MessageSquare className="mr-2" /> Send Message

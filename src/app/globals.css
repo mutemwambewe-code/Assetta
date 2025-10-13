@@ -87,3 +87,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes scroll-up {
+    0% { transform: translateY(0%); }
+    15% { transform: translateY(0%); }
+    25% { transform: translateY(-100%); }
+    75% { transform: translateY(-100%); }
+    85% { transform: translateY(-200%); } /* Quick flick to reset */
+    90% { transform: translateY(0%); } /* Instant reset */
+    100% { transform: translateY(0%); }
+  }
+  .animate-scroll-up {
+    animation: scroll-up 6s infinite;
+  }
+}
