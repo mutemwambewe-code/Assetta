@@ -43,52 +43,61 @@ export function Header({ showTitle, pageTitle, mobileMenuOpen, setMobileMenuOpen
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetTrigger asChild>
-          <Button size="icon" variant="outline" className="sm:hidden">
-            <PanelLeft className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border">
-          <nav className="grid gap-4 text-lg font-medium">
-            <Link
-              href="/dashboard"
-              className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
+       <div className='flex items-center gap-4'>
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+            <Button size="icon" variant="outline" className="sm:hidden">
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Toggle Menu</span>
+            </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border">
+            <nav className="grid gap-4 text-lg font-medium">
+                <Link
+                href="/dashboard"
+                className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
+                >
+                <Building className="h-6 w-6" />
+                <span className="font-bold text-xl text-foreground">PropBot</span>
+                </Link>
+                {navLinks.map(({ href, label, icon: Icon }) => (
+                <Link
+                    key={href}
+                    href={href}
+                    className={cn("flex items-center gap-4 px-2.5 rounded-lg",
+                    pathname.startsWith(href)
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                >
+                    <Icon className="h-5 w-5" />
+                    {label}
+                </Link>
+                ))}
+            </nav>
+            <nav className="mt-auto grid gap-4">
+                <Link
+                    href={settingsLink.href}
+                    className={cn("flex items-center gap-4 px-2.5 rounded-lg",
+                    pathname.startsWith(settingsLink.href)
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                >
+                    <settingsLink.icon className="h-5 w-5" />
+                    {settingsLink.label}
+                </Link>
+            </nav>
+            </SheetContent>
+        </Sheet>
+         <Link
+            href="/dashboard"
+            className="hidden items-center gap-2 text-lg font-semibold text-primary sm:flex"
             >
-              <Building className="h-6 w-6" />
-              <span className="font-bold text-xl text-foreground">PropBot</span>
-            </Link>
-            {navLinks.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn("flex items-center gap-4 px-2.5 rounded-lg",
-                  pathname.startsWith(href)
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                {label}
-              </Link>
-            ))}
-          </nav>
-           <nav className="mt-auto grid gap-4">
-              <Link
-                href={settingsLink.href}
-                className={cn("flex items-center gap-4 px-2.5 rounded-lg",
-                  pathname.startsWith(settingsLink.href)
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <settingsLink.icon className="h-5 w-5" />
-                {settingsLink.label}
-              </Link>
-          </nav>
-        </SheetContent>
-      </Sheet>
+            <Building className="h-6 w-6" />
+            <span className="font-bold text-xl text-foreground">PropBot</span>
+        </Link>
+       </div>
       
       <div className="flex-1">
         <div className={cn(
