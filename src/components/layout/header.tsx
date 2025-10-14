@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { navLinks, settingsLink } from './nav-links';
 import { cn } from '@/lib/utils';
 import { useAuth, useUser } from '@/firebase';
@@ -52,6 +52,9 @@ export function Header({ showTitle, pageTitle, mobileMenuOpen, setMobileMenuOpen
             </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border">
+            <SheetHeader className="p-4">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            </SheetHeader>
             <nav className="grid gap-4 text-lg font-medium">
                 <Link
                 href="/dashboard"
