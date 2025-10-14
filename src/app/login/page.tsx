@@ -12,7 +12,7 @@ import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building } from 'lucide-react';
 import Link from 'next/link';
 import {
   AlertDialog,
@@ -101,7 +101,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="mb-8 flex flex-col items-center gap-2 text-center">
+          <div className="flex items-center gap-2 text-primary">
+            <Building className="h-10 w-10" />
+            <h1 className="text-4xl font-bold">PropBot</h1>
+          </div>
+        <p className="text-muted-foreground">Powering Property Management Through Intelligence.</p>
+      </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
