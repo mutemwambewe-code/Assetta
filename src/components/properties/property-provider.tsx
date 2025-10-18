@@ -10,7 +10,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 type PropertyContextType = {
   properties: Property[];
-  addProperty: (property: Omit<Property, 'id' | 'occupied'>) => Property;
+  addProperty: (property: Omit<Property, 'id' | 'occupied'>) => Property | undefined;
   updateProperty: (property: Property) => void;
   deleteProperty: (propertyId: string) => void;
   isInitialized: boolean;
@@ -29,9 +29,10 @@ export function PropertyProvider({ children }: { children: ReactNode }) {
 
   const { data: properties, isLoading: isPropertiesLoading } = useCollection<Property>(propertiesCollection);
 
-  const addProperty = useCallback((propertyData: Omit<Property, 'id' | 'occupied'>): Property => {
+  const addProperty = useCallback((propertyData: Omit<Property, 'id' | 'occupied'>): Property | undefined => {
     if (!propertiesCollection) {
-        throw new Error("Properties collection not available.");
+        console.error("Properties collection not available. Cannot add property.");
+        return;
     };
     const newDocRef = doc(propertiesCollection);
     const newProperty: Property = {

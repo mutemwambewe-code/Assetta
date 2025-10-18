@@ -28,7 +28,10 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
   const { data: templatesData, isLoading: isTemplatesLoading } = useCollection<Template>(templatesCollection);
 
   const addTemplate = useCallback(async (templateData: Omit<Template, 'id'>) => {
-    if (!templatesCollection) return;
+    if (!templatesCollection) {
+      console.error("Templates collection not available. Cannot add template.");
+      return;
+    }
     const newDocRef = doc(templatesCollection);
     const newTemplate: Template = {
         ...templateData,

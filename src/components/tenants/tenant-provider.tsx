@@ -74,7 +74,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   }, [tenantsData]);
 
   const addTenant = useCallback(async (tenantData: Omit<Tenant, 'id' | 'avatarUrl' | 'rentStatus' | 'paymentHistorySummary' | 'paymentHistory'>) => {
-    if (!tenantsCollection) return;
+    if (!tenantsCollection) {
+      console.error("Tenants collection not available. Cannot add tenant.");
+      return;
+    }
     const newDocRef = doc(tenantsCollection);
     const newTenant: Tenant = {
         ...tenantData,

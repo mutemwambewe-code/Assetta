@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { useProperties } from '../properties/property-provider';
 import { AddProperty } from '../properties/add-property';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import type { Property } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -76,6 +77,10 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
     });
     setOpen(false);
     form.reset();
+  }
+
+  const handlePropertyAdded = (newProperty: Property) => {
+    form.setValue('property', newProperty.name);
   }
 
   return (
@@ -147,7 +152,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Property</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a property" />
@@ -166,7 +171,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     <AlertTitle>No Properties Found</AlertTitle>
                     <AlertDescription className='flex flex-col gap-2'>
                         You need to add a property before you can add a tenant.
-                        <AddProperty>
+                        <AddProperty onPropertyAdded={handlePropertyAdded}>
                             <Button size='sm'>
                                 <Plus className='mr-2' />
                                 Add a Property
@@ -288,7 +293,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
             </div>
 
             <DialogFooter>
-              <Button type="submit">Save Tenant</Button>
+              <Button type="submit" disabled={properties.length === 0}>Save Tenant</Button>
             </DialogFooter>
           </form>
         </Form>

@@ -48,10 +48,22 @@ export function AddProperty({ children, onPropertyAdded }: { children: React.Rea
   function onSubmit(values: FormData) {
     const newProperty = addProperty(values);
     
-    toast({
-      title: 'Property Added!',
-      description: `${values.name} has been added to your property list.`,
-    });
+    if (newProperty) {
+        toast({
+        title: 'Property Added!',
+        description: `${values.name} has been added to your property list.`,
+        });
+        if (onPropertyAdded) {
+            onPropertyAdded(newProperty);
+        }
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Failed to Add Property",
+            description: "Could not add property. Please try again later.",
+        });
+    }
+
     setOpen(false);
     form.reset();
   }
