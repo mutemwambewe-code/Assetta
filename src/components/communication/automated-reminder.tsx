@@ -1,3 +1,4 @@
+
 'use client';
 
 import { automatedCommunication, type AutomatedCommunicationOutput } from '@/ai/flows/automated-communication';
@@ -146,51 +147,64 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
       setIsSending(false);
       return;
     }
+    
+    let allSuccessful = true;
+    let firstErrorMessage = '';
 
-    try {
-        const sendPromises = recipients.map(async (tenant) => {
-            const personalizedMessage = replacePlaceholders(message, tenant);
-            
-            const localMessageId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    for (const tenant of recipients) {
+      const personalizedMessage = replacePlaceholders(message, tenant);
+      const localMessageId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-            addMessageLog({
-                id: localMessageId,
-                tenantId: tenant.id,
-                tenantName: tenant.name,
-                message: personalizedMessage,
-                date: new Date().toISOString(),
-                method: 'SMS',
-                direction: 'outgoing',
-                status: 'Sending...'
-            });
+      addMessageLog({
+        id: localMessageId,
+        tenantId: tenant.id,
+        tenantName: tenant.name,
+        message: personalizedMessage,
+        date: new Date().toISOString(),
+        method: 'SMS',
+        direction: 'outgoing',
+        status: 'Sending...'
+      });
 
-            const res = await sendSms([tenant.phone], personalizedMessage, localMessageId);
-            
-            if (!res.success) {
-                throw new Error(`Failed to send to ${tenant.name} (${tenant.phone}): ${res.message}`);
-            }
-            return res;
+      const res = await sendSms([tenant.phone], personalizedMessage, localMessageId);
+
+      if (!res.success) {
+        allSuccessful = false;
+        if (!firstErrorMessage) {
+          firstErrorMessage = res.message;
+        }
+        // Update the specific log with an error status
+        // This is a fire-and-forget update, you might want to await it if it's critical
+        addMessageLog({
+            id: localMessageId,
+            tenantId: tenant.id,
+            tenantName: tenant.name,
+            message: personalizedMessage,
+            date: new Date().toISOString(),
+            method: 'SMS',
+            direction: 'outgoing',
+            status: `Failed: ${res.message}`
         });
+      }
+    }
 
-        await Promise.all(sendPromises);
-
-        toast({
-            title: "Messages Sent!",
-            description: `Your message has been queued for sending to ${recipients.length} tenant(s). Check logs for delivery status.`
-        });
-        setMessage('');
-
-    } catch (error: any) {
-      console.error('Error sending message(s):', error);
+    if (allSuccessful) {
+      toast({
+        title: "Messages Sent!",
+        description: `Your message has been queued for sending to ${recipients.length} tenant(s). Check logs for delivery status.`
+      });
+      setMessage('');
+    } else {
       toast({
         variant: 'destructive',
         title: 'Sending Failed',
-        description: error.message || 'One or more messages could not be sent. Please check the logs.',
+        description: firstErrorMessage || 'One or more messages could not be sent. Please check the logs and your configuration.',
       });
-    } finally {
-        setIsSending(false);
     }
+
+    setIsSending(false);
   }
+
 
   const handleTagClick = (tag: string) => {
     setMessage(prev => `${prev} {{${tag}}}`);
