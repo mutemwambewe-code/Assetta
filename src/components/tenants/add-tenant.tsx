@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,7 +20,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Plus, Loader2 } from 'lucide-react';
+import { CalendarIcon, Plus, Loader2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTenants } from './tenant-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -49,7 +49,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export function AddTenant({ asChild, className }: { asChild?: boolean; className?: string }) {
   const [open, setOpen] = useState(false);
-  const { addTenant, isInitialized: tenantsReady } = useTenants();
+  const { tenants, addTenant, isInitialized: tenantsReady } = useTenants();
   const { properties, isInitialized: propertiesReady } = useProperties();
   const { toast } = useToast();
 
@@ -67,7 +67,28 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
     },
   });
 
+  const selectedPropertyName = form.watch('property');
+
+  const selectedProperty = useMemo(() => {
+    return properties.find(p => p.name === selectedPropertyName);
+  }, [properties, selectedPropertyName]);
+
+  const isPropertyFull = useMemo(() => {
+    if (!selectedProperty) return false;
+    const tenantsInProperty = tenants.filter(t => t.property === selectedProperty.name).length;
+    return tenantsInProperty >= selectedProperty.units;
+  }, [tenants, selectedProperty]);
+
   function onSubmit(values: FormData) {
+    if (isPropertyFull) {
+        toast({
+            variant: "destructive",
+            title: "Property is Full",
+            description: `Cannot add more tenants to ${selectedProperty?.name}.`,
+        });
+        return;
+    }
+
     const tenantData = {
         ...values,
         leaseStartDate: format(values.leaseStartDate, 'yyyy-MM-dd'),
@@ -162,7 +183,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {properties.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                        {properties.map(p => <SelectItem key={p.id} value={p.name}>{p.name} ({tenants.filter(t => t.property === p.name).length}/{p.units})</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -180,6 +201,16 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                                 Add a Property
                             </Button>
                         </AddProperty>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {isPropertyFull && selectedProperty && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Property Full</AlertTitle>
+                    <AlertDescription>
+                        {selectedProperty.name} has reached its maximum capacity of {selectedProperty.units} tenants.
                     </AlertDescription>
                 </Alert>
             )}
@@ -296,7 +327,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
             </div>
 
             <DialogFooter>
-              <Button type="submit" disabled={!isProviderReady || properties.length === 0}>
+              <Button type="submit" disabled={!isProviderReady || properties.length === 0 || isPropertyFull}>
                 {!isProviderReady && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Tenant
               </Button>
