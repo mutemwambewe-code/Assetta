@@ -1,4 +1,5 @@
 
+
 export type Tenant = {
   id: string;
   name: string;
@@ -63,3 +64,12 @@ export type Template = {
   content: string;
   category: string;
 };
+
+export type Expense = {
+  id: string;
+  propertyId: string;
+  date: string;
+  category: 'Maintenance' | 'Utilities' | 'Management' | 'Repair' | 'Other';
+  description: string;
+  amount: number;
+}

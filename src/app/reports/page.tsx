@@ -1,12 +1,11 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTenants } from '@/components/tenants/tenant-provider';
 import { useProperties } from '@/components/properties/property-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Home, Users, FileText, Download, ArrowLeft } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DollarSign, Home, Users, FileText, Download, ArrowLeft, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,48 +22,81 @@ import {
   generatePaymentHistoryExcel,
   generateSummaryReportExcel,
 } from '@/lib/report-generator';
-import type { Tenant, Property, Payment } from '@/lib/types';
 import { FinancialReport } from '@/components/reports/financial-report';
 import { OccupancyReport } from '@/components/reports/occupancy-report';
 import { TenantReportTable } from '@/components/reports/tenant-report-table';
-import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { addMonths, endOfMonth, endOfYear, format, getYear, startOfMonth, startOfYear, subMonths } from 'date-fns';
+import { LeaseExpiryReport } from '@/components/reports/lease-expiry-report';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function ReportsPage({ title }: { title?: string }) {
   const { tenants, isInitialized: tenantsInitialized } = useTenants();
   const { properties, isInitialized: propertiesInitialized } = useProperties();
   const router = useRouter();
+  const [dateRange, setDateRange] = useState('this_month');
+
+  const { startDate, endDate } = useMemo(() => {
+    const now = new Date();
+    switch (dateRange) {
+      case 'last_month':
+        const lastMonth = subMonths(now, 1);
+        return { startDate: startOfMonth(lastMonth), endDate: endOfMonth(lastMonth) };
+      case 'this_year':
+        return { startDate: startOfYear(now), endDate: endOfYear(now) };
+      case 'last_3_months':
+        return { startDate: startOfMonth(subMonths(now, 2)), endDate: endOfMonth(now) };
+      default: // this_month
+        return { startDate: startOfMonth(now), endDate: endOfMonth(now) };
+    }
+  }, [dateRange]);
 
   const reportData = useMemo(() => {
     if (!tenantsInitialized || !propertiesInitialized) return null;
 
+    const filteredPayments = tenants
+        .flatMap(t => t.paymentHistory || [])
+        .filter(p => new Date(p.date) >= startDate && new Date(p.date) <= endDate);
+
+    const rentCollected = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
+    
+    const activeTenantsInPeriod = tenants.filter(t => 
+        new Date(t.leaseStartDate) <= endDate && new Date(t.leaseEndDate) >= startDate
+    );
+    
+    // For outstanding rent, we should probably consider the current state regardless of date range.
+    const outstandingRent = tenants
+        .filter(t => t.rentStatus === 'Pending' || t.rentStatus === 'Overdue')
+        .reduce((sum, t) => sum + t.rentAmount, 0);
+
     const totalUnits = properties.reduce((sum, prop) => sum + prop.units, 0);
     const occupiedUnits = tenants.length;
     const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
-    const totalMonthlyRent = tenants.reduce((sum, t) => sum + t.rentAmount, 0);
-    const allPayments = tenants.flatMap(t => 
-      (t.paymentHistory || []).map(p => ({
-        ...p,
-        tenantName: t.name,
-        property: t.property,
-        unit: t.unit,
-      }))
-    ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    const collectionRate = rentCollected > 0 ? (rentCollected / (rentCollected + outstandingRent)) * 100 : 0;
+
 
     return {
       tenants,
       properties,
-      allPayments,
+      allPayments: tenants.flatMap(t => 
+        (t.paymentHistory || []).map(p => ({
+          ...p,
+          tenantName: t.name,
+          property: t.property,
+          unit: t.unit,
+        }))
+      ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
       overview: {
-        totalProperties: properties.length,
-        totalUnits,
-        occupiedUnits,
+        rentCollected,
+        outstandingRent,
         occupancyRate,
+        collectionRate: collectionRate > 100 ? 100 : collectionRate, // Cap at 100%
         totalTenants: tenants.length,
-        totalMonthlyRent,
+        totalProperties: properties.length
       },
     };
-  }, [tenants, properties, tenantsInitialized, propertiesInitialized]);
+  }, [tenants, properties, tenantsInitialized, propertiesInitialized, startDate, endDate]);
 
   if (!reportData) {
     return <div>Loading reports...</div>;
@@ -97,15 +129,22 @@ function ReportsPage({ title }: { title?: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => router.back()}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-            </Button>
+            <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className='w-[180px]'>
+                    <SelectValue placeholder="Select date range" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="this_month">This Month</SelectItem>
+                    <SelectItem value="last_month">Last Month</SelectItem>
+                    <SelectItem value="last_3_months">Last 3 Months</SelectItem>
+                    <SelectItem value="this_year">This Year</SelectItem>
+                </SelectContent>
+            </Select>
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button>
                 <Download className="mr-2" />
-                Download Report
+                Download
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -137,60 +176,60 @@ function ReportsPage({ title }: { title?: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{reportData.overview.totalProperties}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Units</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{reportData.overview.totalUnits}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Tenants</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{reportData.overview.totalTenants}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Potential Monthly Rent</CardTitle>
+            <CardTitle className="text-sm font-medium">Rental Income</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
+            <div className="text-2xl font-bold">ZMW {reportData.overview.rentCollected.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">in selected period</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Outstanding Rent</CardTitle>
+            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">ZMW {reportData.overview.outstandingRent.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">across all properties</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{reportData.overview.occupancyRate.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground">across all properties</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
             <div className="text-2xl font-bold">
-              ZMW {reportData.overview.totalMonthlyRent.toLocaleString()}
+              {reportData.overview.collectionRate.toFixed(1)}%
             </div>
+            <p className="text-xs text-muted-foreground">based on current arrears</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="financials">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="financials">Financials</TabsTrigger>
-          <TabsTrigger value="occupancy">Occupancy</TabsTrigger>
-          <TabsTrigger value="tenants">Tenants</TabsTrigger>
-        </TabsList>
-        <TabsContent value="financials">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <FinancialReport payments={reportData.allPayments} tenants={reportData.tenants} />
-        </TabsContent>
-        <TabsContent value="occupancy">
-          <OccupancyReport properties={reportData.properties} tenants={reportData.tenants} />
-        </TabsContent>
-        <TabsContent value="tenants">
-          <TenantReportTable tenants={reportData.tenants} />
-        </TabsContent>
-      </Tabs>
+          <LeaseExpiryReport tenants={reportData.tenants} />
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6">
+            <OccupancyReport properties={reportData.properties} tenants={reportData.tenants} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+            <TenantReportTable tenants={reportData.tenants} />
+        </div>
     </div>
   );
 }
