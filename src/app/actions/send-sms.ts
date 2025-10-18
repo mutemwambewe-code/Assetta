@@ -20,11 +20,15 @@ export async function sendSms(to: string | string[], message: string, localMessa
     return { success: false, message: "Africa's Talking credentials are not configured on the server." };
   }
 
+  // A Sender ID is required for messages to be delivered in production.
+  if (process.env.AFRICASTALKING_USERNAME !== 'sandbox' && !process.env.AFRICASTALKING_SENDER_ID) {
+    return { success: false, message: "Africa's Talking Sender ID is not configured for the live environment." };
+  }
+
   try {
     const response = await sms.send({
       to,
       message,
-      // A Sender ID is required for messages to be delivered in production.
       // It can be a shortcode or an alphanumeric ID that you have registered with Africa's Talking.
       from: process.env.AFRICASTALKING_SENDER_ID,
       // Pass the local message ID to the bulk SMS metadata
