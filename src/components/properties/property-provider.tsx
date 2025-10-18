@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
 import type { Property } from '@/lib/types';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, writeBatch, query, where, getDocs } from 'firebase/firestore';
 import { useUser } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -51,16 +51,38 @@ export function PropertyProvider({ children }: { children: ReactNode }) {
   }, [propertiesCollection]);
 
   const deleteProperty = useCallback(async (propertyId: string) => {
-    if (!propertiesCollection) return;
-    const docRef = doc(propertiesCollection, propertyId);
-    deleteDoc(docRef).catch(async (serverError) => {
-      const permissionError = new FirestorePermissionError({
-        path: docRef.path,
-        operation: 'delete',
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
-  }, [propertiesCollection]);
+    if (!firestore || !user || !propertiesCollection) return;
+
+    try {
+        const batch = writeBatch(firestore);
+
+        // 1. Delete the property document
+        const propertyDocRef = doc(propertiesCollection, propertyId);
+        batch.delete(propertyDocRef);
+
+        // 2. Find and delete associated tenants
+        const tenantsCollectionRef = collection(firestore, 'users', user.uid, 'tenants');
+        const q = query(tenantsCollectionRef, where("propertyId", "==", propertyId));
+        const tenantsSnapshot = await getDocs(q);
+        
+        tenantsSnapshot.forEach((tenantDoc) => {
+            batch.delete(tenantDoc.ref);
+        });
+
+        // 3. Commit the batch
+        await batch.commit();
+
+    } catch (error: any) {
+        console.error("Error deleting property and associated tenants:", error);
+        // You can use a more specific error handling here if needed
+         const permissionError = new FirestorePermissionError({
+            path: `users/${user.uid}/properties/${propertyId}`,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    }
+  }, [firestore, user, propertiesCollection]);
+
 
   const isInitialized = !isUserLoading && !isPropertiesLoading;
 
