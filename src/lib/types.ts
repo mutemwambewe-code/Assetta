@@ -39,11 +39,12 @@ export type Property = {
 };
 
 export type OverviewStats = {
-  totalUnits: number;
-  occupiedUnits: number;
   rentCollected: number;
-  rentPending: number;
-  overdueTenants: number;
+  outstandingRent: number;
+  occupancyRate: number;
+  collectionRate: number;
+  totalTenants: number;
+  totalProperties: number;
 };
 
 export type MessageLog = {

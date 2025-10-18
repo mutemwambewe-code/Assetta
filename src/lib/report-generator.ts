@@ -6,7 +6,7 @@ import 'jspdf-autotable';
 import type { jsPDF as jsPDFType } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
-import type { Tenant, EnrichedPayment, Property } from './types';
+import type { Tenant, EnrichedPayment, Property, OverviewStats } from './types';
 
 // Extend the jsPDF interface to include autoTable
 declare module 'jspdf' {
@@ -205,7 +205,14 @@ export const generatePaymentHistoryExcel = (payments: EnrichedPayment[]) => {
     XLSX.writeFile(workbook, `PropBot_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
 
-export const generateSummaryReportExcel = (reportData: { tenants: Tenant[], properties: Property[], payments: EnrichedPayment[] }) => {
+type SummaryReportData = {
+    tenants: Tenant[];
+    properties: Property[];
+    payments: EnrichedPayment[];
+    overview: OverviewStats;
+}
+
+export const generateSummaryReportExcel = (reportData: SummaryReportData) => {
     const { tenants, properties, payments } = reportData;
     const workbook = XLSX.utils.book_new();
 
@@ -247,3 +254,59 @@ export const generateSummaryReportExcel = (reportData: { tenants: Tenant[], prop
 
     XLSX.writeFile(workbook, `PropBot_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
+
+export const generateSummaryReportPDF = (reportData: SummaryReportData) => {
+    const { overview } = reportData;
+    const doc = new jsPDF();
+    addHeader(doc, "Executive Summary Report");
+  
+    // KPIs Section
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Key Performance Indicators", 14, 50);
+  
+    const kpiData = [
+      ['Rental Income (This Period)', `ZMW ${overview.rentCollected.toLocaleString()}`],
+      ['Outstanding Rent (All Time)', `ZMW ${overview.outstandingRent.toLocaleString()}`],
+      ['Occupancy Rate', `${overview.occupancyRate.toFixed(1)}%`],
+      ['Collection Rate', `${overview.collectionRate.toFixed(1)}%`],
+      ['Total Properties', overview.totalProperties],
+      ['Total Tenants', overview.totalTenants],
+    ];
+  
+    doc.autoTable({
+      body: kpiData,
+      startY: 55,
+      theme: 'grid',
+      headStyles: { fillColor: false, textColor: 20 },
+      bodyStyles: { fontStyle: 'bold', cellWidth: 'wrap' },
+      columnStyles: { 0: { fontStyle: 'normal' } },
+      tableWidth: 'auto',
+    });
+  
+    // You can add more tables for other summary data from your reportData here
+    // For example, a table for rent status breakdown
+  
+    const finalY = (doc as any).lastAutoTable.finalY || 120;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Rent Status Breakdown", 14, finalY + 15);
+  
+    const rentStatusData = [
+      ['Paid', reportData.tenants.filter(t => t.rentStatus === 'Paid').length],
+      ['Pending', reportData.tenants.filter(t => t.rentStatus === 'Pending').length],
+      ['Overdue', reportData.tenants.filter(t => t.rentStatus === 'Overdue').length],
+    ];
+  
+    doc.autoTable({
+      head: [['Status', 'Number of Tenants']],
+      body: rentStatusData,
+      startY: finalY + 20,
+      headStyles: { fillColor: [3, 105, 161] },
+      theme: 'striped',
+    });
+  
+    const pageCount = doc.internal.getNumberOfPages();
+    addFooter(doc, pageCount);
+    doc.save(`PropBot_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  };

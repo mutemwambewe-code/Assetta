@@ -21,6 +21,7 @@ import {
   generatePaymentHistoryPDF,
   generatePaymentHistoryExcel,
   generateSummaryReportExcel,
+  generateSummaryReportPDF,
 } from '@/lib/report-generator';
 import { FinancialReport } from '@/components/reports/financial-report';
 import { OccupancyReport } from '@/components/reports/occupancy-report';
@@ -109,12 +110,18 @@ function ReportsPage({ title }: { title?: string }) {
     } else if (type === 'paymentHistory') {
       if (format === 'pdf') generatePaymentHistoryPDF(reportData.allPayments);
       else generatePaymentHistoryExcel(reportData.allPayments);
-    } else if (type === 'summary' && format === 'excel') {
-        generateSummaryReportExcel({
+    } else if (type === 'summary') {
+        const summaryData = {
             tenants: reportData.tenants,
             properties: reportData.properties,
             payments: reportData.allPayments,
-        });
+            overview: reportData.overview,
+        };
+        if (format === 'excel') {
+            generateSummaryReportExcel(summaryData);
+        } else {
+            generateSummaryReportPDF(summaryData);
+        }
     }
   };
 
@@ -149,6 +156,9 @@ function ReportsPage({ title }: { title?: string }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Summary Report</DropdownMenuLabel>
+                 <DropdownMenuItem onClick={() => handleDownload('summary', 'pdf')}>
+                    Download Summary (PDF)
+                </DropdownMenuItem>
                  <DropdownMenuItem onClick={() => handleDownload('summary', 'excel')}>
                     Download Summary (Excel)
                 </DropdownMenuItem>
