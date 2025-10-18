@@ -5,154 +5,133 @@
  * This ruleset enforces a strict user-ownership model for all data. Each user can only access their own data.
  *
  * Data Structure:
- * All data is nested under /users/{userId}, which represents a user's private data tree. This includes properties, tenants, message logs, and templates.
+ * All data is nested under /users/{userId}, which represents the authenticated user's ID.
+ *   - /users/{userId}/properties/{propertyId}: Stores property data owned by the user.
+ *   - /users/{userId}/tenants/{tenantId}: Stores tenant data managed by the user.
+ *   - /users/{userId}/messagelogs/{messagelogId}: Stores message logs for a user
+ *   - /users/{userId}/templates/{templateId}: Stores message templates for a user.
  *
  * Key Security Decisions:
- * - Users can only list their own data (e.g., tenants, properties).
- * - No global admin roles are defined in this prototype.
+ *  - Users can only list resources under their own user ID. Listing of all users is disallowed.
+ *  - Data validation is relaxed during this prototyping phase, focusing on ownership and relational integrity.
+ *
+ * Denormalization for Authorization:
+ *  - The rules leverage the path-based ownership model, avoiding the need for `get()` calls or denormalized `ownerId` fields within the documents themselves. The `userId` is extracted directly from the path.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is made by a signed-in user.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {boolean} True if the user is signed in, false otherwise.
+     * @description Checks if the request is authenticated.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the request is made by the owner of the resource.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {boolean} True if the user is the owner, false otherwise.
+     * @description Checks if the requested user ID matches the authenticated user ID.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the request is made by the owner of the resource and the resource exists.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {boolean} True if the user is the owner and the resource exists, false otherwise.
+     * @description Checks if the requested user ID matches the authenticated user ID and the resource exists.
      */
     function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Rules for user documents.  Users can only read/write their own user document.
-     * @path /users/{userId}
-     * @allow (create) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can create their own user document.
-     * @deny (create) User 'randomUserId' cannot create a document for user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-     * @allow (get) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can get their own user document.
-     * @deny (get) User 'randomUserId' cannot get the user document for user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-     * @allow (update) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can update their own user document.
-     * @deny (update) User 'randomUserId' cannot update the user document for user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-     * @allow (delete) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can delete their own user document.
-     * @deny (delete) User 'randomUserId' cannot delete the user document for user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-     * @principle Enforces document ownership for writes.
+     * @description Rules for the /users/{userId} document.
+     * @path /databases/{database}/documents/users/{userId}
+     * @allow (create) - Authenticated user with matching userId can create their user document.
+     * @deny (create) - Authenticated user with non-matching userId cannot create a user document.
+     * @principle Enforces user-ownership: Only the authenticated user can create their own user document.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      allow get: if false;
       allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/properties/{propertyId} collection.
+     * @path /databases/{database}/documents/users/{userId}/properties/{propertyId}
+     * @allow (create) - Authenticated user with matching userId can create a property document under their user ID.
+     * @allow (update) - Authenticated user with matching userId can update a property document under their user ID.
+     * @allow (delete) - Authenticated user with matching userId can delete a property document under their user ID.
+     * @deny (create) - Authenticated user with non-matching userId cannot create a property document under another user ID.
+     * @deny (update) - Authenticated user with non-matching userId cannot update a property document under another user ID.
+     * @deny (delete) - Authenticated user with non-matching userId cannot delete a property document under another user ID.
+     * @principle Enforces user-ownership: Only the authenticated user can manage properties under their own user ID.
+     */
+    match /users/{userId}/properties/{propertyId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/tenants/{tenantId} collection.
+     * @path /databases/{database}/documents/users/{userId}/tenants/{tenantId}
+     * @allow (create) - Authenticated user with matching userId can create a tenant document under their user ID.
+     * @allow (update) - Authenticated user with matching userId can update a tenant document under their user ID.
+     * @allow (delete) - Authenticated user with matching userId can delete a tenant document under their user ID.
+     * @deny (create) - Authenticated user with non-matching userId cannot create a tenant document under another user ID.
+     * @deny (update) - Authenticated user with non-matching userId cannot update a tenant document under another user ID.
+     * @deny (delete) - Authenticated user with non-matching userId cannot delete a tenant document under another user ID.
+     * @principle Enforces user-ownership: Only the authenticated user can manage tenants under their own user ID.
+     */
+    match /users/{userId}/tenants/{tenantId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
 
         /**
-         * @description Rules for properties owned by a user. Only the owner can read/write their properties.
-         * @path /users/{userId}/properties/{propertyId}
-         * @allow (create) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can create a property under their user document.
-         * @deny (create) User 'randomUserId' cannot create a property under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (get) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can get a property under their user document.
-         * @deny (get) User 'randomUserId' cannot get a property under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (list) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can list the properties under their user document.
-         * @deny (list) User 'randomUserId' cannot list properties under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (update) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can update a property under their user document.
-         * @deny (update) User 'randomUserId' cannot update a property under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (delete) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can delete a property under their user document.
-         * @deny (delete) User 'randomUserId' cannot delete a property under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @principle Enforces document ownership for writes.
-         */
-        match /properties/{propertyId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isExistingOwner(userId);
-          allow delete: if isExistingOwner(userId);
-        }
+     * @description Rules for the /users/{userId}/messagelogs/{messagelogId} collection.
+     * @path /databases/{database}/documents/users/{userId}/messagelogs/{messagelogId}
+     * @allow (create) - Authenticated user with matching userId can create a message log document under their user ID.
+     * @allow (update) - Authenticated user with matching userId can update a message log document under their user ID.
+     * @allow (delete) - Authenticated user with matching userId can delete a message log document under their user ID.
+     * @deny (create) - Authenticated user with non-matching userId cannot create a message log document under another user ID.
+     * @deny (update) - Authenticated user with non-matching userId cannot update a message log document under another user ID.
+     * @deny (delete) - Authenticated user with non-matching userId cannot delete a message log document under another user ID.
+     * @principle Enforces user-ownership: Only the authenticated user can manage message logs under their own user ID.
+     */
+    match /users/{userId}/messagelogs/{messagelogId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
 
-        /**
-         * @description Rules for tenants of a user. Only the owner can read/write their tenants.
-         * @path /users/{userId}/tenants/{tenantId}
-         * @allow (create) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can create a tenant under their user document.
-         * @deny (create) User 'randomUserId' cannot create a tenant under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (get) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can get a tenant under their user document.
-         * @deny (get) User 'randomUserId' cannot get a tenant under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (list) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can list the tenants under their user document.
-         * @deny (list) User 'randomUserId' cannot list tenants under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (update) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can update a tenant under their user document.
-         * @deny (update) User 'randomUserId' cannot update a tenant under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (delete) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can delete a tenant under their user document.
-         * @deny (delete) User 'randomUserId' cannot delete a tenant under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @principle Enforces document ownership for writes.
-         */
-        match /tenants/{tenantId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isExistingOwner(userId);
-          allow delete: if isExistingOwner(userId);
-        }
-
-        /**
-         * @description Rules for message logs of a user. Only the owner can read/write their message logs.
-         * @path /users/{userId}/messagelogs/{messagelogId}
-         * @allow (create) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can create a messagelog under their user document.
-         * @deny (create) User 'randomUserId' cannot create a messagelog under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (get) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can get a messagelog under their user document.
-         * @deny (get) User 'randomUserId' cannot get a messagelog under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (list) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can list the messagelogs under their user document.
-         * @deny (list) User 'randomUserId' cannot list messagelogs under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (update) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can update a messagelog under their user document.
-         * @deny (update) User 'randomUserId' cannot update a messagelog under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (delete) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can delete a messagelog under their user document.
-         * @deny (delete) User 'randomUserId' cannot delete a messagelog under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @principle Enforces document ownership for writes.
-         */
-        match /messagelogs/{messagelogId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isExistingOwner(userId);
-          allow delete: if isExistingOwner(userId);
-        }
-
-        /**
-         * @description Rules for message templates of a user. Only the owner can read/write their message templates.
-         * @path /users/{userId}/templates/{templateId}
-         * @allow (create) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can create a template under their user document.
-         * @deny (create) User 'randomUserId' cannot create a template under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (get) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can get a template under their user document.
-         * @deny (get) User 'randomUserId' cannot get a template under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (list) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can list the templates under their user document.
-         * @deny (list) User 'randomUserId' cannot list templates under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (update) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can update a template under their user document.
-         * @deny (update) User 'randomUserId' cannot update a template under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @allow (delete) User 'AUvNYg10hoXIAkcBxgsnsPnBzYo1' can delete a template under their user document.
-         * @deny (delete) User 'randomUserId' cannot delete a template under user 'AUvNYg10hoXIAkcBxgsnsPnBzYo1'.
-         * @principle Enforces document ownership for writes.
-         */
-        match /templates/{templateId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isExistingOwner(userId);
-          allow delete: if isExistingOwner(userId);
-        }
+    /**
+     * @description Rules for the /users/{userId}/templates/{templateId} collection.
+     * @path /databases/{database}/documents/users/{userId}/templates/{templateId}
+     * @allow (create) - Authenticated user with matching userId can create a template document under their user ID.
+     * @allow (update) - Authenticated user with matching userId can update a template document under their user ID.
+     * @allow (delete) - Authenticated user with matching userId can delete a template document under their user ID.
+     * @deny (create) - Authenticated user with non-matching userId cannot create a template document under another user ID.
+     * @deny (update) - Authenticated user with non-matching userId cannot update a template document under another user ID.
+     * @deny (delete) - Authenticated user with non-matching userId cannot delete a template document under another user ID.
+     * @principle Enforces user-ownership: Only the authenticated user can manage message templates under their own user ID.
+     */
+    match /users/{userId}/templates/{templateId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
