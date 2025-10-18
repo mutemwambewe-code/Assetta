@@ -1,15 +1,17 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, type ReactNode, useEffect, useCallback, useMemo } from 'react';
 import type { MessageLog } from '@/lib/types';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useUser } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type MessageLogContextType = {
   messageLogs: MessageLog[];
-  addMessageLog: (message: Omit<MessageLog, 'id'> & { id?: string }) => void;
-  updateMessageStatus: (localId: string, status: string, providerId?: string) => void;
+  addMessageLog: (message: Omit<MessageLog, 'id'> & { id?: string }) => Promise<void>;
+  updateMessageStatus: (localId: string, status: string, providerId?: string) => Promise<void>;
   isInitialized: boolean;
 };
 
@@ -26,6 +28,10 @@ export function MessageLogProvider({ children }: { children: ReactNode }) {
 
   const { data: messageLogs, isLoading: isLogsLoading } = useCollection<MessageLog>(logsCollection);
 
+  const sortedLogs = useMemo(() => {
+    return (messageLogs || []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [messageLogs]);
+
   const addMessageLog = useCallback(async (messageData: Omit<MessageLog, 'id'> & { id?: string }) => {
     if (!logsCollection) return;
     
@@ -37,19 +43,39 @@ export function MessageLogProvider({ children }: { children: ReactNode }) {
       id: localId,
     };
     const docRef = doc(logsCollection, localId);
-    await setDoc(docRef, messageWithDirection);
+    await setDoc(docRef, messageWithDirection).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'create',
+            requestResourceData: messageWithDirection,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   }, [logsCollection]);
   
   const updateMessageStatus = useCallback(async (localId: string, status: string, providerId?: string) => {
     if (!logsCollection) return;
     const docRef = doc(logsCollection, localId);
-    await setDoc(docRef, { status, providerId }, { merge: true });
+    
+    const updateData: { status: string; providerId?: string } = { status };
+    if (providerId) {
+      updateData.providerId = providerId;
+    }
+    
+    await updateDoc(docRef, updateData).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: updateData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
   }, [logsCollection]);
 
   const isInitialized = !isUserLoading && !isLogsLoading;
   
   const value = {
-    messageLogs: messageLogs || [],
+    messageLogs: sortedLogs || [],
     addMessageLog,
     updateMessageStatus,
     isInitialized

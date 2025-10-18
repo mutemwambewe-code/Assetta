@@ -1,59 +1,24 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { tenants as staticTenants } from '@/lib/data'; // Using static data for now
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { findUserByPhoneNumber, addIncomingMessageToLog, updateMessageDeliveryStatus, findUserByLocalMessageId } from '@/lib/firebase-admin';
 
-// This is a simplified in-memory "database" lookup.
-// In a real app, you would fetch this from your actual database (e.g., Firestore).
-async function findTenantByPhoneNumber(phoneNumber: string) {
-  // The phone numbers from Africa's Talking are in international format e.g. +260...
-  // We need to make sure our stored numbers are in a comparable format.
-  // This is a basic normalization, you might need a more robust library for this.
-  const normalizedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-  
-  // Find the tenant. This is a very naive lookup and should be optimized in a real app.
-  // It assumes the stored number might or might not have the '+'
-  const tenant = staticTenants.find(t => {
-    const tenantNumber = t.phone.startsWith('+') ? t.phone : `+${t.phone.replace(/\s/g, '')}`;
-    return tenantNumber === normalizedNumber;
-  });
-
-  return tenant;
+// Initialize Firebase Admin SDK
+// This is a secure way to access Firestore from the server-side.
+if (!getApps().length) {
+    try {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG!);
+        initializeApp({
+            credential: cert(serviceAccount),
+        });
+    } catch (e) {
+        console.error('Firebase Admin SDK initialization failed.', e);
+    }
 }
 
-// In a real application, you would use a proper state management solution
-// that can be shared between your webhook and your frontend, like a database.
-// Since we are using localStorage on the frontend, we cannot directly update it from here.
-// This is a placeholder for where you'd interact with your database.
-async function addIncomingMessageToLog(tenant: any, message: string, date: string, messageId: string) {
-    console.log(`[Webhook] Storing incoming message from ${tenant.name} (${tenant.phone}): "${message}"`);
-    // In a real app, you would do something like:
-    // await db.collection('messageLogs').add({
-    //     id: messageId,
-    //     tenantId: tenant.id,
-    //     tenantName: tenant.name,
-    //     message: message,
-    //     date: date,
-    //     method: 'SMS',
-    //     direction: 'incoming',
-    // });
-
-    // Since we can't update frontend localStorage from the server, we'll revalidate the path
-    // If the frontend were fetching data, this would trigger a refetch.
-    revalidatePath('/communication');
-}
-
-async function updateMessageDeliveryStatus(messageId: string, status: string, localMessageId?: string) {
-    console.log(`[Webhook] Updating status for message ${messageId} (local: ${localMessageId}) to: ${status}`);
-    
-    // In a real app, you would find the message by either the provider's messageId OR the localMessageId
-    // and then update its status.
-    // e.g. await db.collection('messageLogs').doc(localMessageId).update({ status: status, providerId: messageId });
-    
-    // We revalidate the path to signal to the frontend that data might have changed.
-    revalidatePath('/communication');
-}
-
+const db = getFirestore();
 
 // The main handler for POST requests from Africa's Talking
 export async function POST(req: NextRequest) {
@@ -66,26 +31,33 @@ export async function POST(req: NextRequest) {
     // Check if it's an incoming message
     if (body.from && body.text) {
       const { from, text, date, id } = body as { from: string; text: string; date: string; id: string };
-      const tenant = await findTenantByPhoneNumber(from);
+      
+      const user = await findUserByPhoneNumber(db, from);
 
-      if (tenant) {
-        await addIncomingMessageToLog(tenant, text, date, id);
+      if (user) {
+        await addIncomingMessageToLog(db, user.uid, user.tenant, text, date, id);
+        revalidatePath(`/communication`);
+        revalidatePath(`/tenants/${user.tenant.id}`);
       } else {
         console.warn(`[Webhook] Received message from unknown number: ${from}`);
       }
     } 
     // Check if it's a delivery report
     else if (body.id && body.status) {
-      const { id, status, failureReason, metadata } = body as { id: string; status: string; failureReason?: string; metadata?: string };
+      const { id, status, failureReason, networkCode, retryCount, metadata } = body as {
+        id: string; 
+        status: string; 
+        failureReason?: string; 
+        networkCode?: string;
+        retryCount?: string;
+        metadata?: string 
+      };
+      
       const finalStatus = status === 'Failed' ? `${status}: ${failureReason}` : status;
       
-      // Try to parse metadata to get our local ID back
       let localMessageId;
        if (metadata && typeof metadata === 'string') {
-          // The metadata comes as a stringified object, e.g., "{'localMessageId':'local_123'}"
-          // We need to parse it carefully.
           try {
-              // It's not standard JSON, so we replace single quotes with double quotes
               const jsonString = metadata.replace(/'/g, '"');
               const parsedMeta = JSON.parse(jsonString);
               localMessageId = parsedMeta.localMessageId;
@@ -93,10 +65,20 @@ export async function POST(req: NextRequest) {
               console.warn('[Webhook] Could not parse metadata:', metadata);
           }
       }
-      
-      await updateMessageDeliveryStatus(id, finalStatus, localMessageId);
+
+      if (localMessageId) {
+        const user = await findUserByLocalMessageId(db, localMessageId);
+        if (user) {
+            await updateMessageDeliveryStatus(db, user.uid, localMessageId, finalStatus, id);
+            revalidatePath(`/communication`);
+            revalidatePath(`/tenants/${user.tenantId}`);
+        } else {
+            console.warn(`[Webhook] Could not find user/message for local ID: ${localMessageId}`);
+        }
+      } else {
+          console.warn(`[Webhook] Delivery report for provider ID ${id} is missing a localMessageId in its metadata. Cannot update status.`);
+      }
     } 
-    // It might be an event notification for a sent message that does not have a status yet
     else if (body.id && !body.status){
       console.log(`[Webhook] Received an event notification for message ID: ${body.id}. Awaiting delivery report.`);
     }
