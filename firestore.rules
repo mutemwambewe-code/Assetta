@@ -1,110 +1,133 @@
+/**
+ * @fileoverview Firestore Security Rules for PropEase Zambia.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model, where each user can only
+ * access data associated with their own user ID. This ensures data privacy and
+ * prevents unauthorized access.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, creating a clear data isolation.
+ *
+ * Key Security Decisions:
+ * - Users can only manage their own properties, tenants, message logs and templates.
+ * - Listing of properties, tenants, message logs and templates is restricted to the owner.
+ * - No global admin roles are defined.
+ *
+ * Denormalization for Authorization:
+ *  - No denormalization is used in the current rules.
+ *
+ * Structural Segregation:
+ *  - All private data resides under the /users/{userId} collection, ensuring clear
+ *    separation between public and private data (although there's no public data
+ *    in the current data model).
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Checks if the request is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the requested user ID matches the authenticated user's ID.
-     */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Checks if the user is the owner of the existing document.
-     */
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource.data != null && resource.data.userId == request.auth.uid;
+      return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Rules for user-specific data.
-     * @path /users/{userId}
-     * @allow (create) - A user can create their own user document if the userId matches their auth.uid.
-     * @allow (get, list, update, delete) - Only the user can read, update, or delete their own user document.
-     * @deny (create) - A user cannot create a document with a userId that does not match their auth.uid.
-     * @principle Enforces user-ownership for all operations.
+     * @description Allows a user to manage their own properties.
+     * @path /users/{userId}/properties/{propertyId}
+     * @allow (create) - User A creates a new property under /users/A/properties/property1.
+     * @allow (update) - User A updates property /users/A/properties/property1.
+     * @allow (delete) - User A deletes property /users/A/properties/property1.
+     * @allow (get) - User A gets property /users/A/properties/property1.
+     * @allow (list) - User A lists properties under /users/A/properties.
+     * @deny (create) - User A attempts to create a property under /users/B/properties.
+     * @deny (update) - User A attempts to update property /users/B/properties/property1.
+     * @deny (delete) - User A attempts to delete property /users/B/properties/property1.
+     * @deny (get) - User A attempts to get property /users/B/properties/property1.
+     * @deny (list) - User A attempts to list properties under /users/B/properties.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
-    match /users/{userId} {
+    match /users/{userId}/properties/{propertyId} {
       allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
 
-      /**
-       * @description Rules for properties owned by a user.
-       * @path /users/{userId}/properties/{propertyId}
-       * @allow (create) - A user can create a property under their user ID.
-       * @allow (get, list) - A user can read (get and list) properties under their user ID.
-       * @allow (update, delete) - Only the user can update or delete properties under their user ID.
-       * @deny (create) - A user cannot create a property under another user's ID.
-       * @principle Enforces user-ownership for all operations on properties.
-       */
-      match /properties/{propertyId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
+    /**
+     * @description Allows a user to manage their own tenants.
+     * @path /users/{userId}/tenants/{tenantId}
+     * @allow (create) - User A creates a new tenant under /users/A/tenants/tenant1.
+     * @allow (update) - User A updates tenant /users/A/tenants/tenant1.
+     * @allow (delete) - User A deletes tenant /users/A/tenants/tenant1.
+     * @allow (get) - User A gets tenant /users/A/tenants/tenant1.
+     * @allow (list) - User A lists tenants under /users/A/tenants.
+     * @deny (create) - User A attempts to create a tenant under /users/B/tenants.
+     * @deny (update) - User A attempts to update tenant /users/B/tenants/tenant1.
+     * @deny (delete) - User A attempts to delete tenant /users/B/tenants/tenant1.
+     * @deny (get) - User A attempts to get tenant /users/B/tenants/tenant1.
+     * @deny (list) - User A attempts to list tenants under /users/B/tenants.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     */
+    match /users/{userId}/tenants/{tenantId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
 
-      /**
-       * @description Rules for tenants associated with a user.
-       * @path /users/{userId}/tenants/{tenantId}
-       * @allow (create) - A user can create a tenant under their user ID.
-       * @allow (get, list) - A user can read (get and list) tenants under their user ID.
-       * @allow (update, delete) - Only the user can update or delete tenants under their user ID.
-       * @deny (create) - A user cannot create a tenant under another user's ID.
-       * @principle Enforces user-ownership for all operations on tenants.
-       */
-      match /tenants/{tenantId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
+    /**
+     * @description Allows a user to manage their own message logs.
+     * @path /users/{userId}/messagelogs/{messagelogId}
+     * @allow (create) - User A creates a new message log under /users/A/messagelogs/log1.
+     * @allow (update) - User A updates message log /users/A/messagelogs/log1.
+     * @allow (delete) - User A deletes message log /users/A/messagelogs/log1.
+     * @allow (get) - User A gets message log /users/A/messagelogs/log1.
+     * @allow (list) - User A lists message logs under /users/A/messagelogs.
+     * @deny (create) - User A attempts to create a message log under /users/B/messagelogs.
+     * @deny (update) - User A attempts to update message log /users/B/messagelogs/log1.
+     * @deny (delete) - User A attempts to delete message log /users/B/messagelogs/log1.
+     * @deny (get) - User A attempts to get message log /users/B/messagelogs/log1.
+     * @deny (list) - User A attempts to list message logs under /users/B/messagelogs.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     */
+    match /users/{userId}/messagelogs/{messagelogId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
 
-      /**
-       * @description Rules for message logs associated with a user.
-       * @path /users/{userId}/messagelogs/{messagelogId}
-       * @allow (create) - A user can create a messagelog under their user ID.
-       * @allow (get, list) - A user can read (get and list) messagelogs under their user ID.
-       * @allow (update, delete) - Only the user can update or delete messagelogs under their user ID.
-       * @deny (create) - A user cannot create a messagelog under another user's ID.
-       * @principle Enforces user-ownership for all operations on message logs.
-       */
-      match /messagelogs/{messagelogId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isOwner(userId);
-          allow delete: if isOwner(userId);
-      }
-
-      /**
-       * @description Rules for templates associated with a user.
-       * @path /users/{userId}/templates/{templateId}
-       * @allow (create) - A user can create a template under their user ID.
-       * @allow (get, list) - A user can read (get and list) templates under their user ID.
-       * @allow (update, delete) - Only the user can update or delete templates under their user ID.
-       * @deny (create) - A user cannot create a template under another user's ID.
-       * @principle Enforces user-ownership for all operations on templates.
-       */
-      match /templates/{templateId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isOwner(userId);
-          allow delete: if isOwner(userId);
-      }
+    /**
+     * @description Allows a user to manage their own message templates.
+     * @path /users/{userId}/templates/{templateId}
+     * @allow (create) - User A creates a new template under /users/A/templates/template1.
+     * @allow (update) - User A updates template /users/A/templates/template1.
+     * @allow (delete) - User A deletes template /users/A/templates/template1.
+     * @allow (get) - User A gets template /users/A/templates/template1.
+     * @allow (list) - User A lists templates under /users/A/templates.
+     * @deny (create) - User A attempts to create a template under /users/B/templates.
+     * @deny (update) - User A attempts to update template /users/B/templates/template1.
+     * @deny (delete) - User A attempts to delete template /users/B/templates/template1.
+     * @deny (get) - User A attempts to get template /users/B/templates/template1.
+     * @deny (list) - User A attempts to list templates under /users/B/templates.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     */
+    match /users/{userId}/templates/{templateId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
