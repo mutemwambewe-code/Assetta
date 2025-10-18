@@ -35,7 +35,7 @@ export function OccupancyReport({ properties, tenants }: OccupancyReportProps) {
             <CardTitle>Occupancy by Property</CardTitle>
             <CardDescription>Breakdown of occupied vs. vacant units per property.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px]">
+          <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={occupancyByProperty} layout="vertical" margin={{ left: 50 }}>
                 <XAxis type="number" hide />
