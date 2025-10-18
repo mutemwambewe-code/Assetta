@@ -9,10 +9,8 @@ import { findUserByPhoneNumber, addIncomingMessageToLog, updateMessageDeliverySt
 // This is a secure way to access Firestore from the server-side.
 if (!getApps().length) {
     try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_SDK_CONFIG!);
-        initializeApp({
-            credential: cert(serviceAccount),
-        });
+        // App Hosting provides the credentials automatically, so we can initialize without parameters.
+        initializeApp();
     } catch (e) {
         console.error('Firebase Admin SDK initialization failed.', e);
     }
