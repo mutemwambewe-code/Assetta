@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -20,6 +21,7 @@ import { useProperties } from './property-provider';
 import { useToast } from '@/hooks/use-toast';
 import type { Property } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -32,7 +34,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export function AddProperty({ children, onPropertyAdded }: { children: React.ReactNode, onPropertyAdded?: (newProperty: Property) => void }) {
   const [open, setOpen] = useState(false);
-  const { addProperty } = useProperties();
+  const { addProperty, isInitialized } = useProperties();
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -142,7 +144,10 @@ export function AddProperty({ children, onPropertyAdded }: { children: React.Rea
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save Property</Button>
+              <Button type="submit" disabled={!isInitialized}>
+                {!isInitialized && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Property
+              </Button>
             </DialogFooter>
           </form>
         </Form>

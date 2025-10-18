@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -19,7 +20,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { CalendarIcon, Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTenants } from './tenant-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -48,9 +49,11 @@ type FormData = z.infer<typeof formSchema>;
 
 export function AddTenant({ asChild, className }: { asChild?: boolean; className?: string }) {
   const [open, setOpen] = useState(false);
-  const { addTenant } = useTenants();
-  const { properties } = useProperties();
+  const { addTenant, isInitialized: tenantsReady } = useTenants();
+  const { properties, isInitialized: propertiesReady } = useProperties();
   const { toast } = useToast();
+
+  const isProviderReady = tenantsReady && propertiesReady;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -293,7 +296,10 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
             </div>
 
             <DialogFooter>
-              <Button type="submit" disabled={properties.length === 0}>Save Tenant</Button>
+              <Button type="submit" disabled={!isProviderReady || properties.length === 0}>
+                {!isProviderReady && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Tenant
+              </Button>
             </DialogFooter>
           </form>
         </Form>

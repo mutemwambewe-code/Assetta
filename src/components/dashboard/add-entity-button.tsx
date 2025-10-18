@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -12,12 +13,12 @@ import { AddTenant } from '@/components/tenants/add-tenant';
 import { AddProperty } from '@/components/properties/add-property';
 import { Plus, Building, UserPlus } from 'lucide-react';
 
-export function AddEntityButton() {
+export function AddEntityButton({ disabled }: { disabled?: boolean }) {
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" disabled={disabled}>
           <Plus className="mr-2 h-4 w-4" />
           Add New...
         </Button>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -22,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Tenant, Payment } from '@/lib/types';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Info } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   amount: z.coerce.number().min(1, 'Payment amount must be positive.'),
@@ -39,7 +40,7 @@ interface LogPaymentProps {
 
 export function LogPayment({ tenant, children }: LogPaymentProps) {
   const [open, setOpen] = useState(false);
-  const { logPayment } = useTenants();
+  const { logPayment, isInitialized } = useTenants();
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -145,7 +146,10 @@ export function LogPayment({ tenant, children }: LogPaymentProps) {
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save Payment</Button>
+              <Button type="submit" disabled={!isInitialized}>
+                {!isInitialized && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Payment
+              </Button>
             </DialogFooter>
           </form>
         </Form>
