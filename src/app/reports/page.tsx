@@ -21,6 +21,7 @@ import {
   generateTenantListExcel,
   generatePaymentHistoryPDF,
   generatePaymentHistoryExcel,
+  generateSummaryReportExcel,
 } from '@/lib/report-generator';
 import type { Tenant, Property, Payment } from '@/lib/types';
 import { FinancialReport } from '@/components/reports/financial-report';
@@ -42,7 +43,7 @@ function ReportsPage({ title }: { title?: string }) {
     const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
     const totalMonthlyRent = tenants.reduce((sum, t) => sum + t.rentAmount, 0);
     const allPayments = tenants.flatMap(t => 
-      t.paymentHistory.map(p => ({
+      (t.paymentHistory || []).map(p => ({
         ...p,
         tenantName: t.name,
         property: t.property,
@@ -69,13 +70,19 @@ function ReportsPage({ title }: { title?: string }) {
     return <div>Loading reports...</div>;
   }
 
-  const handleDownload = (type: 'tenantList' | 'paymentHistory', format: 'pdf' | 'excel') => {
+  const handleDownload = (type: 'tenantList' | 'paymentHistory' | 'summary', format: 'pdf' | 'excel') => {
     if (type === 'tenantList') {
       if (format === 'pdf') generateTenantListPDF(reportData.tenants);
       else generateTenantListExcel(reportData.tenants);
     } else if (type === 'paymentHistory') {
       if (format === 'pdf') generatePaymentHistoryPDF(reportData.allPayments);
       else generatePaymentHistoryExcel(reportData.allPayments);
+    } else if (type === 'summary' && format === 'excel') {
+        generateSummaryReportExcel({
+            tenants: reportData.tenants,
+            properties: reportData.properties,
+            payments: reportData.allPayments,
+        });
     }
   };
 
@@ -102,6 +109,11 @@ function ReportsPage({ title }: { title?: string }) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Summary Report</DropdownMenuLabel>
+                 <DropdownMenuItem onClick={() => handleDownload('summary', 'excel')}>
+                    Download Summary (Excel)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuLabel>Tenant Reports</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleDownload('tenantList', 'pdf')}>
                 Download Tenant List (PDF)

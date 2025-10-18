@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -91,7 +92,7 @@ export function FinancialReport({ payments, tenants }: FinancialReportProps) {
     const unpaidTenants: Tenant[] = [];
 
     tenants.forEach(tenant => {
-        const paymentsThisMonth = tenant.paymentHistory.filter(p => 
+        const paymentsThisMonth = (tenant.paymentHistory || []).filter(p => 
             isWithinInterval(new Date(p.date), { start: currentMonthStart, end: new Date() })
         );
 

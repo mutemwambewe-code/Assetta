@@ -6,7 +6,7 @@ import 'jspdf-autotable';
 import type { jsPDF as jsPDFType } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
-import type { Tenant, EnrichedPayment } from './types';
+import type { Tenant, EnrichedPayment, Property } from './types';
 
 // Extend the jsPDF interface to include autoTable
 declare module 'jspdf' {
@@ -44,6 +44,18 @@ const addFooter = (doc: jsPDFType, pageCount: number) => {
   }
 };
 
+const autoSizeColumns = (worksheet: XLSX.WorkSheet, data: any[]) => {
+    if (!data.length) return;
+    const header = Object.keys(data[0]);
+    const colWidths = header.map(key => ({
+        wch: Math.max(
+            key.length,
+            ...data.map(row => String(row[key] || '').length)
+        ) + 2
+    }));
+    worksheet['!cols'] = colWidths;
+}
+
 const createStyledExcelSheet = (data: any[], title: string, sheetName: string) => {
     const workbook = XLSX.utils.book_new();
 
@@ -65,16 +77,7 @@ const createStyledExcelSheet = (data: any[], title: string, sheetName: string) =
         skipHeader: false,
     });
 
-    // Auto-fit columns
-    const cols = Object.keys(data[0] || {});
-    const colWidths = cols.map(key => ({
-        wch: Math.max(
-            key.length,
-            ...data.map(row => String(row[key] || '').length)
-        ) + 2
-    }));
-
-    worksheet['!cols'] = colWidths;
+    autoSizeColumns(worksheet, data);
     
     // Style the title
     if(worksheet['A1']) {
@@ -200,4 +203,47 @@ export const generatePaymentHistoryExcel = (payments: EnrichedPayment[]) => {
         
     const workbook = createStyledExcelSheet(data, 'PropBot Payment History', 'Payment History');
     XLSX.writeFile(workbook, `PropBot_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+};
+
+export const generateSummaryReportExcel = (reportData: { tenants: Tenant[], properties: Property[], payments: EnrichedPayment[] }) => {
+    const { tenants, properties, payments } = reportData;
+    const workbook = XLSX.utils.book_new();
+
+    // 1. Rent Status Summary
+    const rentStatusData = [
+        { Status: 'Paid', Count: tenants.filter(t => t.rentStatus === 'Paid').length },
+        { Status: 'Pending', Count: tenants.filter(t => t.rentStatus === 'Pending').length },
+        { Status: 'Overdue', Count: tenants.filter(t => t.rentStatus === 'Overdue').length },
+    ];
+    const rentStatusSheet = XLSX.utils.json_to_sheet(rentStatusData);
+    autoSizeColumns(rentStatusSheet, rentStatusData);
+    XLSX.utils.book_append_sheet(workbook, rentStatusSheet, 'Rent Status');
+
+    // 2. Occupancy Summary
+    const occupancyData = properties.map(property => {
+      const occupied = tenants.filter(t => t.property === property.name).length;
+      return {
+        'Property Name': property.name,
+        'Total Units': property.units,
+        'Occupied Units': occupied,
+        'Vacant Units': property.units - occupied,
+        'Occupancy Rate (%)': property.units > 0 ? ((occupied / property.units) * 100).toFixed(1) : 0,
+      };
+    });
+    const occupancySheet = XLSX.utils.json_to_sheet(occupancyData);
+    autoSizeColumns(occupancySheet, occupancyData);
+    XLSX.utils.book_append_sheet(workbook, occupancySheet, 'Occupancy');
+
+    // 3. Payment Method Summary
+    const methodCounts = payments.reduce((acc, p) => {
+      acc[p.method] = (acc[p.method] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const paymentMethodData = Object.entries(methodCounts).map(([name, value]) => ({ 'Payment Method': name, 'Number of Transactions': value }));
+    const paymentMethodSheet = XLSX.utils.json_to_sheet(paymentMethodData);
+    autoSizeColumns(paymentMethodSheet, paymentMethodData);
+    XLSX.utils.book_append_sheet(workbook, paymentMethodSheet, 'Payment Methods');
+
+    XLSX.writeFile(workbook, `PropBot_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
