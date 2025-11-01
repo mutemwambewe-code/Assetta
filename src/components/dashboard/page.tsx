@@ -26,16 +26,16 @@ export default function DashboardPage({ title }: { title?: string }) {
             Here&apos;s a summary of your properties.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
             <AddEntityButton disabled={!isReady} />
             <Link href="/communication" passHref>
-                <Button variant="outline" disabled={!isReady}>
-                    <MessageSquare className="mr-2" /> Send Message
+                <Button variant="outline" disabled={!isReady} className="flex-1 sm:flex-none">
+                    <MessageSquare className="mr-2 h-4 w-4" /> Send Message
                 </Button>
             </Link>
             <Link href="/tenants" passHref>
-                <Button disabled={!isReady}>
-                    <Receipt className="mr-2" /> Record Payment
+                <Button disabled={!isReady} className="flex-1 sm:flex-none">
+                    <Receipt className="mr-2 h-4 w-4" /> Record Payment
                 </Button>
             </Link>
         </div>

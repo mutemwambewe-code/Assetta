@@ -31,11 +31,11 @@ function CommunicationPage({ title }: { title?: string }) {
       <Tabs defaultValue="compose" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="compose">
-            <MessagesSquare className="mr-2" />
+            <MessagesSquare className="mr-2 h-4 w-4" />
             Compose & Send
           </TabsTrigger>
           <TabsTrigger value="logs">
-            <History className="mr-2" />
+            <History className="mr-2 h-4 w-4" />
             Message Logs
           </TabsTrigger>
         </TabsList>

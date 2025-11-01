@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Search, Check as CheckIcon } from 'lucide-react';
+import { Search, Check as CheckIcon, Plus } from 'lucide-react';
 import { useTenants } from './tenant-provider';
 import { AddTenant } from './add-tenant';
 import { Skeleton } from '../ui/skeleton';
@@ -21,8 +21,8 @@ function TenantListSkeleton() {
     return (
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                <Skeleton className="h-10 sm:w-64" />
-                <div className="flex items-center gap-2">
+                <Skeleton className="h-10 w-full sm:w-64" />
+                <div className="flex items-center gap-2 flex-wrap">
                     <Skeleton className="h-10 w-24" />
                     <Skeleton className="h-10 w-24" />
                     <Skeleton className="h-10 w-28" />
@@ -122,7 +122,9 @@ export function TenantList() {
             <h2 className="text-xl font-semibold">No tenants yet</h2>
             <p className="text-muted-foreground mt-2">Add your first tenant to get started.</p>
             <AddTenant>
-              <Button className='mt-4'>Add Tenant</Button>
+              <Button className='mt-4'>
+                <Plus className="mr-2 h-4 w-4" /> Add Tenant
+              </Button>
             </AddTenant>
         </div>
     )
@@ -130,8 +132,8 @@ export function TenantList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="relative sm:w-64">
+      <div className="flex flex-col md:flex-row gap-4 justify-between">
+        <div className="relative w-full md:w-64">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -150,7 +152,7 @@ export function TenantList() {
                 <Button
                   variant={isSelected ? 'default' : 'outline'}
                   onClick={() => handleFilterToggle(status)}
-                  className="capitalize h-10 pl-3 pr-4 rounded-md"
+                  className="capitalize h-10 pl-3 pr-4 rounded-md text-xs sm:text-sm"
                   aria-pressed={isSelected}
                 >
                     <div className={cn(
@@ -164,12 +166,16 @@ export function TenantList() {
               </div>
             )}
           )}
-          <AddTenant />
+          <AddTenant>
+             <Button className="h-10">
+                <Plus className="mr-2 h-4 w-4" /> Add Tenant
+             </Button>
+          </AddTenant>
         </div>
       </div>
 
       {filteredTenants.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredTenants.map((tenant) => (
             <TenantCard key={tenant.id} tenant={tenant} />
           ))}

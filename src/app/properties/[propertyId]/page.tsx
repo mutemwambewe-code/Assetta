@@ -88,7 +88,7 @@ function PropertyDetailPage({ title }: { title?: string }) {
                     <Building />
                     {property.name}
                 </h1>
-                <div className="flex items-center gap-4 text-muted-foreground mt-1">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-muted-foreground mt-1">
                     <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
                         {property.location}
@@ -99,24 +99,24 @@ function PropertyDetailPage({ title }: { title?: string }) {
                     </div>
                 </div>
             </div>
-            <div className='flex items-center gap-2'>
+            <div className='flex items-center gap-2 self-start sm:self-center'>
                 <Link href="/properties">
                     <Button variant="outline">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back
+                        <span className="hidden sm:inline">Back</span>
                     </Button>
                 </Link>
                 <EditProperty property={property}>
                     <Button>
                         <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                        <span className="hidden sm:inline">Edit</span>
                     </Button>
                 </EditProperty>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive">
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                             <span className="hidden sm:inline">Delete</span>
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -149,7 +149,7 @@ function PropertyDetailPage({ title }: { title?: string }) {
                         <p className="text-xl font-bold">{tenantsInProperty.length} / {property.units}</p>
                     </div>
                 </div>
-                 <div className="flex flex-col justify-center gap-2 p-4 border rounded-lg col-span-2">
+                 <div className="flex flex-col justify-center gap-2 p-4 border rounded-lg md:col-span-2">
                     <div className='flex items-center justify-between'>
                         <span className='text-sm text-muted-foreground'>Occupancy Rate</span>
                         <span className='text-sm font-bold'>{occupancyRate.toFixed(1)}%</span>
@@ -161,7 +161,7 @@ function PropertyDetailPage({ title }: { title?: string }) {
 
         <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <CardTitle>Tenants</CardTitle>
                   <CardDescription>
@@ -173,42 +173,44 @@ function PropertyDetailPage({ title }: { title?: string }) {
             </CardHeader>
             <CardContent>
               {tenantsInProperty.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tenant</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Rent Status</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead className='text-right'>Rent</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tenantsInProperty.map((tenant) => (
-                      <TableRow key={tenant.id} onClick={() => handleRowClick(tenant.id)} className="cursor-pointer">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage asChild src={tenant.avatarUrl}>
-                                    <Image src={tenant.avatarUrl} alt={tenant.name} width={40} height={40} />
-                                </AvatarImage>
-                                <AvatarFallback>{tenant.name.split(' ').map((n) => n[0]).join('')}</AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{tenant.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{tenant.unit}</TableCell>
-                        <TableCell>
-                            <Badge className={cn('text-xs', statusStyles[tenant.rentStatus])}>
-                                {tenant.rentStatus}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>{tenant.phone}</TableCell>
-                        <TableCell className='text-right'>ZMW {tenant.rentAmount.toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tenant</TableHead>
+                          <TableHead className="hidden sm:table-cell">Unit</TableHead>
+                          <TableHead>Rent Status</TableHead>
+                          <TableHead className="hidden md:table-cell">Contact</TableHead>
+                          <TableHead className='text-right'>Rent</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {tenantsInProperty.map((tenant) => (
+                          <TableRow key={tenant.id} onClick={() => handleRowClick(tenant.id)} className="cursor-pointer">
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage asChild src={tenant.avatarUrl}>
+                                        <Image src={tenant.avatarUrl} alt={tenant.name} width={40} height={40} />
+                                    </AvatarImage>
+                                    <AvatarFallback>{tenant.name.split(' ').map((n) => n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{tenant.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">{tenant.unit}</TableCell>
+                            <TableCell>
+                                <Badge className={cn('text-xs', statusStyles[tenant.rentStatus])}>
+                                    {tenant.rentStatus}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">{tenant.phone}</TableCell>
+                            <TableCell className='text-right'>ZMW {tenant.rentAmount.toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                </div>
               ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
                     <h2 className="text-xl font-semibold">No Tenants in this Property</h2>

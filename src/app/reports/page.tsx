@@ -135,9 +135,9 @@ function ReportsPage({ title }: { title?: string }) {
             In-depth insights into your property performance.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
             <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger className='w-[180px]'>
+                <SelectTrigger className='w-full sm:w-[180px]'>
                     <SelectValue placeholder="Select date range" />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,8 +149,8 @@ function ReportsPage({ title }: { title?: string }) {
             </Select>
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button>
-                <Download className="mr-2" />
+                <Button className="w-full sm:w-auto">
+                <Download className="mr-2 h-4 w-4" />
                 Download
                 </Button>
             </DropdownMenuTrigger>
