@@ -71,7 +71,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full">
       <aside className="hidden border-r bg-sidebar text-sidebar-foreground sm:flex">
         <div className="flex h-full flex-col">
-          <div className="flex-1">
+          <div className="flex flex-1 flex-col">
             <nav className="flex flex-col items-center gap-4 px-2 py-4">
               <Link
                 href="/dashboard"
@@ -106,7 +106,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </TooltipProvider>
             </nav>
           </div>
-          <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
+          <nav className="flex flex-col items-center gap-4 px-2 py-4">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
