@@ -67,47 +67,45 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  const propertyLinks = navLinks.slice(0, 2);
-  const toolLinks = navLinks.slice(2);
-
-
   return (
     <div className="flex min-h-screen w-full">
       <aside className="hidden border-r bg-sidebar text-sidebar-foreground sm:flex">
-        <div className="flex flex-col sticky top-0 h-screen">
-          <nav className="flex flex-col items-center gap-4 px-2 py-4 flex-1">
-            <Link
-              href="/dashboard"
-              className="group flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
-            >
-              <Building className="h-6 w-6" />
-              <span className="sr-only">PropBot</span>
-            </Link>
-            <TooltipProvider>
-              {navLinks.map(({ href, label, icon: Icon, isPrimary }, index) => (
-                <React.Fragment key={href}>
-                 {index === 2 && <Separator className="my-2" />}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={href}
-                        className={cn(
-                          'flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                          pathname.startsWith(href)
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                            : 'text-muted-foreground'
-                        )}
-                      >
-                        <Icon className={cn("h-5 w-5", isPrimary && "h-6 w-6")} />
-                        <span className="sr-only">{label}</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{label}</TooltipContent>
-                  </Tooltip>
-                </React.Fragment>
-              ))}
-            </TooltipProvider>
-          </nav>
+        <div className="flex h-full flex-col">
+          <div className="flex-1">
+            <nav className="flex flex-col items-center gap-4 px-2 py-4">
+              <Link
+                href="/dashboard"
+                className="group flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
+              >
+                <Building className="h-6 w-6" />
+                <span className="sr-only">PropBot</span>
+              </Link>
+              <TooltipProvider>
+                {navLinks.map(({ href, label, icon: Icon, isPrimary }, index) => (
+                  <React.Fragment key={href}>
+                  {index === 2 && <Separator className="my-2" />}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          href={href}
+                          className={cn(
+                            'flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                            pathname.startsWith(href)
+                              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                              : 'text-muted-foreground'
+                          )}
+                        >
+                          <Icon className={cn("h-5 w-5", isPrimary && "h-6 w-6")} />
+                          <span className="sr-only">{label}</span>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{label}</TooltipContent>
+                    </Tooltip>
+                  </React.Fragment>
+                ))}
+              </TooltipProvider>
+            </nav>
+          </div>
           <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
             <TooltipProvider>
               <Tooltip>
