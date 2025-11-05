@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMessageLog } from "./message-log-provider";
@@ -9,14 +8,20 @@ import { Badge } from "../ui/badge";
 import Link from "next/link";
 import { History, ArrowRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export function MessageLogs() {
   const { messageLogs, isInitialized } = useMessageLog();
+  const router = useRouter();
 
   if (!isInitialized) {
     return <div>Loading logs...</div>;
   }
   
+  const handleRowClick = (logId: string) => {
+    router.push(`/communication/${logId}`);
+  };
+
   return (
     <Card className="mt-4 border-none shadow-none">
       <CardHeader>
@@ -38,7 +43,7 @@ export function MessageLogs() {
             </TableHeader>
             <TableBody>
               {messageLogs.map((log) => (
-                <TableRow key={log.id}>
+                <TableRow key={log.id} onClick={() => handleRowClick(log.id)} className="cursor-pointer">
                    <TableCell>
                     {log.direction === 'incoming' ? 
                       <ArrowLeft className="h-4 w-4 text-blue-500" /> : 
@@ -49,7 +54,7 @@ export function MessageLogs() {
                     {format(new Date(log.date), 'PPp')}
                   </TableCell>
                   <TableCell>
-                    <Link href={`/tenants/${log.tenantId}`} className="font-medium hover:underline">
+                    <Link href={`/tenants/${log.tenantId}`} className="font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
                       {log.tenantName}
                     </Link>
                   </TableCell>
