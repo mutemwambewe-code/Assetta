@@ -134,12 +134,12 @@ export function MessageTemplates({ onTemplateSelect }: MessageTemplatesProps) {
                         </AccordionTrigger>
                         <AccordionContent className="pt-4 space-y-3">
                             {trashedTemplates.map(template => (
-                                <div key={template.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
-                                    <div>
+                                <div key={template.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-md bg-muted/30 gap-4">
+                                    <div className="flex-1">
                                         <p className="font-medium">{template.title}</p>
-                                        <p className="text-xs text-muted-foreground">{template.category}</p>
+                                        <p className="text-xs text-muted-foreground italic mt-1">&quot;{template.content}&quot;</p>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 self-end sm:self-center">
                                         <Button variant="ghost" size="sm" onClick={() => handleRestore(template)}>
                                             <RotateCcw className="mr-2 h-4 w-4"/> Restore
                                         </Button>
