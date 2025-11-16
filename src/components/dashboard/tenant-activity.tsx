@@ -57,26 +57,25 @@ export default function TenantActivity() {
         <ResponsiveContainer width="100%" height="100%">
             <PieChart>
                 <Pie
-                    data={statusData}
+                    data={statusData.filter(d => d.value > 0)}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    outerRadius={100}
-                    innerRadius={70}
+                    labelLine={true}
+                    outerRadius={80}
+                    innerRadius={60}
                     fill="#8884d8"
                     dataKey="value"
                     onClick={handlePieClick}
                     className='cursor-pointer'
-                    label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
-                        if (value === 0) return null;
+                    label={({ cx, cy, midAngle, innerRadius, outerRadius, value, percent, name }) => {
                         const RADIAN = Math.PI / 180;
-                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                        const radius = outerRadius + 25;
                         const x  = cx + radius * Math.cos(-midAngle * RADIAN);
                         const y = cy  + radius * Math.sin(-midAngle * RADIAN);
             
                         return (
-                          <text x={x} y={y} fill="hsl(var(--card-foreground))" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className='font-bold text-lg'>
-                            {`${((value / totalTenants) * 100).toFixed(0)}%`}
+                          <text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className='text-xs font-semibold'>
+                            {`${name} (${(percent * 100).toFixed(0)}%)`}
                           </text>
                         );
                       }}
@@ -86,10 +85,11 @@ export default function TenantActivity() {
                     ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{fontSize: "0.8rem"}}/>
+                <Legend wrapperStyle={{fontSize: "0.8rem", paddingTop: '20px'}}/>
             </PieChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
   );
 }
+
