@@ -1,16 +1,20 @@
+
 'use client';
 
-import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, type ReactNode, useEffect, useCallback, useMemo } from 'react';
 import type { Template } from '@/lib/types';
 import { initialTemplates } from '@/lib/data';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useUser } from '@/firebase';
 
 type TemplateContextType = {
-  templates: Template[];
-  addTemplate: (template: Omit<Template, 'id'>) => void;
-  deleteTemplate: (id: string) => void;
+  activeTemplates: Template[];
+  trashedTemplates: Template[];
+  addTemplate: (template: Omit<Template, 'id' | 'status'>) => void;
+  trashTemplate: (id: string) => void;
+  restoreTemplate: (id: string) => void;
+  permanentlyDeleteTemplate: (id: string) => void;
   isInitialized: boolean;
 };
 
@@ -27,7 +31,20 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
 
   const { data: templatesData, isLoading: isTemplatesLoading } = useCollection<Template>(templatesCollection);
 
-  const addTemplate = useCallback(async (templateData: Omit<Template, 'id'>) => {
+  const { activeTemplates, trashedTemplates } = useMemo(() => {
+    const active: Template[] = [];
+    const trashed: Template[] = [];
+    (templatesData || []).forEach(t => {
+      if (t.status === 'trashed') {
+        trashed.push(t);
+      } else {
+        active.push(t);
+      }
+    });
+    return { activeTemplates: active, trashedTemplates: trashed };
+  }, [templatesData]);
+
+  const addTemplate = useCallback(async (templateData: Omit<Template, 'id' | 'status'>) => {
     if (!templatesCollection) {
       console.error("Templates collection not available. Cannot add template.");
       return;
@@ -35,12 +52,22 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
     const newDocRef = doc(templatesCollection);
     const newTemplate: Template = {
         ...templateData,
-        id: newDocRef.id
+        id: newDocRef.id,
+        status: 'active',
     };
     await setDoc(newDocRef, newTemplate);
   }, [templatesCollection]);
 
-  const deleteTemplate = useCallback(async (id: string) => {
+  const updateTemplateStatus = useCallback(async (id: string, status: 'active' | 'trashed') => {
+    if (!templatesCollection) return;
+    const docRef = doc(templatesCollection, id);
+    await updateDoc(docRef, { status });
+  }, [templatesCollection]);
+
+  const trashTemplate = (id: string) => updateTemplateStatus(id, 'trashed');
+  const restoreTemplate = (id: string) => updateTemplateStatus(id, 'active');
+
+  const permanentlyDeleteTemplate = useCallback(async (id: string) => {
     if (!templatesCollection) return;
     const docRef = doc(templatesCollection, id);
     await deleteDoc(docRef);
@@ -59,9 +86,12 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
   const isInitialized = !isUserLoading && !isTemplatesLoading;
 
   const value = {
-    templates: templatesData || [],
+    activeTemplates,
+    trashedTemplates,
     addTemplate,
-    deleteTemplate,
+    trashTemplate,
+    restoreTemplate,
+    permanentlyDeleteTemplate,
     isInitialized
   };
 

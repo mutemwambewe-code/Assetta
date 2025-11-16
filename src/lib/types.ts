@@ -64,6 +64,7 @@ export type Template = {
   title: string;
   content: string;
   category: string;
+  status: 'active' | 'trashed';
 };
 
 export type Expense = {

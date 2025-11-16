@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -32,7 +33,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export function AddTemplate() {
   const [open, setOpen] = useState(false);
-  const { addTemplate, templates } = useTemplates();
+  const { addTemplate, activeTemplates } = useTemplates();
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -44,7 +45,7 @@ export function AddTemplate() {
     },
   });
   
-  const categories = [...new Set(templates.map(t => t.category))];
+  const categories = [...new Set(activeTemplates.map(t => t.category))];
 
   function onSubmit(values: FormData) {
     addTemplate(values);
