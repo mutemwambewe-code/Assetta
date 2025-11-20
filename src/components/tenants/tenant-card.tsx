@@ -106,9 +106,8 @@ export function TenantCard({ tenant }: TenantCardProps) {
         <AlertDialog>
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className='h-10 w-10'>
+                <Button variant="ghost" size="icon" className='h-10 w-10' aria-label={`More options for ${tenant.name}`}>
                     <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">More options for {tenant.name}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
