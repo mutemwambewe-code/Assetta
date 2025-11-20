@@ -178,7 +178,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-6 -mr-6">
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pr-6">
                 <div className="flex flex-col items-center pt-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -384,7 +384,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                     )}
                 />
 
-                <DialogFooter className="sticky bottom-0 bg-background py-4">
+                <DialogFooter className="sticky bottom-0 bg-background py-4 -mx-6 px-6">
                 <Button type="submit">Save Changes</Button>
                 </DialogFooter>
             </form>

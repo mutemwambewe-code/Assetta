@@ -31,6 +31,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import type { Property } from '@/lib/types';
 import { countries } from '@/lib/countries';
 import { Combobox } from '../ui/combobox';
+import { ScrollArea } from '../ui/scroll-area';
 
 const phoneFormSchema = z.object({
   countryCode: z.string().min(1),
@@ -180,8 +181,9 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
           <DialogTitle>Add New Tenant</DialogTitle>
           <DialogDescription>Enter the details of the new tenant below.</DialogDescription>
         </DialogHeader>
+        <ScrollArea className="max-h-[70vh] pr-6 -mr-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pr-6">
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
@@ -391,7 +393,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                 />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="sticky bottom-0 bg-background py-4 -mx-6 px-6">
               <Button type="submit" disabled={!isProviderReady || properties.length === 0 || isPropertyFull}>
                 {!isProviderReady && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Tenant
@@ -399,6 +401,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
             </DialogFooter>
           </form>
         </Form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
