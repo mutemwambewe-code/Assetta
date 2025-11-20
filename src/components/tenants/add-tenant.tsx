@@ -29,6 +29,12 @@ import { useProperties } from '../properties/property-provider';
 import { AddProperty } from '../properties/add-property';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import type { Property } from '@/lib/types';
+import { countries } from '@/lib/countries';
+
+const phoneFormSchema = z.object({
+  countryCode: z.string().min(1),
+  number: z.string().min(1, 'Phone number is required.'),
+});
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -43,7 +49,22 @@ const formSchema = z.object({
   leaseEndDate: z.date({
     required_error: 'Lease end date is required.',
   }),
+}).refine(data => {
+    // This is a workaround to validate the phone number length based on the country code.
+    // In a real app, you would likely use a more robust library like libphonenumber-js.
+    const phoneWithCode = data.phone;
+    if (!phoneWithCode.startsWith('+')) return false;
+
+    const country = countries.find(c => phoneWithCode.startsWith(`+${c.phone}`));
+    if (!country) return true; // Cannot validate if country not in our list
+    
+    const numberPart = phoneWithCode.replace(`+${country.phone}`, '');
+    return numberPart.length === country.phoneLength;
+}, {
+    message: 'Phone number has an incorrect number of digits for the selected country.',
+    path: ['phone'],
 });
+
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -54,6 +75,9 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
   const { toast } = useToast();
 
   const isProviderReady = tenantsReady && propertiesReady;
+  
+  const [phoneCountryCode, setPhoneCountryCode] = useState(countries[0].phone);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -66,6 +90,8 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
       rentAmount: 0,
     },
   });
+  
+  const selectedCountryForPhone = countries.find(c => c.phone === phoneCountryCode);
 
   const selectedPropertyName = form.watch('property');
 
@@ -101,7 +127,29 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
     });
     setOpen(false);
     form.reset();
+    setPhoneNumber('');
+    setPhoneCountryCode(countries[0].phone);
   }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    const selectedCountry = countries.find(c => c.phone === phoneCountryCode);
+    
+    if (selectedCountry) {
+        const maxLength = selectedCountry.phoneLength;
+        setPhoneNumber(value.slice(0, maxLength));
+        form.setValue('phone', `+${phoneCountryCode}${value.slice(0, maxLength)}`);
+    } else {
+        setPhoneNumber(value);
+        form.setValue('phone', `+${phoneCountryCode}${value}`);
+    }
+  }
+  
+  const handleCountryChange = (value: string) => {
+    setPhoneCountryCode(value);
+    form.setValue('phone', `+${value}${phoneNumber}`);
+  }
+
 
   const handlePropertyAdded = (newProperty: Property) => {
     form.setValue('property', newProperty.name);
@@ -120,7 +168,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
             </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Tenant</DialogTitle>
           <DialogDescription>Enter the details of the new tenant below.</DialogDescription>
@@ -145,7 +193,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="col-span-2">
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                         <Input placeholder="email@example.com" {...field} />
@@ -154,19 +202,33 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     </FormItem>
                 )}
                 />
-                <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                    <FormItem>
+                
+                <div className="col-span-2 space-y-2">
                     <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                        <Input placeholder="+260 9..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                    <div className="flex gap-2">
+                        <Select value={phoneCountryCode} onValueChange={handleCountryChange}>
+                            <SelectTrigger className="w-[100px]">
+                                <SelectValue placeholder="Code" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {countries.map(country => (
+                                    <SelectItem key={country.code} value={country.phone}>
+                                        +{country.phone}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <div className='relative w-full'>
+                            <Input 
+                                placeholder={selectedCountryForPhone ? '0'.repeat(selectedCountryForPhone.phoneLength) : '977123456'} 
+                                value={phoneNumber}
+                                onChange={handlePhoneChange}
+                            />
+                            {selectedCountryForPhone && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{phoneNumber.length}/{selectedCountryForPhone.phoneLength}</div>}
+                        </div>
+                    </div>
+                    {form.formState.errors.phone && <p className="text-sm font-medium text-destructive">{form.formState.errors.phone.message}</p>}
+                </div>
             </div>
 
             {properties.length > 0 ? (
