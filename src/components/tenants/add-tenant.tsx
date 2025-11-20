@@ -30,6 +30,7 @@ import { AddProperty } from '../properties/add-property';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import type { Property } from '@/lib/types';
 import { countries } from '@/lib/countries';
+import { Combobox } from '../ui/combobox';
 
 const phoneFormSchema = z.object({
   countryCode: z.string().min(1),
@@ -91,6 +92,11 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
     },
   });
   
+  const countryOptions = useMemo(() => countries.map(c => ({
+    value: c.phone,
+    label: `${c.label} (+${c.phone})`
+  })), []);
+
   const selectedCountryForPhone = countries.find(c => c.phone === phoneCountryCode);
 
   const selectedPropertyName = form.watch('property');
@@ -147,7 +153,8 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
   
   const handleCountryChange = (value: string) => {
     setPhoneCountryCode(value);
-    form.setValue('phone', `+${value}${phoneNumber}`);
+    setPhoneNumber(''); // Reset phone number when country changes
+    form.setValue('phone', `+${value}`);
   }
 
 
@@ -206,18 +213,14 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                 <div className="col-span-2 space-y-2">
                     <FormLabel>Phone Number</FormLabel>
                     <div className="flex gap-2">
-                        <Select value={phoneCountryCode} onValueChange={handleCountryChange}>
-                            <SelectTrigger className="w-[100px]">
-                                <SelectValue placeholder="Code" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {countries.map(country => (
-                                    <SelectItem key={country.code} value={country.phone}>
-                                        +{country.phone}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Combobox
+                          options={countryOptions}
+                          value={phoneCountryCode}
+                          onChange={handleCountryChange}
+                          placeholder="Country"
+                          searchPlaceholder='Search country...'
+                          className='w-[150px]'
+                        />
                         <div className='relative w-full'>
                             <Input 
                                 placeholder={selectedCountryForPhone ? '0'.repeat(selectedCountryForPhone.phoneLength) : '977123456'} 

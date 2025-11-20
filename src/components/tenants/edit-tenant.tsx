@@ -28,6 +28,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useProperties } from '../properties/property-provider';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { countries } from '@/lib/countries';
+import { Combobox } from '../ui/combobox';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -77,21 +78,27 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
     defaultValues: tenant,
   });
   
+  const countryOptions = useMemo(() => countries.map(c => ({
+    value: c.phone,
+    label: `${c.label} (+${c.phone})`
+  })), []);
+  
   const selectedCountryForPhone = countries.find(c => c.phone === phoneCountryCode);
 
   useEffect(() => {
-    if (tenant.phone) {
+    if (open && tenant.phone) {
         const country = countries.find(c => tenant.phone.startsWith(`+${c.phone}`));
         if (country) {
             setPhoneCountryCode(country.phone);
             setPhoneNumber(tenant.phone.substring(country.phone.length + 1));
         } else {
             // Fallback for numbers not in our list
-            setPhoneCountryCode(countries[0].phone);
+            const defaultCountry = countries[0];
+            setPhoneCountryCode(defaultCountry.phone);
             setPhoneNumber(tenant.phone);
         }
     }
-  }, [tenant.phone]);
+  }, [tenant.phone, open]);
 
 
   function onSubmit(values: FormData) {
@@ -154,7 +161,8 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
   
   const handleCountryChange = (value: string) => {
     setPhoneCountryCode(value);
-    form.setValue('phone', `+${value}${phoneNumber}`);
+    setPhoneNumber(''); // Reset phone number when country changes
+    form.setValue('phone', `+${value}`);
   }
 
 
@@ -253,18 +261,14 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                     <div className="col-span-2 space-y-2">
                         <FormLabel>Phone Number</FormLabel>
                         <div className="flex gap-2">
-                            <Select value={phoneCountryCode} onValueChange={handleCountryChange}>
-                                <SelectTrigger className="w-[100px]">
-                                    <SelectValue placeholder="Code" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {countries.map(country => (
-                                        <SelectItem key={country.code} value={country.phone}>
-                                            +{country.phone}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Combobox
+                                options={countryOptions}
+                                value={phoneCountryCode}
+                                onChange={handleCountryChange}
+                                placeholder="Country"
+                                searchPlaceholder='Search country...'
+                                className='w-[150px]'
+                            />
                             <div className='relative w-full'>
                                 <Input 
                                     placeholder={selectedCountryForPhone ? '0'.repeat(selectedCountryForPhone.phoneLength) : '977123456'} 
