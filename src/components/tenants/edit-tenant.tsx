@@ -182,7 +182,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                 <div className="flex flex-col items-center pt-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <div className="relative group cursor-pointer">
+                            <div className="relative group cursor-pointer" aria-label="Change profile picture">
                                 <Avatar className="h-24 w-24">
                                 {currentAvatar ? (
                                     <AvatarImage asChild src={currentAvatar}>
@@ -394,3 +394,5 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
     </Dialog>
   );
 }
+
+    
