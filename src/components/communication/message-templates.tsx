@@ -100,6 +100,7 @@ export function MessageTemplates({ onTemplateSelect }: MessageTemplatesProps) {
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2" onClick={(e) => e.stopPropagation()}>
                                                             <MoreVertical className="h-4 w-4"/>
+                                                            <span className="sr-only">More options for {template.title}</span>
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">

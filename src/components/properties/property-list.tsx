@@ -140,6 +140,7 @@ export function PropertyList() {
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
                                         <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">More options for {property.name}</span>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
