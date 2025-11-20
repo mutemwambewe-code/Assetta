@@ -145,6 +145,7 @@ export function OverviewCards() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">More options for {card.title}</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
