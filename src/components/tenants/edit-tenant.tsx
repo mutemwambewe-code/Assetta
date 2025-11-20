@@ -394,5 +394,3 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
     </Dialog>
   );
 }
-
-    
