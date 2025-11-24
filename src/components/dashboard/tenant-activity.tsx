@@ -61,15 +61,15 @@ export default function TenantActivity() {
                     cx="50%"
                     cy="50%"
                     labelLine={true}
-                    outerRadius={80}
-                    innerRadius={60}
+                    outerRadius={60}
+                    innerRadius={40}
                     fill="#8884d8"
                     dataKey="value"
                     onClick={handlePieClick}
                     className='cursor-pointer'
                     label={({ cx, cy, midAngle, innerRadius, outerRadius, value, percent, name }) => {
                         const RADIAN = Math.PI / 180;
-                        const radius = outerRadius + 25;
+                        const radius = outerRadius + 20;
                         const x  = cx + radius * Math.cos(-midAngle * RADIAN);
                         const y = cy  + radius * Math.sin(-midAngle * RADIAN);
             
@@ -92,4 +92,5 @@ export default function TenantActivity() {
     </Card>
   );
 }
+
 
