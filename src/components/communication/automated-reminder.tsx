@@ -13,7 +13,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSearchParams } from 'next/navigation';
-import { Loader2, Send, Wand2, Eye, Pencil, Users, ChevronDown } from 'lucide-react';
+import { Loader2, Send, Wand2, Eye, Pencil, Users, ChevronDown, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -72,6 +72,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const [activeTab, setActiveTab] = useState('write');
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [isTextareaHighlighted, setIsTextareaHighlighted] = useState(false);
+  const [editableRecipients, setEditableRecipients] = useState<Tenant[]>([]);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -104,12 +105,20 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     return [];
   }, [recipientType, groupId, tenants, properties]);
 
+  useEffect(() => {
+    if (recipientType === 'group') {
+      setEditableRecipients(bulkRecipients);
+    } else {
+      setEditableRecipients([]);
+    }
+  }, [recipientType, bulkRecipients]);
+
   const previewTenant = useMemo(() => {
     if (recipientType === 'individual') return selectedTenant;
-    if (bulkRecipients.length > 0) return bulkRecipients[0];
+    if (editableRecipients.length > 0) return editableRecipients[0];
     if (tenants.length > 0) return tenants[0];
     return undefined;
-  }, [recipientType, selectedTenant, bulkRecipients, tenants]);
+  }, [recipientType, selectedTenant, editableRecipients, tenants]);
 
 
   const bulkGroups = [
@@ -135,7 +144,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     if (recipientType === 'individual' && selectedTenant) {
       recipients.push(selectedTenant);
     } else if (recipientType === 'group' && groupId) {
-      recipients = bulkRecipients;
+      recipients = editableRecipients;
     }
     
     if(recipients.length === 0) {
@@ -205,6 +214,10 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     setIsSending(false);
   }
 
+  const handleRemoveRecipient = (tenantId: string) => {
+    setEditableRecipients(prev => prev.filter(t => t.id !== tenantId));
+  }
+
 
   const handleTagClick = (tag: string) => {
     setMessage(prev => `${prev} {{${tag}}}`);
@@ -220,7 +233,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     }, 100);
   }
 
-  const isSendDisabled = !message || isSending || (recipientType === 'individual' && !selectedTenantId) || (recipientType === 'group' && !groupId);
+  const isSendDisabled = !message || isSending || (recipientType === 'individual' && !selectedTenantId) || (recipientType === 'group' && (!groupId || editableRecipients.length === 0));
 
   return (
     <Card className="mt-4 border-none shadow-none">
@@ -318,19 +331,19 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             )}
                         />
                     </div>
-                    {bulkRecipients.length > 0 && (
-                        <Collapsible className='-mx-4'>
+                    {editableRecipients.length > 0 && (
+                        <Collapsible className='-mx-4' defaultOpen>
                             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md bg-muted/50 px-4 py-2 text-sm font-medium hover:bg-muted">
                                 <div className="flex items-center gap-2">
                                     <Users className="h-4 w-4" />
-                                    <span>{bulkRecipients.length} Recipient{bulkRecipients.length > 1 ? 's' : ''} Selected</span>
+                                    <span>{editableRecipients.length} Recipient{editableRecipients.length > 1 ? 's' : ''} Selected</span>
                                 </div>
                                 <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <ScrollArea className="h-48 rounded-md border mt-2">
                                 <div className="p-2 space-y-1">
-                                    {bulkRecipients.map(tenant => (
+                                    {editableRecipients.map(tenant => (
                                     <div key={tenant.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
                                         <Avatar className="h-8 w-8">
                                             {tenant.avatarUrl && <AvatarImage asChild src={tenant.avatarUrl}><Image src={tenant.avatarUrl} alt={tenant.name} width={32} height={32} /></AvatarImage>}
@@ -340,6 +353,15 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                                             <p className="text-sm font-medium">{tenant.name}</p>
                                             <p className="text-xs text-muted-foreground">{tenant.phone}</p>
                                         </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 rounded-full"
+                                            onClick={() => handleRemoveRecipient(tenant.id)}
+                                        >
+                                            <X className="h-4 w-4" />
+                                            <span className="sr-only">Remove {tenant.name}</span>
+                                        </Button>
                                     </div>
                                     ))}
                                 </div>
@@ -390,8 +412,8 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             {replacePlaceholders(message, previewTenant)}
                         </div>
                          <p className="text-xs text-muted-foreground mt-2">
-                            {recipientType === 'group' && bulkRecipients.length > 0
-                                ? `This is a preview using ${bulkRecipients[0].name} as a sample. Each tenant in the group will receive a personalized message.`
+                            {recipientType === 'group' && editableRecipients.length > 0
+                                ? `This is a preview using ${editableRecipients[0].name} as a sample. Each tenant in the group will receive a personalized message.`
                                 : `This is a preview for ${previewTenant?.name}.`
                             }
                         </p>
