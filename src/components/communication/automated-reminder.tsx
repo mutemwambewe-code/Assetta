@@ -313,7 +313,20 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             control={control}
                             render={({ field }) => (
                             <Select 
-                                onValueChange={field.onChange} 
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  // This effect now happens directly, ensuring the list resets even on re-selection
+                                  let newRecipients: Tenant[] = [];
+                                  if (value === 'all') newRecipients = tenants;
+                                  else if (value === 'arrears') newRecipients = tenants.filter(t => t.rentStatus === 'Overdue');
+                                  else if (value === 'pending') newRecipients = tenants.filter(t => t.rentStatus === 'Pending');
+                                  else if (value.startsWith('prop-')) {
+                                    const propId = value.replace('prop-', '');
+                                    const prop = properties.find(p => p.id === propId);
+                                    if (prop) newRecipients = tenants.filter(t => t.property === prop.name);
+                                  }
+                                  setEditableRecipients(newRecipients);
+                                }} 
                                 defaultValue={field.value}
                                 value={field.value}
                             >
