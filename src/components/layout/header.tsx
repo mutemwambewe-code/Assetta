@@ -22,6 +22,7 @@ import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import React from 'react';
+import { Separator } from '../ui/separator';
 
 interface HeaderProps {
   pageTitle: string;
@@ -62,6 +63,7 @@ export function Header({ pageTitle }: HeaderProps) {
   return (
     <header 
         className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6"
+        style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
     >
        <div className='flex items-center gap-4'>
         <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -83,25 +85,28 @@ export function Header({ pageTitle }: HeaderProps) {
                 <Building className="h-6 w-6" />
                 <span className="font-bold text-xl text-foreground">PropBot</span>
                 </Link>
-                {navLinks.map(({ href, label, icon: Icon }) => (
-                <Link
-                    key={href}
-                    href={href}
-                    className={cn("flex items-center gap-4 px-2.5 rounded-lg",
-                    pathname.startsWith(href)
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                >
-                    <Icon className="h-5 w-5" />
-                    {label}
-                </Link>
+                {navLinks.map(({ href, label, icon: Icon }, index) => (
+                <React.Fragment key={href}>
+                 {index === 2 && <Separator className="my-2 bg-sidebar-border" />}
+                  <Link
+                      href={href}
+                      className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
+                      pathname.startsWith(href)
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                  >
+                      <Icon className="h-5 w-5" />
+                      {label}
+                  </Link>
+                </React.Fragment>
                 ))}
             </nav>
             <nav className="mt-auto grid gap-4">
+                <Separator className='my-2 bg-sidebar-border' />
                 <Link
                     href={settingsLink.href}
-                    className={cn("flex items-center gap-4 px-2.5 rounded-lg",
+                    className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
                     pathname.startsWith(settingsLink.href)
                         ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                         : 'text-muted-foreground hover:text-foreground'
