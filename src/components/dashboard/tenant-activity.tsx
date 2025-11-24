@@ -62,7 +62,7 @@ export default function TenantActivity() {
                     cy="50%"
                     labelLine={true}
                     outerRadius={80}
-                    innerRadius={50}
+                    innerRadius={60}
                     fill="#8884d8"
                     dataKey="value"
                     onClick={handlePieClick}
@@ -92,6 +92,3 @@ export default function TenantActivity() {
     </Card>
   );
 }
-
-
-
