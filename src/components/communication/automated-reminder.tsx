@@ -315,7 +315,6 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             <Select 
                                 onValueChange={(value) => {
                                   field.onChange(value);
-                                  // This effect now happens directly, ensuring the list resets even on re-selection
                                   let newRecipients: Tenant[] = [];
                                   if (value === 'all') newRecipients = tenants;
                                   else if (value === 'arrears') newRecipients = tenants.filter(t => t.rentStatus === 'Overdue');
