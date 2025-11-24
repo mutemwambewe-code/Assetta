@@ -21,20 +21,34 @@ import { cn } from '@/lib/utils';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import React from 'react';
 
 interface HeaderProps {
-  showTitle: boolean;
   pageTitle: string;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
 }
 
-export function Header({ showTitle, pageTitle, mobileMenuOpen, setMobileMenuOpen }: HeaderProps) {
+export function Header({ pageTitle, mobileMenuOpen, setMobileMenuOpen }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [showTitle, setShowTitle] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = (e: Event) => {
+        const target = e.currentTarget as HTMLElement;
+        if(target) {
+            setShowTitle(target.scrollTop > 20);
+        }
+    };
+    // The main element is the scroll container now
+    const mainEl = document.querySelector('main');
+    mainEl?.addEventListener('scroll', handleScroll);
+    return () => mainEl?.removeEventListener('scroll', handleScroll);
+  }, []);
   
   const handleLogout = async () => {
     await signOut(auth);
@@ -99,19 +113,12 @@ export function Header({ showTitle, pageTitle, mobileMenuOpen, setMobileMenuOpen
             </nav>
             </SheetContent>
         </Sheet>
-         <Link
-            href="/dashboard"
-            className="hidden items-center gap-2 text-lg font-semibold text-primary sm:flex"
-            >
-            <Building className="h-6 w-6" />
-            <span className="font-bold text-xl text-foreground">PropBot</span>
-        </Link>
        </div>
       
       <div className="flex-1">
         <div className={cn(
             "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform transition-all duration-300",
-            showTitle ? "opacity-100" : "opacity-0 -translate-y-6"
+            showTitle ? "opacity-100" : "opacity-0 -translate-y-4 pointer-events-none"
           )}>
           <h1 className="font-semibold text-lg">{pageTitle}</h1>
         </div>
