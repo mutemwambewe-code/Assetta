@@ -106,7 +106,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </TooltipProvider>
             </nav>
           </div>
-          <nav className="flex flex-col items-center gap-4 px-2 py-4">
+          <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
+            <Separator className="my-2" />
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
