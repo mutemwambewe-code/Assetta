@@ -25,30 +25,34 @@ import React from 'react';
 
 interface HeaderProps {
   pageTitle: string;
-  mobileMenuOpen: boolean;
-  setMobileMenuOpen: (open: boolean) => void;
 }
 
-export function Header({ pageTitle, mobileMenuOpen, setMobileMenuOpen }: HeaderProps) {
+export function Header({ pageTitle }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [showTitle, setShowTitle] = React.useState(false);
+  const [isMobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
+    const mainEl = document.querySelector('main');
     const handleScroll = (e: Event) => {
         const target = e.currentTarget as HTMLElement;
         if(target) {
             setShowTitle(target.scrollTop > 20);
         }
     };
-    // The main element is the scroll container now
-    const mainEl = document.querySelector('main');
     mainEl?.addEventListener('scroll', handleScroll);
     return () => mainEl?.removeEventListener('scroll', handleScroll);
   }, []);
+
+  React.useEffect(() => {
+    if (isMobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  }, [pathname]);
   
   const handleLogout = async () => {
     await signOut(auth);
@@ -57,14 +61,10 @@ export function Header({ pageTitle, mobileMenuOpen, setMobileMenuOpen }: HeaderP
 
   return (
     <header 
-        className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 sm:px-6"
-        style={{
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-        }}
+        className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6"
     >
        <div className='flex items-center gap-4'>
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
             <Button size="icon" variant="outline" className="sm:hidden">
                 <PanelLeft className="h-5 w-5" />

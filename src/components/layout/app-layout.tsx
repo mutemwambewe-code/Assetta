@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, Children } from 'react';
+import React, { useState, useEffect, Children } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Header } from './header';
@@ -14,7 +14,6 @@ import { Separator } from '../ui/separator';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
@@ -27,21 +26,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }, [isUserLoading, user, isAuthPage, router]);
 
   let pageTitle = '';
-  // Extract title from children's props
   if (Children.only(children) && React.isValidElement(children)) {
       const child = children as React.ReactElement;
       if (child.type && (child.type as any).title) {
         pageTitle = (child.type as any).title;
       }
   }
-
-
-  // Close mobile menu on navigation
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      setMobileMenuOpen(false);
-    }
-  }, [pathname, mobileMenuOpen]);
 
   if (isUserLoading && !isAuthPage) {
     return (
@@ -115,8 +105,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 flex-col sm:pl-16">
         <Header 
           pageTitle={pageTitle}
-          mobileMenuOpen={mobileMenuOpen}
-          setMobileMenuOpen={setMobileMenuOpen}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
