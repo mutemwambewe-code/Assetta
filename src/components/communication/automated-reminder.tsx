@@ -91,27 +91,34 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
 
-  const bulkRecipients = useMemo(() => {
-    if (recipientType !== 'group' || !groupId) return [];
-    
-    if (groupId === 'all') return tenants;
-    if (groupId === 'arrears') return tenants.filter(t => t.rentStatus === 'Overdue');
-    if (groupId === 'pending') return tenants.filter(t => t.rentStatus === 'Pending');
-    if (groupId.startsWith('prop-')) {
-      const propId = groupId.replace('prop-', '');
+  useEffect(() => {
+    if (recipientType === 'individual') {
+      setEditableRecipients([]);
+    } else {
+      const initialRecipients = getRecipientsForGroup(groupId);
+      setEditableRecipients(initialRecipients);
+    }
+  }, [recipientType, groupId, tenants, properties]);
+
+  const getRecipientsForGroup = (selectedGroupId: string | undefined): Tenant[] => {
+    if (!selectedGroupId) return [];
+    if (selectedGroupId === 'all') return tenants;
+    if (selectedGroupId === 'arrears') return tenants.filter(t => t.rentStatus === 'Overdue');
+    if (selectedGroupId === 'pending') return tenants.filter(t => t.rentStatus === 'Pending');
+    if (selectedGroupId.startsWith('prop-')) {
+      const propId = selectedGroupId.replace('prop-', '');
       const prop = properties.find(p => p.id === propId);
       if (prop) return tenants.filter(t => t.property === prop.name);
     }
     return [];
-  }, [recipientType, groupId, tenants, properties]);
+  };
 
-  useEffect(() => {
-    if (recipientType === 'group') {
-      setEditableRecipients(bulkRecipients);
-    } else {
-      setEditableRecipients([]);
-    }
-  }, [recipientType, bulkRecipients]);
+  const handleGroupSelect = (value: string) => {
+    setValue('groupId', value);
+    const newRecipients = getRecipientsForGroup(value);
+    setEditableRecipients(newRecipients);
+  };
+
 
   const previewTenant = useMemo(() => {
     if (recipientType === 'individual') return selectedTenant;
@@ -313,20 +320,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             control={control}
                             render={({ field }) => (
                             <Select 
-                                onValueChange={(value) => {
-                                  field.onChange(value);
-                                  let newRecipients: Tenant[] = [];
-                                  if (value === 'all') newRecipients = tenants;
-                                  else if (value === 'arrears') newRecipients = tenants.filter(t => t.rentStatus === 'Overdue');
-                                  else if (value === 'pending') newRecipients = tenants.filter(t => t.rentStatus === 'Pending');
-                                  else if (value.startsWith('prop-')) {
-                                    const propId = value.replace('prop-', '');
-                                    const prop = properties.find(p => p.id === propId);
-                                    if (prop) newRecipients = tenants.filter(t => t.property === prop.name);
-                                  }
-                                  setEditableRecipients(newRecipients);
-                                }} 
-                                defaultValue={field.value}
+                                onValueChange={field.onChange} 
                                 value={field.value}
                             >
                                 <SelectTrigger id="groupId">
@@ -334,7 +328,11 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                                 </SelectTrigger>
                                 <SelectContent>
                                     {bulkGroups.map((group) => (
-                                        <SelectItem key={group.id} value={group.id}>
+                                        <SelectItem 
+                                            key={group.id} 
+                                            value={group.id}
+                                            onSelect={() => handleGroupSelect(group.id)}
+                                        >
                                             {group.name}
                                         </SelectItem>
                                     ))}
