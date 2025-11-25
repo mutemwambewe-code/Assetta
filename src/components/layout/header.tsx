@@ -101,10 +101,8 @@ export function Header({ pageTitle }: HeaderProps) {
                   </Link>
                 </React.Fragment>
                 ))}
-            </nav>
-            <nav className="mt-auto grid gap-4">
-                <Separator className='my-2 bg-sidebar-border' />
-                <Link
+                 <Separator className="my-2 bg-sidebar-border" />
+                 <Link
                     href={settingsLink.href}
                     className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
                     pathname.startsWith(settingsLink.href)
@@ -118,6 +116,10 @@ export function Header({ pageTitle }: HeaderProps) {
             </nav>
             </SheetContent>
         </Sheet>
+        <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
+            <Building className="h-6 w-6" />
+            <span className="font-bold text-xl">PropBot</span>
+        </Link>
        </div>
       
       <div className="flex-1">
