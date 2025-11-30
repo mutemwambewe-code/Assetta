@@ -13,7 +13,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSearchParams } from 'next/navigation';
-import { Loader2, Send, Wand2, Eye, Pencil, Users, ChevronDown, X } from 'lucide-react';
+import { Loader2, Send, Wand2, Eye, Pencil, Users, ChevronDown, X, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -90,6 +90,10 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const groupId = watch('groupId');
   
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
+  
+  // This value is determined at build time and will be constant on the client
+  const isSenderIdMissing = process.env.NEXT_PUBLIC_AFRICASTALKING_USERNAME !== 'sandbox' && !process.env.NEXT_PUBLIC_AFRICASTALKING_SENDER_ID;
+
 
   useEffect(() => {
     if (recipientType === 'individual') {
@@ -240,7 +244,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     }, 100);
   }
 
-  const isSendDisabled = !message || isSending || (recipientType === 'individual' && !selectedTenantId) || (recipientType === 'group' && (!groupId || editableRecipients.length === 0));
+  const isSendDisabled = isSenderIdMissing || !message || isSending || (recipientType === 'individual' && !selectedTenantId) || (recipientType === 'group' && (!groupId || editableRecipients.length === 0));
 
   return (
     <Card className="mt-4 border-none shadow-none">
@@ -251,6 +255,15 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                 <CardDescription>Select recipients and write your message.</CardDescription>
             </CardHeader>
           <CardContent className="space-y-6">
+            {isSenderIdMissing && (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Sender ID Not Configured</AlertTitle>
+                    <AlertDescription>
+                        Your Africa's Talking Sender ID is not set for the live environment. SMS sending is disabled until it is configured in your project's environment variables.
+                    </AlertDescription>
+                </Alert>
+            )}
             <Controller
               name="recipientType"
               control={control}
