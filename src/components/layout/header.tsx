@@ -23,6 +23,7 @@ import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import React from 'react';
 import { Separator } from '../ui/separator';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface HeaderProps {
   pageTitle: string;
@@ -73,35 +74,38 @@ export function Header({ pageTitle }: HeaderProps) {
                 <span className="sr-only">Toggle Menu</span>
             </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border">
-            <SheetHeader className="p-4">
+            <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border flex flex-col p-0">
+            <SheetHeader className="p-4 border-b border-sidebar-border">
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-            </SheetHeader>
-            <nav className="grid gap-4 text-lg font-medium">
-                <Link
-                href="/dashboard"
-                className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
-                >
-                <Building className="h-6 w-6" />
-                <span className="font-bold text-xl text-foreground">PropBot</span>
+                 <Link
+                    href="/dashboard"
+                    className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
+                    >
+                    <Building className="h-6 w-6" />
+                    <span className="font-bold text-xl text-foreground">PropBot</span>
                 </Link>
-                {navLinks.map(({ href, label, icon: Icon }, index) => (
-                <React.Fragment key={href}>
-                 {index === 2 && <Separator className="my-2 bg-sidebar-border" />}
-                  <Link
-                      href={href}
-                      className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
-                      pathname.startsWith(href)
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                  >
-                      <Icon className="h-5 w-5" />
-                      {label}
-                  </Link>
-                </React.Fragment>
-                ))}
-                 <Separator className="my-2 bg-sidebar-border" />
+            </SheetHeader>
+            <ScrollArea className="flex-1">
+                <nav className="grid gap-4 text-lg font-medium p-4">
+                    {navLinks.map(({ href, label, icon: Icon }, index) => (
+                    <React.Fragment key={href}>
+                    {index === 2 && <Separator className="my-2 bg-sidebar-border" />}
+                    <Link
+                        href={href}
+                        className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
+                        pathname.startsWith(href)
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                    >
+                        <Icon className="h-5 w-5" />
+                        {label}
+                    </Link>
+                    </React.Fragment>
+                    ))}
+                </nav>
+            </ScrollArea>
+             <div className="mt-auto border-t border-sidebar-border p-4">
                  <Link
                     href={settingsLink.href}
                     className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
@@ -113,7 +117,7 @@ export function Header({ pageTitle }: HeaderProps) {
                     <settingsLink.icon className="h-5 w-5" />
                     {settingsLink.label}
                 </Link>
-            </nav>
+             </div>
             </SheetContent>
         </Sheet>
         <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
