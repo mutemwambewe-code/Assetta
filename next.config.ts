@@ -35,13 +35,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // Exclude jspdf from server-side bundle
-    if (isServer) {
-      config.externals.push('jspdf');
-    }
-    return config;
-  },
 };
 
 export default nextConfig;
