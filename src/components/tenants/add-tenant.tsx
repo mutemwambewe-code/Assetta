@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -51,11 +51,50 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+
+// Internal component for the mobile date picker dialog
+const MobileDatePicker = ({
+  value,
+  onChange,
+  trigger,
+}: {
+  value: Date;
+  onChange: (date?: Date) => void;
+  trigger: React.ReactNode;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="w-auto">
+        <Calendar
+          mode="single"
+          selected={value}
+          onSelect={(date) => {
+            onChange(date);
+            setOpen(false);
+          }}
+          initialFocus
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 export function AddTenant({ asChild, className }: { asChild?: boolean; className?: string }) {
   const [open, setOpen] = useState(false);
   const { tenants, addTenant, isInitialized: tenantsReady } = useTenants();
   const { properties, isInitialized: propertiesReady } = useProperties();
   const { toast } = useToast();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const isProviderReady = tenantsReady && propertiesReady;
   
@@ -112,6 +151,32 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
   const handlePropertyAdded = (newProperty: Property) => {
     form.setValue('property', newProperty.name);
   }
+
+  const DatePicker = ({ field, disabled }: { field: any, disabled?: (date: Date) => boolean }) => {
+    const triggerButton = (
+      <Button
+        variant={'outline'}
+        className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+      >
+        {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+      </Button>
+    );
+
+    if (isMobile) {
+      return <MobileDatePicker value={field.value} onChange={field.onChange} trigger={triggerButton} />;
+    }
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={disabled} initialFocus />
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -279,37 +344,9 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
                             <FormLabel>Lease Start</FormLabel>
-                            <Popover modal={true}>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                        date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
+                            <FormControl>
+                                <DatePicker field={field} disabled={(date) => date > new Date() || date < new Date('1900-01-01')} />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -320,34 +357,9 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
                         <FormLabel>Lease End</FormLabel>
-                            <Popover modal={true}>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
+                           <FormControl>
+                                <DatePicker field={field} />
+                            </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
