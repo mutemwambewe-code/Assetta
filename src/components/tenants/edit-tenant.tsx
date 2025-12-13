@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,11 +27,14 @@ import { Upload, Trash2, MoreVertical } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useProperties } from '../properties/property-provider';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { countries } from '@/lib/countries';
+import { Combobox } from '../ui/combobox';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email('Invalid email address.'),
-  phone: z.string().min(10, 'Please enter a valid phone number including the country code (e.g., +260...).'),
+  countryCode: z.string().min(1, "Country code is required."),
+  phone: z.string().min(1, 'Phone number is required.'),
   property: z.string().min(1, 'Please select a property.'),
   unit: z.string().min(1, 'Unit is required.'),
   rentAmount: z.coerce.number().min(1, 'Rent amount must be positive.'),
@@ -47,6 +51,20 @@ interface EditTenantProps {
   children?: React.ReactNode;
 }
 
+const parsePhoneNumber = (fullPhoneNumber: string) => {
+    for (const country of countries) {
+        if (fullPhoneNumber.startsWith(country.dial_code)) {
+            return {
+                countryCode: country.dial_code,
+                phone: fullPhoneNumber.substring(country.dial_code.length),
+            };
+        }
+    }
+    // Fallback if no country code matches
+    return { countryCode: "+260", phone: fullPhoneNumber };
+};
+
+
 export function EditTenant({ tenant, children }: EditTenantProps) {
   const [open, setOpen] = useState(false);
   const { updateTenant } = useTenants();
@@ -59,11 +77,24 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
     resolver: zodResolver(formSchema),
     defaultValues: tenant,
   });
+
+  useEffect(() => {
+    if (open) {
+      const { countryCode, phone } = parsePhoneNumber(tenant.phone);
+      form.reset({
+        ...tenant,
+        countryCode,
+        phone,
+      });
+      setAvatarPreview(tenant.avatarUrl);
+    }
+  }, [open, tenant, form]);
   
   function onSubmit(values: FormData) {
     const updatedTenant: Tenant = {
       ...tenant,
       ...values,
+      phone: `${values.countryCode}${values.phone}`,
       avatarUrl: avatarPreview || values.avatarUrl || '',
     };
     updateTenant(updatedTenant);
@@ -72,14 +103,6 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
       description: `${updatedTenant.name}'s details have been updated.`,
     });
     setOpen(false);
-  }
-  
-  const handleOpenChange = (isOpen: boolean) => {
-      if(isOpen) {
-          form.reset(tenant);
-          setAvatarPreview(tenant.avatarUrl);
-      }
-      setOpen(isOpen);
   }
 
   const handleUploadClick = () => {
@@ -107,7 +130,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
   const currentAvatar = avatarPreview ?? form.watch('avatarUrl');
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -196,19 +219,39 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                         )}
                     />
                     
-                    <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                        <FormItem className="col-span-2">
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                            <Input placeholder="+260 977 123 456" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
+                    <div className="col-span-2">
+                      <FormLabel>Phone Number</FormLabel>
+                      <div className="flex gap-2 mt-2">
+                          <FormField
+                              control={form.control}
+                              name="countryCode"
+                              render={({ field }) => (
+                                  <FormItem className="w-[150px]">
+                                      <Combobox
+                                          items={countries.map(c => ({ value: c.dial_code, label: `${c.flag} ${c.dial_code}`}))}
+                                          value={field.value}
+                                          onChange={field.onChange}
+                                          placeholder="Code"
+                                          searchPlaceholder="Search country..."
+                                      />
+                                      <FormMessage />
+                                  </FormItem>
+                              )}
+                          />
+                          <FormField
+                              control={form.control}
+                              name="phone"
+                              render={({ field }) => (
+                                  <FormItem className="flex-1">
+                                      <FormControl>
+                                          <Input placeholder="977 123 456" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                  </FormItem>
+                              )}
+                          />
+                      </div>
+                    </div>
                 </div>
 
                 <FormField

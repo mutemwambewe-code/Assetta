@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,11 +30,14 @@ import { AddProperty } from '../properties/add-property';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import type { Property } from '@/lib/types';
 import { ScrollArea } from '../ui/scroll-area';
+import { countries } from '@/lib/countries';
+import { Combobox } from '../ui/combobox';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email('Invalid email address.'),
-  phone: z.string().min(10, 'Please enter a valid phone number including the country code (e.g., +260...).'),
+  countryCode: z.string().min(1, "Country code is required."),
+  phone: z.string().min(1, 'Phone number is required.'),
   property: z.string().min(1, 'Please select a property.'),
   unit: z.string().min(1, 'Unit is required.'),
   rentAmount: z.coerce.number().min(1, 'Rent amount must be positive.'),
@@ -60,7 +64,8 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
     defaultValues: {
       name: '',
       email: '',
-      phone: '+260',
+      countryCode: "+260",
+      phone: '',
       property: '',
       unit: '',
       rentAmount: 0,
@@ -91,6 +96,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
 
     const tenantData = {
         ...values,
+        phone: `${values.countryCode}${values.phone}`,
         leaseStartDate: format(values.leaseStartDate, 'yyyy-MM-dd'),
         leaseEndDate: format(values.leaseEndDate, 'yyyy-MM-dd'),
     }
@@ -156,19 +162,39 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                 )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem className="col-span-2">
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+260 977 123 456" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="col-span-2">
+                  <FormLabel>Phone Number</FormLabel>
+                  <div className="flex gap-2 mt-2">
+                      <FormField
+                          control={form.control}
+                          name="countryCode"
+                          render={({ field }) => (
+                              <FormItem className="w-[150px]">
+                                  <Combobox
+                                      items={countries.map(c => ({ value: c.dial_code, label: `${c.flag} ${c.dial_code}`}))}
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      placeholder="Code"
+                                      searchPlaceholder="Search country..."
+                                  />
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                              <FormItem className="flex-1">
+                                  <FormControl>
+                                      <Input placeholder="977 123 456" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                  </div>
+                </div>
             </div>
 
             {properties.length > 0 ? (
