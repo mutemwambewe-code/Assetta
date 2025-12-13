@@ -318,7 +318,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
                             <FormLabel>Lease Start</FormLabel>
-                            <Popover>
+                            <Popover modal={true}>
                                 <PopoverTrigger asChild>
                                 <FormControl>
                                     <Button
@@ -359,7 +359,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
                         <FormLabel>Lease End</FormLabel>
-                            <Popover>
+                            <Popover modal={true}>
                                 <PopoverTrigger asChild>
                                 <FormControl>
                                     <Button
