@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,19 +28,12 @@ import { useProperties } from '../properties/property-provider';
 import { AddProperty } from '../properties/add-property';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import type { Property } from '@/lib/types';
-import { countries } from '@/lib/countries';
-import { Combobox } from '../ui/combobox';
 import { ScrollArea } from '../ui/scroll-area';
-
-const phoneFormSchema = z.object({
-  countryCode: z.string().min(1),
-  number: z.string().min(1, 'Phone number is required.'),
-});
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email('Invalid email address.'),
-  phone: z.string().min(10, 'Phone number seems too short.'),
+  phone: z.string().min(10, 'Please enter a valid phone number including the country code (e.g., +260...).'),
   property: z.string().min(1, 'Please select a property.'),
   unit: z.string().min(1, 'Unit is required.'),
   rentAmount: z.coerce.number().min(1, 'Rent amount must be positive.'),
@@ -51,22 +43,7 @@ const formSchema = z.object({
   leaseEndDate: z.date({
     required_error: 'Lease end date is required.',
   }),
-}).refine(data => {
-    // This is a workaround to validate the phone number length based on the country code.
-    // In a real app, you would likely use a more robust library like libphonenumber-js.
-    const phoneWithCode = data.phone;
-    if (!phoneWithCode.startsWith('+')) return false;
-
-    const country = countries.find(c => phoneWithCode.startsWith(`+${c.phone}`));
-    if (!country) return true; // Cannot validate if country not in our list
-    
-    const numberPart = phoneWithCode.replace(`+${country.phone}`, '');
-    return numberPart.length === country.phoneLength;
-}, {
-    message: 'Phone number has an incorrect number of digits for the selected country.',
-    path: ['phone'],
 });
-
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -78,27 +55,17 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
 
   const isProviderReady = tenantsReady && propertiesReady;
   
-  const [phoneCountryCode, setPhoneCountryCode] = useState(countries[0].phone);
-  const [phoneNumber, setPhoneNumber] = useState('');
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       email: '',
-      phone: '',
+      phone: '+260',
       property: '',
       unit: '',
       rentAmount: 0,
     },
   });
-  
-  const countryOptions = useMemo(() => countries.map(c => ({
-    value: c.phone,
-    label: `${c.label} (+${c.phone})`
-  })), []);
-
-  const selectedCountryForPhone = countries.find(c => c.phone === phoneCountryCode);
 
   const selectedPropertyName = form.watch('property');
 
@@ -134,31 +101,8 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
     });
     setOpen(false);
     form.reset();
-    setPhoneNumber('');
-    setPhoneCountryCode(countries[0].phone);
-  }
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    const selectedCountry = countries.find(c => c.phone === phoneCountryCode);
-    
-    if (selectedCountry) {
-        const maxLength = selectedCountry.phoneLength;
-        setPhoneNumber(value.slice(0, maxLength));
-        form.setValue('phone', `+${phoneCountryCode}${value.slice(0, maxLength)}`);
-    } else {
-        setPhoneNumber(value);
-        form.setValue('phone', `+${phoneCountryCode}${value}`);
-    }
   }
   
-  const handleCountryChange = (value: string) => {
-    setPhoneCountryCode(value);
-    setPhoneNumber(''); // Reset phone number when country changes
-    form.setValue('phone', `+${value}`);
-  }
-
-
   const handlePropertyAdded = (newProperty: Property) => {
     form.setValue('property', newProperty.name);
   }
@@ -212,28 +156,19 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                 )}
                 />
                 
-                <div className="col-span-2 space-y-2">
-                    <FormLabel>Phone Number</FormLabel>
-                    <div className="flex gap-2">
-                        <Combobox
-                          options={countryOptions}
-                          value={phoneCountryCode}
-                          onChange={handleCountryChange}
-                          placeholder="Country"
-                          searchPlaceholder='Search country...'
-                          className='w-[150px]'
-                        />
-                        <div className='relative w-full'>
-                            <Input 
-                                placeholder={selectedCountryForPhone ? '0'.repeat(selectedCountryForPhone.phoneLength) : '977123456'} 
-                                value={phoneNumber}
-                                onChange={handlePhoneChange}
-                            />
-                            {selectedCountryForPhone && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{phoneNumber.length}/{selectedCountryForPhone.phoneLength}</div>}
-                        </div>
-                    </div>
-                    {form.formState.errors.phone && <p className="text-sm font-medium text-destructive">{form.formState.errors.phone.message}</p>}
-                </div>
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+260 977 123 456" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
 
             {properties.length > 0 ? (

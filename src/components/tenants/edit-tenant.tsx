@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,13 +26,11 @@ import { Upload, Trash2, MoreVertical } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useProperties } from '../properties/property-provider';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
-import { countries } from '@/lib/countries';
-import { Combobox } from '../ui/combobox';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email('Invalid email address.'),
-  phone: z.string().min(10, 'Phone number seems too short.'),
+  phone: z.string().min(10, 'Please enter a valid phone number including the country code (e.g., +260...).'),
   property: z.string().min(1, 'Please select a property.'),
   unit: z.string().min(1, 'Unit is required.'),
   rentAmount: z.coerce.number().min(1, 'Rent amount must be positive.'),
@@ -41,18 +38,6 @@ const formSchema = z.object({
   leaseEndDate: z.string().min(1, 'Lease end date is required.'),
   rentStatus: z.enum(['Paid', 'Pending', 'Overdue']),
   avatarUrl: z.string().optional(),
-}).refine(data => {
-    const phoneWithCode = data.phone;
-    if (!phoneWithCode.startsWith('+')) return false;
-
-    const country = countries.find(c => phoneWithCode.startsWith(`+${c.phone}`));
-    if (!country) return true;
-    
-    const numberPart = phoneWithCode.replace(`+${country.phone}`, '');
-    return numberPart.length === country.phoneLength;
-}, {
-    message: 'Phone number has an incorrect number of digits for the selected country.',
-    path: ['phone'],
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -69,38 +54,12 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  
-  const [phoneCountryCode, setPhoneCountryCode] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: tenant,
   });
   
-  const countryOptions = useMemo(() => countries.map(c => ({
-    value: c.phone,
-    label: `${c.label} (+${c.phone})`
-  })), []);
-  
-  const selectedCountryForPhone = countries.find(c => c.phone === phoneCountryCode);
-
-  useEffect(() => {
-    if (open && tenant.phone) {
-        const country = countries.find(c => tenant.phone.startsWith(`+${c.phone}`));
-        if (country) {
-            setPhoneCountryCode(country.phone);
-            setPhoneNumber(tenant.phone.substring(country.phone.length + 1));
-        } else {
-            // Fallback for numbers not in our list
-            const defaultCountry = countries[0];
-            setPhoneCountryCode(defaultCountry.phone);
-            setPhoneNumber(tenant.phone);
-        }
-    }
-  }, [tenant.phone, open]);
-
-
   function onSubmit(values: FormData) {
     const updatedTenant: Tenant = {
       ...tenant,
@@ -144,27 +103,6 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
       reader.readAsDataURL(file);
     }
   };
-  
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    const selectedCountry = countries.find(c => c.phone === phoneCountryCode);
-    
-    if (selectedCountry) {
-        const maxLength = selectedCountry.phoneLength;
-        setPhoneNumber(value.slice(0, maxLength));
-        form.setValue('phone', `+${phoneCountryCode}${value.slice(0, maxLength)}`);
-    } else {
-        setPhoneNumber(value);
-        form.setValue('phone', `+${phoneCountryCode}${value}`);
-    }
-  }
-  
-  const handleCountryChange = (value: string) => {
-    setPhoneCountryCode(value);
-    setPhoneNumber(''); // Reset phone number when country changes
-    form.setValue('phone', `+${value}`);
-  }
-
 
   const currentAvatar = avatarPreview ?? form.watch('avatarUrl');
 
@@ -258,28 +196,19 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                         )}
                     />
                     
-                    <div className="col-span-2 space-y-2">
-                        <FormLabel>Phone Number</FormLabel>
-                        <div className="flex gap-2">
-                            <Combobox
-                                options={countryOptions}
-                                value={phoneCountryCode}
-                                onChange={handleCountryChange}
-                                placeholder="Country"
-                                searchPlaceholder='Search country...'
-                                className='w-[150px]'
-                            />
-                            <div className='relative w-full'>
-                                <Input 
-                                    placeholder={selectedCountryForPhone ? '0'.repeat(selectedCountryForPhone.phoneLength) : '977123456'} 
-                                    value={phoneNumber}
-                                    onChange={handlePhoneChange}
-                                />
-                                {selectedCountryForPhone && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{phoneNumber.length}/{selectedCountryForPhone.phoneLength}</div>}
-                            </div>
-                        </div>
-                        {form.formState.errors.phone && <p className="text-sm font-medium text-destructive">{form.formState.errors.phone.message}</p>}
-                    </div>
+                    <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                        <FormItem className="col-span-2">
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                            <Input placeholder="+260 977 123 456" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
                 </div>
 
                 <FormField
