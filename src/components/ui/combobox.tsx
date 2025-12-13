@@ -32,7 +32,7 @@ export function Combobox({ items, value, onChange, placeholder, searchPlaceholde
   const [open, setOpen] = React.useState(false)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -49,7 +49,7 @@ export function Combobox({ items, value, onChange, placeholder, searchPlaceholde
       <PopoverContent className="w-[300px] p-0">
         <Command>
           <CommandInput placeholder={searchPlaceholder || "Search item..."} />
-            <CommandList className="max-h-72">
+            <CommandList className="max-h-[300px] overflow-y-auto overflow-x-hidden">
                 <CommandEmpty>No item found.</CommandEmpty>
                 <CommandGroup>
                 {items.map((item) => (
