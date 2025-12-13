@@ -171,7 +171,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                           render={({ field }) => (
                               <FormItem className="w-[150px]">
                                   <Combobox
-                                      items={countries.map(c => ({ value: c.dial_code, label: `${c.flag} ${c.dial_code}`}))}
+                                      items={countries.map(c => ({ value: c.dial_code, label: `${c.flag} ${c.name} (${c.dial_code})`}))}
                                       value={field.value}
                                       onChange={field.onChange}
                                       placeholder="Code"

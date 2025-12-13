@@ -42,12 +42,12 @@ export function Combobox({ items, value, onChange, placeholder, searchPlaceholde
           className="w-full justify-between"
         >
           {value
-            ? items.find((item) => item.value === value)?.label
+            ? items.find((item) => item.value === value)?.label.split('(')[0]
             : placeholder || "Select item..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[300px] p-0">
         <Command>
           <CommandInput placeholder={searchPlaceholder || "Search item..."} />
             <CommandList>
