@@ -97,14 +97,14 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
 
   useEffect(() => {
     // This effect now simply ensures the recipient list is correct when the mode changes.
-    // The main logic for populating the list is in handleGroupChange.
+    // The main logic for populating the list is in handleGroupSelect.
     if (recipientType === 'individual') {
       setEditableRecipients([]);
     } else {
       const initialRecipients = getRecipientsForGroup(groupId);
       setEditableRecipients(initialRecipients);
     }
-  }, [recipientType, tenants, properties]);
+  }, [recipientType, tenants, properties, groupId]);
 
 
   const getRecipientsForGroup = (selectedGroupId: string | undefined): Tenant[] => {
@@ -120,7 +120,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     return [];
   };
 
-  const handleGroupChange = (value: string) => {
+  const handleGroupSelect = (value: string) => {
     setValue('groupId', value, { shouldValidate: true });
     const newRecipients = getRecipientsForGroup(value);
     setEditableRecipients(newRecipients);
@@ -335,13 +335,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             name="groupId"
                             control={control}
                             render={({ field }) => (
-                            <Select 
-                                onValueChange={(value) => {
-                                  field.onChange(value);
-                                  handleGroupChange(value);
-                                }} 
-                                value={field.value}
-                            >
+                            <Select value={field.value}>
                                 <SelectTrigger id="groupId">
                                     <SelectValue placeholder="Select a bulk group" />
                                 </SelectTrigger>
@@ -350,6 +344,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                                         <SelectItem 
                                             key={group.id} 
                                             value={group.id}
+                                            onSelect={() => handleGroupSelect(group.id)}
                                         >
                                             {group.name}
                                         </SelectItem>
