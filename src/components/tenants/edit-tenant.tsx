@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,7 +42,19 @@ const formSchema = z.object({
   leaseEndDate: z.string().min(1, 'Lease end date is required.'),
   rentStatus: z.enum(['Paid', 'Pending', 'Overdue']),
   avatarUrl: z.string().optional(),
+}).refine(data => {
+    const selectedCountry = countries.find(c => c.dial_code === data.countryCode);
+    if (!selectedCountry) return false; // Should not happen if countryCode is required
+    const phoneDigits = data.phone.replace(/\D/g, '');
+    return phoneDigits.length === selectedCountry.phone_length;
+}, (data) => {
+    const selectedCountry = countries.find(c => c.dial_code === data.countryCode);
+    return {
+        message: `${selectedCountry?.name || 'Selected country'} phone numbers must have ${selectedCountry?.phone_length || 'a specific number of'} digits.`,
+        path: ['phone'],
+    };
 });
+
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -61,7 +73,7 @@ const parsePhoneNumber = (fullPhoneNumber: string) => {
         }
     }
     // Fallback if no country code matches
-    return { countryCode: "+260", phone: fullPhoneNumber };
+    return { countryCode: "+260", phone: fullPhoneNumber.replace('+260', '') };
 };
 
 
@@ -77,6 +89,12 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
     resolver: zodResolver(formSchema),
     defaultValues: tenant,
   });
+  
+  const selectedCountryCode = form.watch('countryCode');
+
+  const selectedCountry = useMemo(() => {
+    return countries.find(c => c.dial_code === selectedCountryCode);
+  }, [selectedCountryCode]);
 
   useEffect(() => {
     if (open) {
@@ -91,10 +109,11 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
   }, [open, tenant, form]);
   
   function onSubmit(values: FormData) {
+    const phoneDigits = values.phone.replace(/\D/g, '');
     const updatedTenant: Tenant = {
       ...tenant,
       ...values,
-      phone: `${values.countryCode}${values.phone}`,
+      phone: `${values.countryCode}${phoneDigits}`,
       avatarUrl: avatarPreview || values.avatarUrl || '',
     };
     updateTenant(updatedTenant);
@@ -244,7 +263,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                               render={({ field }) => (
                                   <FormItem className="flex-1">
                                       <FormControl>
-                                          <Input placeholder="977 123 456" {...field} />
+                                          <Input placeholder={selectedCountry?.phone_format || '977 123 456'} {...field} />
                                       </FormControl>
                                       <FormMessage />
                                   </FormItem>

@@ -47,7 +47,19 @@ const formSchema = z.object({
   leaseEndDate: z.date({
     required_error: 'Lease end date is required.',
   }),
+}).refine(data => {
+    const selectedCountry = countries.find(c => c.dial_code === data.countryCode);
+    if (!selectedCountry) return false;
+    const phoneDigits = data.phone.replace(/\D/g, '');
+    return phoneDigits.length === selectedCountry.phone_length;
+}, (data) => {
+    const selectedCountry = countries.find(c => c.dial_code === data.countryCode);
+    return {
+        message: `${selectedCountry?.name || 'Selected country'} phone numbers must have ${selectedCountry?.phone_length || 'a specific number of'} digits.`,
+        path: ['phone'],
+    };
 });
+
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -112,10 +124,15 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
   });
 
   const selectedPropertyName = form.watch('property');
+  const selectedCountryCode = form.watch('countryCode');
 
   const selectedProperty = useMemo(() => {
     return properties.find(p => p.name === selectedPropertyName);
   }, [properties, selectedPropertyName]);
+  
+  const selectedCountry = useMemo(() => {
+    return countries.find(c => c.dial_code === selectedCountryCode);
+  }, [selectedCountryCode]);
 
   const isPropertyFull = useMemo(() => {
     if (!selectedProperty) return false;
@@ -132,10 +149,10 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
         });
         return;
     }
-
+    const phoneDigits = values.phone.replace(/\D/g, '');
     const tenantData = {
         ...values,
-        phone: `${values.countryCode}${values.phone}`,
+        phone: `${values.countryCode}${phoneDigits}`,
         leaseStartDate: format(values.leaseStartDate, 'yyyy-MM-dd'),
         leaseEndDate: format(values.leaseEndDate, 'yyyy-MM-dd'),
     }
@@ -156,7 +173,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
     const triggerButton = (
       <Button
         variant={'outline'}
-        className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+        className={cn('pl-3 text-left font-normal w-full', !field.value && 'text-muted-foreground')}
       >
         {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -252,7 +269,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                           render={({ field }) => (
                               <FormItem className="flex-1">
                                   <FormControl>
-                                      <Input placeholder="977 123 456" {...field} />
+                                      <Input placeholder={selectedCountry?.phone_format || '977 123 456'} {...field} />
                                   </FormControl>
                                   <FormMessage />
                               </FormItem>

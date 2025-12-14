@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { countries } from "@/lib/countries"
 
 interface ComboboxProps {
     items: { value: string; label: string }[];
@@ -31,6 +32,9 @@ interface ComboboxProps {
 export function Combobox({ items, value, onChange, placeholder, searchPlaceholder }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
+  const selectedItem = items.find((item) => item.value === value);
+  const country = countries.find(c => c.dial_code === value);
+
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
@@ -40,20 +44,18 @@ export function Combobox({ items, value, onChange, placeholder, searchPlaceholde
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {value
-            ? items.find((item) => item.value === value)?.label.split(' (')[0]
-            : placeholder || "Select item..."}
+          {country ? `${country.flag} ${country.dial_code}` : placeholder || "Select..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent 
+      <PopoverContent
         className="w-[var(--radix-popover-trigger-width)] p-0"
         sideOffset={8}
         collisionPadding={8}
       >
         <Command>
-          <CommandInput placeholder={searchPlaceholder || "Search item..."} />
-            <CommandList className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+          <CommandInput placeholder={searchPlaceholder || "Search..."} />
+          <CommandList className="max-h-[250px] overflow-y-auto overflow-x-hidden">
                 <CommandEmpty>No item found.</CommandEmpty>
                 <CommandGroup>
                 {items.map((item) => (
