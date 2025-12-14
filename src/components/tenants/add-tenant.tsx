@@ -55,7 +55,7 @@ const formSchema = z.object({
 }, (data) => {
     const selectedCountry = countries.find(c => c.dial_code === data.countryCode);
     return {
-        message: `${selectedCountry?.name || 'Selected country'} phone numbers must have ${selectedCountry?.phone_length || 'a specific number of'} digits.`,
+        message: `Phone numbers in ${selectedCountry?.name || 'the selected country'} must have ${selectedCountry?.phone_length || 'a specific number of'} digits.`,
         path: ['phone'],
     };
 });
@@ -269,7 +269,11 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                           render={({ field }) => (
                               <FormItem className="flex-1">
                                   <FormControl>
-                                      <Input placeholder={selectedCountry?.phone_format || '977 123 456'} {...field} />
+                                      <Input 
+                                        placeholder={selectedCountry?.phone_format || '977 123 456'} 
+                                        maxLength={selectedCountry ? selectedCountry.phone_length + 2 : 15}
+                                        {...field} 
+                                      />
                                   </FormControl>
                                   <FormMessage />
                               </FormItem>
