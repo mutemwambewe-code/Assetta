@@ -265,8 +265,17 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                                       <FormControl>
                                           <Input 
                                             placeholder={selectedCountry?.phone_format || '977 123 456'}
-                                            maxLength={selectedCountry ? selectedCountry.phone_length + 2 : 15}
-                                            {...field} 
+                                            {...field}
+                                            onChange={(e) => {
+                                                if (selectedCountry) {
+                                                    const digitsOnly = e.target.value.replace(/\D/g, '');
+                                                    if (digitsOnly.length <= selectedCountry.phone_length) {
+                                                        field.onChange(e.target.value);
+                                                    }
+                                                } else {
+                                                    field.onChange(e.target.value);
+                                                }
+                                            }}
                                           />
                                       </FormControl>
                                       <FormMessage />
