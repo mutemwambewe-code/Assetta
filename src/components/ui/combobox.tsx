@@ -63,7 +63,7 @@ export function Combobox({ items, value, onChange, placeholder, searchPlaceholde
                     key={item.label}
                     value={item.label}
                     onSelect={() => {
-                        onChange(item.value === value ? "" : item.value)
+                        onChange(item.value)
                         setOpen(false)
                     }}
                     >
