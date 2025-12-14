@@ -96,13 +96,16 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
 
 
   useEffect(() => {
+    // This effect now simply ensures the recipient list is correct when the mode changes.
+    // The main logic for populating the list is in handleGroupChange.
     if (recipientType === 'individual') {
       setEditableRecipients([]);
     } else {
       const initialRecipients = getRecipientsForGroup(groupId);
       setEditableRecipients(initialRecipients);
     }
-  }, [recipientType, groupId, tenants, properties]);
+  }, [recipientType, tenants, properties]);
+
 
   const getRecipientsForGroup = (selectedGroupId: string | undefined): Tenant[] => {
     if (!selectedGroupId) return [];
@@ -117,8 +120,8 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     return [];
   };
 
-  const handleGroupSelect = (value: string) => {
-    setValue('groupId', value);
+  const handleGroupChange = (value: string) => {
+    setValue('groupId', value, { shouldValidate: true });
     const newRecipients = getRecipientsForGroup(value);
     setEditableRecipients(newRecipients);
   };
@@ -333,7 +336,10 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             control={control}
                             render={({ field }) => (
                             <Select 
-                                onValueChange={field.onChange} 
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  handleGroupChange(value);
+                                }} 
                                 value={field.value}
                             >
                                 <SelectTrigger id="groupId">
@@ -344,7 +350,6 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                                         <SelectItem 
                                             key={group.id} 
                                             value={group.id}
-                                            onSelect={() => handleGroupSelect(group.id)}
                                         >
                                             {group.name}
                                         </SelectItem>
