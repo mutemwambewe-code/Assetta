@@ -30,6 +30,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 const formSchema = z.object({
   tenantId: z.string().optional(),
@@ -73,6 +74,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [isTextareaHighlighted, setIsTextareaHighlighted] = useState(false);
   const [editableRecipients, setEditableRecipients] = useState<Tenant[]>([]);
+  const [isGroupPopoverOpen, setGroupPopoverOpen] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -83,7 +85,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     },
   });
 
-  const { control, handleSubmit, watch, formState: { errors }, setValue } = form;
+  const { control, handleSubmit, watch, formState: { errors }, setValue, getValues } = form;
 
   const selectedTenantId = watch('tenantId');
   const recipientType = watch('recipientType');
@@ -91,20 +93,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
   
-  // This value is determined at build time and will be constant on the client
   const isSenderIdMissing = process.env.NEXT_PUBLIC_AFRICASTALKING_USERNAME !== 'sandbox' && !process.env.NEXT_PUBLIC_AFRICASTALKING_SENDER_ID;
-
-
-  useEffect(() => {
-    // This effect now simply ensures the recipient list is correct when the mode changes.
-    // The main logic for populating the list is in handleGroupSelect.
-    if (recipientType === 'individual') {
-      setEditableRecipients([]);
-    } else {
-      const initialRecipients = getRecipientsForGroup(groupId);
-      setEditableRecipients(initialRecipients);
-    }
-  }, [recipientType, tenants, properties, groupId]);
 
 
   const getRecipientsForGroup = (selectedGroupId: string | undefined): Tenant[] => {
@@ -120,11 +109,17 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     return [];
   };
 
-  const handleGroupSelect = (value: string) => {
-    setValue('groupId', value, { shouldValidate: true });
-    const newRecipients = getRecipientsForGroup(value);
-    setEditableRecipients(newRecipients);
-  };
+  const handleGroupPopoverChange = (open: boolean) => {
+    setGroupPopoverOpen(open);
+    // When the popover closes, we sync the recipient list.
+    if (!open) {
+        const currentGroupId = getValues('groupId');
+        if (currentGroupId) {
+            const newRecipients = getRecipientsForGroup(currentGroupId);
+            setEditableRecipients(newRecipients);
+        }
+    }
+  }
 
 
   const previewTenant = useMemo(() => {
@@ -196,8 +191,6 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
         if (!firstErrorMessage) {
           firstErrorMessage = res.message;
         }
-        // Update the specific log with an error status
-        // This is a fire-and-forget update, you might want to await it if it's critical
         addMessageLog({
             id: localMessageId,
             tenantId: tenant.id,
@@ -243,7 +236,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     setTimeout(() => {
         messageBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setIsTextareaHighlighted(true);
-        setTimeout(() => setIsTextareaHighlighted(false), 1500); // Highlight for 1.5s
+        setTimeout(() => setIsTextareaHighlighted(false), 1500);
     }, 100);
   }
 
@@ -276,6 +269,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                       field.onChange(value);
                       setValue('tenantId', '');
                       setValue('groupId', '');
+                      setEditableRecipients([]);
                   }}
                   defaultValue={field.value}
                   className="flex items-center space-x-4"
@@ -307,7 +301,6 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                     <Select 
                       onValueChange={(value) => {
                         field.onChange(value);
-                        setMessage('');
                       }} 
                       defaultValue={field.value}
                       value={field.value}
@@ -335,22 +328,29 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                             name="groupId"
                             control={control}
                             render={({ field }) => (
-                            <Select value={field.value}>
-                                <SelectTrigger id="groupId">
-                                    <SelectValue placeholder="Select a bulk group" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {bulkGroups.map((group) => (
-                                        <SelectItem 
-                                            key={group.id} 
-                                            value={group.id}
-                                            onSelect={() => handleGroupSelect(group.id)}
+                                <Popover open={isGroupPopoverOpen} onOpenChange={handleGroupPopoverChange}>
+                                    <PopoverTrigger asChild>
+                                        <SelectTrigger id="groupId">
+                                            <SelectValue placeholder="Select a bulk group" />
+                                        </SelectTrigger>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value)
+                                            }}
+                                            value={field.value}
                                         >
-                                            {group.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                            <SelectContent className="w-full">
+                                                {bulkGroups.map((group) => (
+                                                    <SelectItem key={group.id} value={group.id}>
+                                                        {group.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </PopoverContent>
+                                </Popover>
                             )}
                         />
                     </div>
@@ -459,3 +459,5 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     </Card>
   );
 }
+
+    
