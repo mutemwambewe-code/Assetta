@@ -13,7 +13,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSearchParams } from 'next/navigation';
-import { Loader2, Send, Wand2, Eye, Pencil, Users, ChevronDown, X, AlertTriangle } from 'lucide-react';
+import { Loader2, Send, Wand2, Eye, Pencil, Users, ChevronDown, X, AlertTriangle, ChevronsUpDown, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -30,6 +30,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
 
 const formSchema = z.object({
   tenantId: z.string().optional(),
@@ -73,6 +75,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [isTextareaHighlighted, setIsTextareaHighlighted] = useState(false);
   const [editableRecipients, setEditableRecipients] = useState<Tenant[]>([]);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -108,9 +111,10 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   };
 
   const handleGroupSelection = (value: string) => {
-    setValue('groupId', value);
     const newRecipients = getRecipientsForGroup(value);
+    setValue('groupId', value);
     setEditableRecipients(newRecipients);
+    setPopoverOpen(false);
   };
 
 
@@ -316,18 +320,46 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="groupId">Select Group</Label>
-                         <Select onValueChange={handleGroupSelection} value={groupId}>
-                            <SelectTrigger id="groupId">
-                                <SelectValue placeholder="Select a bulk group" />
-                            </SelectTrigger>
-                            <SelectContent>
+                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={popoverOpen}
+                              className="w-full justify-between"
+                            >
+                              {groupId
+                                ? bulkGroups.find((group) => group.id === groupId)?.name
+                                : "Select a bulk group"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                            <Command>
+                              <CommandInput placeholder="Search groups..." />
+                              <CommandEmpty>No group found.</CommandEmpty>
+                              <CommandGroup>
                                 {bulkGroups.map((group) => (
-                                    <SelectItem key={group.id} value={group.id}>
-                                        {group.name}
-                                    </SelectItem>
+                                  <CommandItem
+                                    key={group.id}
+                                    value={group.id}
+                                    onSelect={(currentValue) => {
+                                      handleGroupSelection(currentValue);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        groupId === group.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {group.name}
+                                  </CommandItem>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                     </div>
                     {editableRecipients.length > 0 && (
                         <Collapsible className='-mx-4' defaultOpen>
