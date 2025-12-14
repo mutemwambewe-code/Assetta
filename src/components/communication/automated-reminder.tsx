@@ -30,7 +30,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 const formSchema = z.object({
   tenantId: z.string().optional(),
@@ -74,7 +73,6 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [isTextareaHighlighted, setIsTextareaHighlighted] = useState(false);
   const [editableRecipients, setEditableRecipients] = useState<Tenant[]>([]);
-  const [isGroupPopoverOpen, setGroupPopoverOpen] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -109,17 +107,11 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     return [];
   };
 
-  const handleGroupPopoverChange = (open: boolean) => {
-    setGroupPopoverOpen(open);
-    // When the popover closes, we sync the recipient list.
-    if (!open) {
-        const currentGroupId = getValues('groupId');
-        if (currentGroupId) {
-            const newRecipients = getRecipientsForGroup(currentGroupId);
-            setEditableRecipients(newRecipients);
-        }
-    }
-  }
+  const handleGroupSelection = (value: string) => {
+    setValue('groupId', value);
+    const newRecipients = getRecipientsForGroup(value);
+    setEditableRecipients(newRecipients);
+  };
 
 
   const previewTenant = useMemo(() => {
@@ -324,35 +316,18 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="groupId">Select Group</Label>
-                        <Controller
-                            name="groupId"
-                            control={control}
-                            render={({ field }) => (
-                                <Popover open={isGroupPopoverOpen} onOpenChange={handleGroupPopoverChange}>
-                                    <PopoverTrigger asChild>
-                                        <SelectTrigger id="groupId">
-                                            <SelectValue placeholder="Select a bulk group" />
-                                        </SelectTrigger>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                field.onChange(value)
-                                            }}
-                                            value={field.value}
-                                        >
-                                            <SelectContent className="w-full">
-                                                {bulkGroups.map((group) => (
-                                                    <SelectItem key={group.id} value={group.id}>
-                                                        {group.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </PopoverContent>
-                                </Popover>
-                            )}
-                        />
+                         <Select onValueChange={handleGroupSelection} value={groupId}>
+                            <SelectTrigger id="groupId">
+                                <SelectValue placeholder="Select a bulk group" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {bulkGroups.map((group) => (
+                                    <SelectItem key={group.id} value={group.id}>
+                                        {group.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     {editableRecipients.length > 0 && (
                         <Collapsible className='-mx-4' defaultOpen>
@@ -459,5 +434,3 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     </Card>
   );
 }
-
-    
