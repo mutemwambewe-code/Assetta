@@ -21,7 +21,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
               <TemplateProvider>
                 <MessageLogProvider>
                   <AppLayout>{children}</AppLayout>
-                  <IntroTutorial />
+                  {/* <IntroTutorial /> */}
                 </MessageLogProvider>
               </TemplateProvider>
             </TenantProvider>
