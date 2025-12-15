@@ -72,6 +72,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const { addMessageLog } = useMessageLog();
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState('write');
+  const [previewMessage, setPreviewMessage] = useState('');
   const messageBoxRef = useRef<HTMLDivElement>(null);
   const [isTextareaHighlighted, setIsTextareaHighlighted] = useState(false);
   const [editableRecipients, setEditableRecipients] = useState<Tenant[]>([]);
@@ -234,6 +235,13 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
         setIsTextareaHighlighted(true);
         setTimeout(() => setIsTextareaHighlighted(false), 1500);
     }, 100);
+  }
+
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
+    if (tabValue === 'preview') {
+        setPreviewMessage(replacePlaceholders(message, previewTenant));
+    }
   }
 
   const isSendDisabled = isSenderIdMissing || !message || isSending || (recipientType === 'individual' && !selectedTenantId) || (recipientType === 'group' && (!groupId || editableRecipients.length === 0));
@@ -406,7 +414,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
 
 
             <div className="space-y-2" ref={messageBoxRef}>
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                     <TabsList className='grid w-full grid-cols-2'>
                         <TabsTrigger value="write"><Pencil className='mr-2'/> Write</TabsTrigger>
                         <TabsTrigger value="preview" disabled={!previewTenant}><Eye className='mr-2' /> Preview</TabsTrigger>
@@ -441,7 +449,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                     </TabsContent>
                     <TabsContent value="preview" className='mt-4'>
                         <div className="p-4 border rounded-md bg-muted/20 min-h-[170px] text-sm whitespace-pre-wrap">
-                            {replacePlaceholders(message, previewTenant)}
+                            {previewMessage}
                         </div>
                          <p className="text-xs text-muted-foreground mt-2">
                             {recipientType === 'group' && editableRecipients.length > 0
@@ -468,3 +476,5 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     </Card>
   );
 }
+
+    
