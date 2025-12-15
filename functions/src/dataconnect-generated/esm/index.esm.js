@@ -104,4 +104,3 @@ searchMovieRef.operationName = 'SearchMovie';
 export function searchMovie(dcOrVars, vars) {
   return executeQuery(searchMovieRef(dcOrVars, vars));
 }
-

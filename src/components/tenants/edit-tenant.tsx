@@ -267,11 +267,9 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                                             placeholder={selectedCountry?.phone_format || '977 123 456'}
                                             {...field}
                                             onChange={(e) => {
-                                                if (selectedCountry) {
-                                                    const digitsOnly = e.target.value.replace(/\D/g, '');
-                                                    if (digitsOnly.length <= selectedCountry.phone_length) {
-                                                        field.onChange(e.target.value);
-                                                    }
+                                                const digitsOnly = e.target.value.replace(/\D/g, '');
+                                                if (selectedCountry && digitsOnly.length > selectedCountry.phone_length) {
+                                                    field.onChange(digitsOnly.slice(0, selectedCountry.phone_length));
                                                 } else {
                                                     field.onChange(e.target.value);
                                                 }

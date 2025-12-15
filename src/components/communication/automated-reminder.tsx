@@ -31,7 +31,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 
 const formSchema = z.object({
   tenantId: z.string().optional(),
@@ -337,26 +337,28 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                           <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                             <Command>
                               <CommandInput placeholder="Search groups..." />
-                              <CommandEmpty>No group found.</CommandEmpty>
-                              <CommandGroup>
-                                {bulkGroups.map((group) => (
-                                  <CommandItem
-                                    key={group.id}
-                                    value={group.id}
-                                    onSelect={(currentValue) => {
-                                      handleGroupSelection(currentValue);
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        groupId === group.id ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    {group.name}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
+                              <CommandList>
+                                <CommandEmpty>No group found.</CommandEmpty>
+                                <CommandGroup>
+                                  {bulkGroups.map((group) => (
+                                    <CommandItem
+                                      key={group.id}
+                                      value={group.id}
+                                      onSelect={(currentValue) => {
+                                        handleGroupSelection(currentValue);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          groupId === group.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {group.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
                             </Command>
                           </PopoverContent>
                         </Popover>

@@ -1068,4 +1068,3 @@ executeMutation(ref).then((response) => {
   console.log(data.review_delete);
 });
 ```
-

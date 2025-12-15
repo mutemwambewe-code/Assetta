@@ -948,5 +948,3 @@ export default function DeleteReviewComponent() {
   }
   return <div>Mutation execution {mutation.isSuccess ? 'successful' : 'failed'}!</div>;
 }
-```
-
