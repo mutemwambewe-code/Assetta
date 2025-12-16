@@ -69,7 +69,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const { toast } = useToast();
   const { tenants } = useTenants();
   const { properties } = useProperties();
-  const { addMessageLog } = useMessageLog();
+  const { addMessageLog, updateMessageStatus } = useMessageLog();
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState('write');
   const [previewMessage, setPreviewMessage] = useState('');
@@ -94,9 +94,6 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const groupId = watch('groupId');
   
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
-  
-  const isSenderIdMissing = process.env.NEXT_PUBLIC_AFRICASTALKING_USERNAME !== 'sandbox' && !process.env.NEXT_PUBLIC_AFRICASTALKING_SENDER_ID;
-
 
   const getRecipientsForGroup = (selectedGroupId: string | undefined): Tenant[] => {
     if (!selectedGroupId) return [];
@@ -110,7 +107,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     }
     return [];
   };
-
+  
   const handleGroupSelection = (value: string) => {
     const newRecipients = getRecipientsForGroup(value);
     setValue('groupId', value);
@@ -170,7 +167,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
       const personalizedMessage = replacePlaceholders(message, tenant);
       const localMessageId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      addMessageLog({
+      await addMessageLog({
         id: localMessageId,
         tenantId: tenant.id,
         tenantName: tenant.name,
@@ -181,23 +178,16 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
         status: 'Sending...'
       });
 
-      const res = await sendSms([tenant.phone], personalizedMessage, localMessageId);
+      const res = await sendSms([tenant.phone], personalizedMessage);
 
       if (!res.success) {
         allSuccessful = false;
         if (!firstErrorMessage) {
           firstErrorMessage = res.message;
         }
-        addMessageLog({
-            id: localMessageId,
-            tenantId: tenant.id,
-            tenantName: tenant.name,
-            message: personalizedMessage,
-            date: new Date().toISOString(),
-            method: 'SMS',
-            direction: 'outgoing',
-            status: `Failed: ${res.message}`
-        });
+        await updateMessageStatus(localMessageId, `Failed: ${res.message}`);
+      } else {
+        await updateMessageStatus(localMessageId, 'Sent', res.response?.SMSMessageData?.Recipients[0]?.messageId);
       }
     }
 
@@ -320,7 +310,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="groupId">Select Group</Label>
-                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
@@ -344,8 +334,8 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                                     <CommandItem
                                       key={group.id}
                                       value={group.id}
-                                      onSelect={(currentValue) => {
-                                        handleGroupSelection(currentValue);
+                                      onSelect={() => {
+                                        handleGroupSelection(group.id);
                                       }}
                                     >
                                       <Check
@@ -468,5 +458,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     </Card>
   );
 }
+
+    
 
     
