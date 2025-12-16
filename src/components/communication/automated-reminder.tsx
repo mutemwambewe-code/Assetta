@@ -244,7 +244,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     }
   }
 
-  const isSendDisabled = isSenderIdMissing || !message || isSending || (recipientType === 'individual' && !selectedTenantId) || (recipientType === 'group' && (!groupId || editableRecipients.length === 0));
+  const isSendDisabled = !message || isSending || (recipientType === 'individual' && !selectedTenantId) || (recipientType === 'group' && (!groupId || editableRecipients.length === 0));
 
   return (
     <Card className="mt-4 border-none shadow-none">
@@ -255,15 +255,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                 <CardDescription>Select recipients and write your message.</CardDescription>
             </CardHeader>
           <CardContent className="space-y-6">
-            {isSenderIdMissing && (
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Sender ID Not Configured</AlertTitle>
-                    <AlertDescription>
-                        Your Africa's Talking Sender ID is not set for the live environment. SMS sending is disabled until it is configured in your project's environment variables.
-                    </AlertDescription>
-                </Alert>
-            )}
+            
             <Controller
               name="recipientType"
               control={control}
