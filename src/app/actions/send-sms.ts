@@ -31,9 +31,6 @@ export async function sendSms(to: string | string[], message: string, localMessa
       message,
       // It can be a shortcode or an alphanumeric ID that you have registered with Africa's Talking.
       from: process.env.AFRICASTALKING_SENDER_ID,
-      // Pass the local message ID to the bulk SMS metadata
-      bulkSMSMode: 1,
-      metadata: { localMessageId: localMessageId || '' }
     });
     console.log('SMS sent successfully:', response);
     return { success: true, message: 'SMS sent successfully!', response };
