@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, ReactNode, useEffect, useCallback, useMemo } from 'react';
@@ -81,6 +82,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const newDocRef = doc(tenantsCollection);
     const newTenant: Tenant = {
         ...tenantData,
+        email: tenantData.email || '',
         id: newDocRef.id,
         avatarUrl: '',
         rentStatus: 'Pending',

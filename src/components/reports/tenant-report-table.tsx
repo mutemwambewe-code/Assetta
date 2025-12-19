@@ -98,7 +98,7 @@ export function TenantReportTable({ tenants }: TenantReportTableProps) {
                     <TableCell className="hidden md:table-cell">
                         <div className='flex flex-col'>
                             <span>{tenant.phone}</span>
-                            <span className='text-muted-foreground text-xs'>{tenant.email}</span>
+                            {tenant.email && <span className='text-muted-foreground text-xs'>{tenant.email}</span>}
                         </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">{format(new Date(tenant.leaseEndDate), 'PPP')}</TableCell>

@@ -107,7 +107,7 @@ export const generateTenantListPDF = (tenants: Tenant[]) => {
       tenant.property,
       tenant.unit,
       tenant.phone,
-      tenant.email,
+      tenant.email || 'N/A',
       tenant.rentStatus,
     ];
     tableRows.push(tenantData);
@@ -133,7 +133,7 @@ export const generateTenantListExcel = (tenants: Tenant[]) => {
       Property: t.property,
       Unit: t.unit,
       Phone: t.phone,
-      Email: t.email,
+      Email: t.email || 'N/A',
       'Rent Status': t.rentStatus,
       'Rent Amount': t.rentAmount,
       'Lease Start': t.leaseStartDate,

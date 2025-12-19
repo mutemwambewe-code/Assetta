@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -108,10 +109,12 @@ function TenantDetailPage({ title }: { title?: string }) {
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span>{tenant.phone}</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span>{tenant.email}</span>
-                </div>
+                {tenant.email && (
+                  <div className="flex items-center gap-3 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{tenant.email}</span>
+                  </div>
+                )}
                 <div className="border-t pt-4 space-y-2">
                      <div className='flex justify-between items-center text-sm'>
                         <span className='text-muted-foreground'>Rent Amount:</span>

@@ -82,10 +82,12 @@ export function TenantCard({ tenant }: TenantCardProps) {
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <span>{tenant.phone}</span>
             </div>
-            <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{tenant.email}</span>
-            </div>
+            {tenant.email && (
+              <div className="flex items-center gap-3 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span>{tenant.email}</span>
+              </div>
+            )}
             <div className='flex items-center justify-between pt-2'>
                 <div className='text-sm'>
                     <p className="text-muted-foreground">Rent</p>

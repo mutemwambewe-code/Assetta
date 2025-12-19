@@ -35,7 +35,7 @@ import { Combobox } from '../ui/combobox';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
-  email: z.string().email('Invalid email address.'),
+  email: z.string().email('Invalid email address.').optional().or(z.literal('')),
   countryCode: z.string().min(1, "Country code is required."),
   phone: z.string().min(1, 'Phone number is required.'),
   property: z.string().min(1, 'Please select a property.'),
@@ -235,7 +235,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                 name="email"
                 render={({ field }) => (
                     <FormItem className="col-span-2">
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email (Optional)</FormLabel>
                     <FormControl>
                         <Input placeholder="email@example.com" {...field} />
                     </FormControl>

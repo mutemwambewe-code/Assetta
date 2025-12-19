@@ -32,7 +32,7 @@ import { Combobox } from '../ui/combobox';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
-  email: z.string().email('Invalid email address.'),
+  email: z.string().email('Invalid email address.').optional().or(z.literal('')),
   countryCode: z.string().min(1, "Country code is required."),
   phone: z.string().min(1, 'Phone number is required.'),
   property: z.string().min(1, 'Please select a property.'),
@@ -103,6 +103,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
         ...tenant,
         countryCode,
         phone,
+        email: tenant.email || '',
       });
       setAvatarPreview(tenant.avatarUrl);
     }
@@ -113,6 +114,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
     const updatedTenant: Tenant = {
       ...tenant,
       ...values,
+      email: values.email || '',
       phone: `${values.countryCode}${phoneDigits}`,
       avatarUrl: avatarPreview || values.avatarUrl || '',
     };
@@ -229,7 +231,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                         name="email"
                         render={({ field }) => (
                             <FormItem className="col-span-2">
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>Email (Optional)</FormLabel>
                             <FormControl>
                                 <Input placeholder="email@example.com" {...field} />
                             </FormControl>

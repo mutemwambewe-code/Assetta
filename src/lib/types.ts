@@ -7,7 +7,7 @@ export type Tenant = {
   property: string;
   unit: string;
   phone: string;
-  email: string;
+  email: string | '';
   rentStatus: 'Paid' | 'Pending' | 'Overdue';
   rentAmount: number;
   leaseStartDate: string;
