@@ -36,7 +36,7 @@ const formSchema = z.object({
   countryCode: z.string().min(1, "Country code is required."),
   phone: z.string().min(1, 'Phone number is required.'),
   property: z.string().min(1, 'Please select a property.'),
-  unit: z.string().min(1, 'Unit is required.'),
+  unit: z.string().min(1, 'Room Name/Number is required.'),
   rentAmount: z.coerce.number().min(1, 'Rent amount must be positive.'),
   leaseStartDate: z.string().min(1, 'Lease start date is required.'),
   leaseEndDate: z.string().min(1, 'Lease end date is required.'),
@@ -313,7 +313,7 @@ export function EditTenant({ tenant, children }: EditTenantProps) {
                         name="unit"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Unit</FormLabel>
+                            <FormLabel>Room Name/ Number</FormLabel>
                             <FormControl>
                                 <Input placeholder="e.g. A01" {...field} />
                             </FormControl>
