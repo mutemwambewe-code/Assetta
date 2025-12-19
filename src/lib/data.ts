@@ -113,14 +113,14 @@ export const initialTemplates: Template[] = [
         id: 'tmpl1',
         category: "Rent Reminders",
         title: "Gentle Rent Due Reminder",
-        content: "Hi {{name}}, just a friendly reminder that your rent of ZMW {{rent_due}} is due on {{due_date}}. Thank you!",
+        content: "Hi {{name}}, just a friendly reminder that your rent of {{rent_due}} is due on {{due_date}}. Thank you!",
         status: 'active'
     },
     {
         id: 'tmpl2',
         category: "Rent Reminders",
         title: "Rent Overdue Notice",
-        content: "Hi {{name}}, your rent of ZMW {{rent_due}} was due on {{due_date}} and is now overdue. Please make the payment as soon as possible to avoid late fees. Thank you.",
+        content: "Hi {{name}}, your rent of {{rent_due}} was due on {{due_date}} and is now overdue. Please make the payment as soon as possible to avoid late fees. Thank you.",
         status: 'active'
     },
     {
