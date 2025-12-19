@@ -23,6 +23,18 @@ export function MessageLogs() {
     router.push(`/communication/${logId}`);
   };
 
+  const getStatusVariant = (status?: string) => {
+    if (!status) return 'secondary';
+    const s = status.toLowerCase();
+    if (s.includes('success') || s.includes('sent') || s.includes('delivered') || s.includes('received')) {
+        return 'default';
+    }
+    if (s.includes('failed') || s.includes('rejected')) {
+        return 'destructive';
+    }
+    return 'secondary';
+  }
+
   return (
     <Card className="mt-4 border-none shadow-none">
       <CardHeader>
@@ -60,7 +72,7 @@ export function MessageLogs() {
                       {log.message}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      {log.status && <Badge variant={log.status === 'Success' || log.status === 'Received' ? 'default' : 'destructive'}>{log.status}</Badge>}
+                      {log.status && <Badge variant={getStatusVariant(log.status)}>{log.status}</Badge>}
                     </TableCell>
                   </TableRow>
                 ))}
