@@ -214,10 +214,10 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
           <DialogTitle>Add New Tenant</DialogTitle>
           <DialogDescription>Enter the details of the new tenant below.</DialogDescription>
         </DialogHeader>
-        <div className="px-1">
-          <ScrollArea className="max-h-[70vh] pr-5 -mr-5">
+        
+        <ScrollArea className="max-h-[70vh] -mx-6 px-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pr-1">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                     <FormField
                     control={form.control}
@@ -405,7 +405,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
               </form>
             </Form>
           </ScrollArea>
-        </div>
+        
       </DialogContent>
     </Dialog>
   );
