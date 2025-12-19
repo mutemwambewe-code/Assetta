@@ -57,8 +57,8 @@ const replacePlaceholders = (message: string, tenant?: Tenant): string => {
   
     return message
       .replace(/{{name}}/g, tenant.name)
-      .replace(/{{rent_due}}/g, `ZMW ${tenant.rentAmount.toLocaleString()}`)
-      .replace(/{{arrears}}/g, `ZMW ${arrears.toLocaleString()}`)
+      .replace(/{{rent_due}}/g, tenant.rentAmount.toLocaleString())
+      .replace(/{{arrears}}/g, arrears.toLocaleString())
       .replace(/{{due_date}}/g, dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }))
       .replace(/{{property}}/g, tenant.property)
       .replace(/{{lease_end_date}}/g, new Date(tenant.leaseEndDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
@@ -458,6 +458,8 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     </Card>
   );
 }
+
+    
 
     
 
