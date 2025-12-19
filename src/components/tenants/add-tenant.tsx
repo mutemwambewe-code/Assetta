@@ -217,13 +217,13 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
         
         <ScrollArea className="max-h-[70vh] -mx-6 px-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 pr-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
-                        <FormItem className="col-span-2">
+                        <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
                             <Input placeholder="e.g. John Doe" {...field} />
@@ -236,7 +236,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     control={form.control}
                     name="email"
                     render={({ field }) => (
-                        <FormItem className="col-span-2">
+                        <FormItem>
                         <FormLabel>Email (Optional)</FormLabel>
                         <FormControl>
                             <Input placeholder="email@example.com" {...field} />
@@ -245,50 +245,50 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                         </FormItem>
                     )}
                     />
+                </div>
                     
-                    <div className="col-span-2">
-                      <FormLabel>Phone Number</FormLabel>
-                      <div className="flex gap-2 mt-2">
-                          <FormField
-                              control={form.control}
-                              name="countryCode"
-                              render={({ field }) => (
-                                  <FormItem className="w-[150px]">
-                                      <Combobox
-                                          items={countries.map(c => ({ value: c.dial_code, label: `${c.flag} ${c.name} (${c.dial_code})`}))}
-                                          value={field.value}
-                                          onChange={field.onChange}
-                                          placeholder="Code"
-                                          searchPlaceholder="Search country..."
-                                      />
-                                      <FormMessage />
-                                  </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={form.control}
-                              name="phone"
-                              render={({ field }) => (
-                                  <FormItem className="flex-1">
-                                      <FormControl>
-                                          <Input 
-                                            placeholder={selectedCountry?.phone_format || '977 123 456'} 
-                                            {...field}
-                                            onChange={(e) => {
-                                                const digitsOnly = e.target.value.replace(/\D/g, '');
-                                                if (selectedCountry && digitsOnly.length > selectedCountry.phone_length) {
-                                                    field.onChange(digitsOnly.slice(0, selectedCountry.phone_length));
-                                                } else {
-                                                    field.onChange(e.target.value);
-                                                }
-                                            }}
-                                          />
-                                      </FormControl>
-                                      <FormMessage />
-                                  </FormItem>
-                              )}
-                          />
-                      </div>
+                <div className="col-span-2">
+                    <FormLabel>Phone Number</FormLabel>
+                    <div className="flex gap-2 mt-2">
+                        <FormField
+                            control={form.control}
+                            name="countryCode"
+                            render={({ field }) => (
+                                <FormItem className="w-[150px]">
+                                    <Combobox
+                                        items={countries.map(c => ({ value: c.dial_code, label: `${c.flag} ${c.name} (${c.dial_code})`}))}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Code"
+                                        searchPlaceholder="Search country..."
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl>
+                                        <Input 
+                                        placeholder={selectedCountry?.phone_format || '977 123 456'} 
+                                        {...field}
+                                        onChange={(e) => {
+                                            const digitsOnly = e.target.value.replace(/\D/g, '');
+                                            if (selectedCountry && digitsOnly.length > selectedCountry.phone_length) {
+                                                field.onChange(digitsOnly.slice(0, selectedCountry.phone_length));
+                                            } else {
+                                                field.onChange(e.target.value);
+                                            }
+                                        }}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </div>
                 </div>
 
