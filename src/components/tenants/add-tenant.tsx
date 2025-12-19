@@ -215,9 +215,9 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
           <DialogDescription>Enter the details of the new tenant below.</DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+        <ScrollArea className="max-h-[70vh]">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 pr-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                     control={form.control}
@@ -396,7 +396,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
                     />
                 </div>
 
-                <DialogFooter className="sticky bottom-0 bg-background py-4 -mx-6 px-6">
+                <DialogFooter className="sticky bottom-0 bg-background py-4 px-1">
                   <Button type="submit" disabled={!isProviderReady || properties.length === 0 || isPropertyFull}>
                     {!isProviderReady && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Tenant
