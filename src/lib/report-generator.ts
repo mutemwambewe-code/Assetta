@@ -15,6 +15,19 @@ declare module 'jspdf' {
   }
 }
 
+const isIOS = () => {
+    if (typeof window === 'undefined') return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
+};
+
+const saveOrOpenPDF = (doc: jsPDFType, filename: string) => {
+    if (isIOS()) {
+        doc.output('dataurlnewwindow');
+    } else {
+        doc.save(filename);
+    }
+};
+
 const addHeader = (doc: jsPDFType, title: string) => {
   doc.setFontSize(20);
   doc.setTextColor(40);
@@ -124,7 +137,8 @@ export const generateTenantListPDF = (tenants: Tenant[]) => {
   const pageCount = doc.internal.getNumberOfPages();
   addFooter(doc, pageCount);
   
-  doc.save(`Assetta_Tenant_List_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  const filename = `Assetta_Tenant_List_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+  saveOrOpenPDF(doc, filename);
 };
 
 export const generateTenantListExcel = (tenants: Tenant[]) => {
@@ -187,7 +201,9 @@ export const generatePaymentHistoryPDF = (payments: EnrichedPayment[]) => {
 
     const pageCount = doc.internal.getNumberOfPages();
     addFooter(doc, pageCount);
-    doc.save(`Assetta_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    
+    const filename = `Assetta_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    saveOrOpenPDF(doc, filename);
 };
 
 
@@ -308,5 +324,7 @@ export const generateSummaryReportPDF = (reportData: SummaryReportData) => {
   
     const pageCount = doc.internal.getNumberOfPages();
     addFooter(doc, pageCount);
-    doc.save(`Assetta_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    
+    const filename = `Assetta_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    saveOrOpenPDF(doc, filename);
   };
