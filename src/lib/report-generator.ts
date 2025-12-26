@@ -2,7 +2,7 @@
 'use client';
 
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import type { jsPDF as jsPDFType } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
@@ -126,7 +126,7 @@ export const generateTenantListPDF = (tenants: Tenant[]) => {
     tableRows.push(tenantData);
   });
 
-  doc.autoTable({
+  autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
     startY: 40,
@@ -134,7 +134,7 @@ export const generateTenantListPDF = (tenants: Tenant[]) => {
     theme: 'striped',
   });
 
-  const pageCount = doc.internal.getNumberOfPages();
+  const pageCount = (doc as any).internal.getNumberOfPages();
   addFooter(doc, pageCount);
   
   const filename = `Assetta_Tenant_List_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
@@ -179,7 +179,7 @@ export const generatePaymentHistoryPDF = (payments: EnrichedPayment[]) => {
         total += p.amount;
     });
 
-    doc.autoTable({
+    autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
         startY: 40,
@@ -187,7 +187,7 @@ export const generatePaymentHistoryPDF = (payments: EnrichedPayment[]) => {
         theme: 'striped',
         didDrawPage: (data) => {
             // Add total only on the last page
-            if (data.pageNumber === doc.internal.getNumberOfPages()) {
+            if (data.pageNumber === (doc as any).internal.getNumberOfPages()) {
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.text(
@@ -199,7 +199,7 @@ export const generatePaymentHistoryPDF = (payments: EnrichedPayment[]) => {
         }
     });
 
-    const pageCount = doc.internal.getNumberOfPages();
+    const pageCount = (doc as any).internal.getNumberOfPages();
     addFooter(doc, pageCount);
     
     const filename = `Assetta_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
@@ -290,7 +290,7 @@ export const generateSummaryReportPDF = (reportData: SummaryReportData) => {
       ['Total Tenants', overview.totalTenants],
     ];
   
-    doc.autoTable({
+    autoTable(doc, {
       body: kpiData,
       startY: 55,
       theme: 'grid',
@@ -314,7 +314,7 @@ export const generateSummaryReportPDF = (reportData: SummaryReportData) => {
       ['Overdue', reportData.tenants.filter(t => t.rentStatus === 'Overdue').length],
     ];
   
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Status', 'Number of Tenants']],
       body: rentStatusData,
       startY: finalY + 20,
@@ -322,7 +322,7 @@ export const generateSummaryReportPDF = (reportData: SummaryReportData) => {
       theme: 'striped',
     });
   
-    const pageCount = doc.internal.getNumberOfPages();
+    const pageCount = (doc as any).internal.getNumberOfPages();
     addFooter(doc, pageCount);
     
     const filename = `Assetta_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
