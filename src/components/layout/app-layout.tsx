@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Building, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Separator } from '../ui/separator';
+import { Chatbot } from '../ai/chatbot';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -107,6 +108,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           pageTitle={pageTitle}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:px-6 sm:py-6">{children}</main>
+        <Chatbot />
       </div>
     </div>
   );
