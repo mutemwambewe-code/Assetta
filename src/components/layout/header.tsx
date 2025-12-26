@@ -82,7 +82,7 @@ export function Header({ pageTitle }: HeaderProps) {
                     className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
                     >
                     <Building className="h-6 w-6" />
-                    <span className="font-bold text-xl text-foreground">PropBot</span>
+                    <span className="font-bold text-xl text-foreground">Assetta</span>
                 </Link>
             </SheetHeader>
             <ScrollArea className="flex-1">
@@ -122,7 +122,7 @@ export function Header({ pageTitle }: HeaderProps) {
         </Sheet>
         <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
             <Building className="h-6 w-6" />
-            <span className="font-bold text-xl">PropBot</span>
+            <span className="font-bold text-xl">Assetta</span>
         </Link>
        </div>
       

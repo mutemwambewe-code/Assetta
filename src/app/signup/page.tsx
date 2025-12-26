@@ -72,7 +72,7 @@ export default function SignupPage() {
           <h2 className="text-xl text-muted-foreground">Welcome to</h2>
           <div className="flex items-center gap-2 text-primary">
             <Building className="h-10 w-10" />
-            <h1 className="text-4xl font-bold">PropBot</h1>
+            <h1 className="text-4xl font-bold">Assetta</h1>
           </div>
         <p className="text-muted-foreground">Powering Property Management Through Intelligence.</p>
       </div>

@@ -19,7 +19,7 @@ const addHeader = (doc: jsPDFType, title: string) => {
   doc.setFontSize(20);
   doc.setTextColor(40);
   doc.setFont('helvetica', 'bold');
-  doc.text('PropBot', 14, 22);
+  doc.text('Assetta', 14, 22);
   
   doc.setFontSize(14);
   doc.setFont('helvetica', 'normal');
@@ -124,7 +124,7 @@ export const generateTenantListPDF = (tenants: Tenant[]) => {
   const pageCount = doc.internal.getNumberOfPages();
   addFooter(doc, pageCount);
   
-  doc.save(`PropBot_Tenant_List_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  doc.save(`Assetta_Tenant_List_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 };
 
 export const generateTenantListExcel = (tenants: Tenant[]) => {
@@ -140,8 +140,8 @@ export const generateTenantListExcel = (tenants: Tenant[]) => {
       'Lease End': t.leaseEndDate,
     }));
     
-  const workbook = createStyledExcelSheet(data, 'PropBot Tenant List', 'Tenants');
-  XLSX.writeFile(workbook, `PropBot_Tenant_List_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  const workbook = createStyledExcelSheet(data, 'Assetta Tenant List', 'Tenants');
+  XLSX.writeFile(workbook, `Assetta_Tenant_List_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
 
 export const generatePaymentHistoryPDF = (payments: EnrichedPayment[]) => {
@@ -187,7 +187,7 @@ export const generatePaymentHistoryPDF = (payments: EnrichedPayment[]) => {
 
     const pageCount = doc.internal.getNumberOfPages();
     addFooter(doc, pageCount);
-    doc.save(`PropBot_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    doc.save(`Assetta_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 };
 
 
@@ -201,8 +201,8 @@ export const generatePaymentHistoryExcel = (payments: EnrichedPayment[]) => {
             'Method': p.method,
         }));
         
-    const workbook = createStyledExcelSheet(data, 'PropBot Payment History', 'Payment History');
-    XLSX.writeFile(workbook, `PropBot_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    const workbook = createStyledExcelSheet(data, 'Assetta Payment History', 'Payment History');
+    XLSX.writeFile(workbook, `Assetta_Payment_History_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
 
 type SummaryReportData = {
@@ -252,7 +252,7 @@ export const generateSummaryReportExcel = (reportData: SummaryReportData) => {
     autoSizeColumns(paymentMethodSheet, paymentMethodData);
     XLSX.utils.book_append_sheet(workbook, paymentMethodSheet, 'Payment Methods');
 
-    XLSX.writeFile(workbook, `PropBot_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    XLSX.writeFile(workbook, `Assetta_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
 
 export const generateSummaryReportPDF = (reportData: SummaryReportData) => {
@@ -308,5 +308,5 @@ export const generateSummaryReportPDF = (reportData: SummaryReportData) => {
   
     const pageCount = doc.internal.getNumberOfPages();
     addFooter(doc, pageCount);
-    doc.save(`PropBot_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    doc.save(`Assetta_Summary_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };

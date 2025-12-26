@@ -54,7 +54,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             className="group flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
           >
             <Building className="h-6 w-6" />
-            <span className="sr-only">PropBot</span>
+            <span className="sr-only">Assetta</span>
           </Link>
           <TooltipProvider>
             {navLinks.map(({ href, label, icon: Icon, isPrimary }, index) => (

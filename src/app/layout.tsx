@@ -3,7 +3,7 @@ import './globals.css';
 import { ClientProviders } from '@/components/providers/client-providers';
 
 export const metadata: Metadata = {
-  title: 'PropBot',
+  title: 'Assetta',
   description: 'Modern Property Management for Zambian Landlords',
 };
 
