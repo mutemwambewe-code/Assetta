@@ -10,9 +10,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { listTenants, listProperties, getTenantByName } from '../tools/assetta-tools';
 
 const MessageSchema = z.object({
-  role: z.enum(['user', 'model']),
+  role: z.enum(['user', 'model', 'tool']),
   content: z.string(),
 });
 
@@ -31,11 +32,12 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 
 const prompt = ai.definePrompt({
   name: 'chatPrompt',
+  tools: [listTenants, listProperties, getTenantByName],
   input: { schema: ChatInputSchema },
   output: { schema: ChatOutputSchema },
   prompt: `You are Assetta, a friendly and helpful AI assistant for landlords using the Assetta property management app.
 
-Your goal is to answer questions and help users manage their properties. Be concise and professional.
+Your goal is to answer questions and help users manage their properties. You can list tenants, filter them by status, and list properties. Be concise and professional. When presenting lists, use formatting like bullet points. When you use a tool, do not just repeat the tool's output. Instead, summarize it in a friendly and helpful way.
 
 Here is the conversation history:
 {{#each history}}

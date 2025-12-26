@@ -9,10 +9,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, User, CornerDownLeft, Loader2, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { chat, type ChatInput } from '@/ai/flows/chat-flow';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 
 type Message = {
-  role: 'user' | 'model';
+  role: 'user' | 'model' | 'tool';
   content: string;
 };
 
@@ -22,6 +22,7 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+  const auth = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,14 +36,14 @@ export function Chatbot() {
       setMessages([
         {
           role: 'model',
-          content: 'Hello! I am Assetta, your AI assistant. How can I help you manage your properties today?'
+          content: 'Hello! I am Assetta, your AI assistant. How can I help you manage your properties today? You can ask me to "list your tenants" or "show me who is overdue".'
         }
       ]);
     }
   }, [isOpen, messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !user) return;
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -50,13 +51,34 @@ export function Chatbot() {
     setIsLoading(true);
 
     try {
+      // This is a workaround to pass auth context to server-side AI tools
+      const idToken = await user.getIdToken();
+      const headers = new Headers();
+      headers.append('Authorization', `Bearer ${idToken}`);
+
       const chatInput: ChatInput = {
         history: messages,
         message: input,
       };
-      const response = await chat(chatInput);
-      const modelMessage: Message = { role: 'model', content: response };
+
+      // We need to use native fetch to pass headers
+      const response = await fetch('/api/genkit/flow/chatFlow', {
+          method: 'POST',
+          headers: {
+              ...headers,
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(chatInput),
+      });
+
+      if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const flowResult = await response.json();
+      const modelMessage: Message = { role: 'model', content: flowResult };
       setMessages((prev) => [...prev, modelMessage]);
+
     } catch (error) {
       console.error('Chatbot error:', error);
       const errorMessage: Message = {
@@ -90,7 +112,7 @@ export function Chatbot() {
           <ScrollArea className="flex-1" ref={scrollAreaRef as any}>
             <div className="p-4 space-y-6">
               {messages.map((message, index) => (
-                <div key={index} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                message.role !== 'tool' && <div key={index} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                   {message.role === 'model' && (
                     <Avatar className="h-8 w-8 border-2 border-primary">
                       <AvatarFallback><Bot className="h-5 w-5" /></AvatarFallback>
