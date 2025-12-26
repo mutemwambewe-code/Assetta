@@ -4,50 +4,67 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { getSdks } from '@/firebase';
 import { headers } from 'next/headers';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getAuth as getAdminAuth, Auth } from 'firebase-admin/auth';
+import type { Tenant } from '@/lib/types';
+
+
+// Server-side Firebase Admin SDK initialization
+function getAdminSdks(): { auth: Auth; firestore: Firestore } {
+  if (!getApps().length) {
+    // In a deployed Google Cloud environment, service account credentials will be automatically discovered.
+    initializeApp();
+  }
+  return { auth: getAdminAuth(), firestore: getFirestore() };
+}
+
 
 // This is a server-side representation. We can't use the client-side providers here.
 // We will fetch directly from Firestore. This requires a way to get the current user's UID.
-
 async function getUid() {
     const authHeader = headers().get('Authorization');
     if (!authHeader) {
-      throw new Error('Unauthenticated');
+      throw new Error('Unauthenticated: No Authorization header provided.');
     }
     const match = authHeader.match(/^Bearer (.*)$/);
     if (!match) {
-      throw new Error('Unauthenticated');
+      throw new Error('Unauthenticated: Invalid Authorization header format.');
     }
     const idToken = match[1];
-    const {auth} = getSdks();
-    const decodedToken = await auth.verifyIdToken(idToken, true);
-    return decodedToken.uid;
+    const { auth } = getAdminSdks();
+    try {
+        const decodedToken = await auth.verifyIdToken(idToken, true);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying ID token:", error);
+        throw new Error('Unauthenticated: Invalid or expired token.');
+    }
 }
 
 async function getTenants(status?: 'Paid' | 'Pending' | 'Overdue') {
     const uid = await getUid();
-    const { firestore } = getSdks();
+    const { firestore } = getAdminSdks();
     
-    let q = query(collection(firestore, 'users', uid, 'tenants'));
+    let q: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = firestore.collection(`users/${uid}/tenants`);
 
     if (status) {
-        q = query(q, where('rentStatus', '==', status));
+        q = q.where('rentStatus', '==', status);
     }
     
-    const snapshot = await getDocs(q);
+    const snapshot = await q.get();
     if (snapshot.empty) return [];
 
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Tenant[];
 }
 
 async function getProperties() {
     const uid = await getUid();
-    const { firestore } = getSdks();
+    const { firestore } = getAdminSdks();
 
-    const q = query(collection(firestore, 'users', uid, 'properties'));
-    const snapshot = await getDocs(q);
+    const q = firestore.collection(`users/${uid}/properties`);
+    const snapshot = await q.get();
     if (snapshot.empty) return [];
 
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -95,7 +112,7 @@ export const listProperties = ai.defineTool(
     async () => {
         console.log('[AI Tool] Listing all properties');
         const properties = await getProperties();
-        return properties.map(p => ({
+        return properties.map((p: any) => ({
             name: p.name,
             location: p.location,
             units: p.units,
