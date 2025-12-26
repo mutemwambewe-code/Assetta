@@ -51,31 +51,13 @@ export function Chatbot() {
     setIsLoading(true);
 
     try {
-      // This is a workaround to pass auth context to server-side AI tools
-      const idToken = await user.getIdToken();
-      const headers = new Headers();
-      headers.append('Authorization', `Bearer ${idToken}`);
-
       const chatInput: ChatInput = {
         history: messages,
         message: input,
+        uid: user.uid,
       };
 
-      // We need to use native fetch to pass headers
-      const response = await fetch('/api/genkit/flow/chatFlow', {
-          method: 'POST',
-          headers: {
-              ...headers,
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(chatInput),
-      });
-
-      if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
-      }
-
-      const flowResult = await response.json();
+      const flowResult = await chat(chatInput);
       const modelMessage: Message = { role: 'model', content: flowResult };
       setMessages((prev) => [...prev, modelMessage]);
 

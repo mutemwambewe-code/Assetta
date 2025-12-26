@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { listTenants, listProperties, getTenantByName } from '../tools/assetta-tools';
 
 const MessageSchema = z.object({
@@ -20,6 +20,7 @@ const MessageSchema = z.object({
 const ChatInputSchema = z.object({
   history: z.array(MessageSchema).describe('The conversation history.'),
   message: z.string().describe('The latest user message.'),
+  uid: z.string().describe("The user's unique ID."),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -58,7 +59,14 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
+    // Pass the UID to the tools when the prompt is invoked.
+    const { output } = await prompt(input, {
+        tools: {
+            listTenants: { uid: input.uid },
+            listProperties: { uid: input.uid },
+            getTenantByName: { uid: input.uid },
+        }
+    });
     return output!;
   }
 );
