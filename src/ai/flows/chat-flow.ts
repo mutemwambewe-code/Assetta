@@ -59,14 +59,8 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async (input) => {
-    // Pass the UID to the tools when the prompt is invoked.
-    const { output } = await prompt(input, {
-        tools: {
-            listTenants: { uid: input.uid },
-            listProperties: { uid: input.uid },
-            getTenantByName: { uid: input.uid },
-        }
-    });
+    // Genkit automatically maps the `uid` from the flow's input to the tool's input.
+    const { output } = await prompt(input);
     return output!;
   }
 );
