@@ -15,11 +15,9 @@ import { firebaseConfig } from '@/firebase/config';
 let adminApp: App;
 function getAdminFirestore(): Firestore {
   if (!getApps().length) {
-    // In a deployed Google Cloud environment, service account credentials will be automatically discovered.
-    // For local development, we can provide the projectId to help the SDK find the right project.
-    adminApp = initializeApp({
-      projectId: firebaseConfig.projectId,
-    });
+    // In a local development environment authenticated with gcloud,
+    // initializeApp() will automatically use the Application Default Credentials.
+    adminApp = initializeApp();
   } else {
     adminApp = getApps()[0];
   }
