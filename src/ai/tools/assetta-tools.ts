@@ -48,7 +48,7 @@ export const listTenants = ai.defineTool(
       description: 'Get a list of tenants. Can be filtered by rent payment status.',
       inputSchema: z.object({
         status: z.enum(['Paid', 'Pending', 'Overdue']).optional().describe("The rent status to filter tenants by."),
-        uid: z.string().describe("The user's ID. This is required."),
+        uid: z.string(),
       }),
       outputSchema: z.array(z.object({
         name: z.string(),
@@ -76,7 +76,7 @@ export const listProperties = ai.defineTool(
         name: 'listProperties',
         description: 'Get a list of all properties.',
         inputSchema: z.object({
-            uid: z.string().describe("The user's ID. This is required."),
+            uid: z.string(),
         }),
         outputSchema: z.array(z.object({
             name: z.string(),
@@ -101,7 +101,7 @@ export const getTenantByName = ai.defineTool(
         description: 'Get detailed information about a specific tenant by their name.',
         inputSchema: z.object({
             name: z.string().describe("The full name of the tenant to search for."),
-            uid: z.string().describe("The user's ID. This is required."),
+            uid: z.string(),
         }),
         outputSchema: z.object({
             name: z.string(),
