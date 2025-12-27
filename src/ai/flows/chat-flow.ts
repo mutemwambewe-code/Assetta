@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { listTenants, listProperties, getTenantByName } from '../tools/assetta-tools';
+import { generate } from 'genkit';
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'model', 'tool']),
@@ -31,12 +32,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   return chatFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'chatPrompt',
-  tools: [listTenants, listProperties, getTenantByName],
-  input: { schema: ChatInputSchema },
-  output: { schema: ChatOutputSchema },
-  prompt: `You are Assetta, a friendly and helpful AI assistant for landlords using the Assetta property management app.
+const promptTemplate = `You are Assetta, a friendly and helpful AI assistant for landlords using the Assetta property management app.
 
 Your goal is to answer questions and help users manage their properties. You can list tenants, filter them by status, and list properties. Be concise and professional. When presenting lists, use formatting like bullet points. When you use a tool, do not just repeat the tool's output. Instead, summarize it in a friendly and helpful way.
 
@@ -46,11 +42,7 @@ Here is the conversation history:
 {{/each}}
 
 Here is the user's latest message:
-- user: {{{message}}}
-
-Your response:
-`,
-});
+- user: {{{message}}}`;
 
 const chatFlow = ai.defineFlow(
   {
@@ -60,7 +52,17 @@ const chatFlow = ai.defineFlow(
   },
   async (input) => {
     // Genkit automatically maps the `uid` from the flow's input to the tool's input.
-    const { output } = await prompt(input);
-    return output!;
+    const response = await generate({
+      model: ai.model('gemini-2.5-flash'),
+      tools: [listTenants, listProperties, getTenantByName],
+      prompt: promptTemplate,
+      history: input.history,
+      input: {
+        message: input.message,
+        uid: input.uid,
+      },
+    });
+
+    return response.text;
   }
 );
