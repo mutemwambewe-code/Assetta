@@ -64,7 +64,7 @@ const chatFlow = ai.defineFlow(
   async (input) => {
     // Genkit automatically maps the `uid` from the flow's input to the tool's input.
     const response = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash'),
+      model: 'googleai/gemini-1.5-flash',
       tools: [listTenants, listProperties, getTenantByName, addTenant],
       prompt: await chatPrompt(input),
     });
