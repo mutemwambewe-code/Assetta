@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, User, CornerDownLeft, Loader2, MessageSquare } from 'lucide-react';
+import { Bot, User, CornerDownLeft, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { chat, type ChatInput } from '@/ai/flows/chat-flow';
-import { useUser, useAuth } from '@/firebase';
+import { useUser } from '@/firebase';
 
 type Message = {
   role: 'user' | 'model' | 'tool';
@@ -22,7 +22,6 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
-  const auth = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export function Chatbot() {
       setMessages([
         {
           role: 'model',
-          content: 'Hello! I am Assetta, your AI assistant. How can I help you manage your properties today? You can ask me to "list your tenants" or "show me who is overdue".'
+          content: 'Hello! I am Assetta, your AI assistant. How can I help you manage your properties today? You can ask me to "list your tenants" or "add a new tenant".'
         }
       ]);
     }
@@ -47,13 +46,14 @@ export function Chatbot() {
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
       const chatInput: ChatInput = {
         history: messages,
-        message: input,
+        message: currentInput,
         uid: user.uid,
       };
 
@@ -65,7 +65,7 @@ export function Chatbot() {
       console.error('Chatbot error:', error);
       const errorMessage: Message = {
         role: 'model',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: 'Sorry, I encountered an error. Please check the server logs and try again.',
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
