@@ -5,18 +5,25 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import type { Tenant } from '@/lib/types';
+import { firebaseConfig } from '@/firebase/config';
 
 
 // Server-side Firebase Admin SDK initialization
+let adminApp: App;
 function getAdminFirestore(): Firestore {
   if (!getApps().length) {
     // In a deployed Google Cloud environment, service account credentials will be automatically discovered.
-    initializeApp();
+    // For local development, we can provide the projectId to help the SDK find the right project.
+    adminApp = initializeApp({
+      projectId: firebaseConfig.projectId,
+    });
+  } else {
+    adminApp = getApps()[0];
   }
-  return getFirestore();
+  return getFirestore(adminApp);
 }
 
 async function getTenants(uid: string, status?: 'Paid' | 'Pending' | 'Overdue') {
@@ -48,7 +55,7 @@ export const listTenants = ai.defineTool(
       description: 'Get a list of tenants. Can be filtered by rent payment status.',
       inputSchema: z.object({
         status: z.enum(['Paid', 'Pending', 'Overdue']).optional().describe("The rent status to filter tenants by."),
-        uid: z.string(),
+        uid: z.string().describe("The user's unique ID."),
       }),
       outputSchema: z.array(z.object({
         name: z.string(),
@@ -76,7 +83,7 @@ export const listProperties = ai.defineTool(
         name: 'listProperties',
         description: 'Get a list of all properties.',
         inputSchema: z.object({
-            uid: z.string(),
+            uid: z.string().describe("The user's unique ID."),
         }),
         outputSchema: z.array(z.object({
             name: z.string(),
@@ -101,7 +108,7 @@ export const getTenantByName = ai.defineTool(
         description: 'Get detailed information about a specific tenant by their name.',
         inputSchema: z.object({
             name: z.string().describe("The full name of the tenant to search for."),
-            uid: z.string(),
+            uid: z.string().describe("The user's unique ID."),
         }),
         outputSchema: z.object({
             name: z.string(),
