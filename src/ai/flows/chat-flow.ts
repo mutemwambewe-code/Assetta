@@ -8,7 +8,7 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { z } from 'zod';
 import { listTenants, listProperties, getTenantByName, addTenant } from '../tools/assetta-tools';
 
@@ -40,12 +40,12 @@ When you need to add a tenant, you MUST ask for all the required information (na
 Be concise and professional. When presenting lists, use formatting like bullet points. When you use a tool, do not just repeat the tool's output. Instead, summarize it in a friendly and helpful way.
 
 Here is the conversation history:
-{{#each history}}
+{{#each input.history}}
 - {{role}}: {{{content}}}
 {{/each}}
 
 Here is the user's latest message:
-- user: {{{message}}}`;
+- user: {{{input.message}}}`;
 
 const chatFlow = ai.defineFlow(
   {
@@ -56,11 +56,11 @@ const chatFlow = ai.defineFlow(
   async (input) => {
     // Genkit automatically maps the `uid` from the flow's input to the tool's input.
     const response = await ai.generate({
-      model: 'gemini-1.5-flash',
+      model: googleAI.model('gemini-1.5-flash'),
       tools: [listTenants, listProperties, getTenantByName, addTenant],
       prompt: promptTemplate,
-      history: input.history,
       input: {
+        history: input.history,
         message: input.message,
         uid: input.uid,
       },
