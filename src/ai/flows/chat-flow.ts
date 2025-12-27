@@ -39,18 +39,13 @@ When you need to add a tenant, you MUST ask for all the required information (na
 
 Be concise and professional. When presenting lists, use formatting like bullet points. When you use a tool, do not just repeat the tool's output. Instead, summarize it in a friendly and helpful way.
 
-Here is the conversation history:
-{{#each history}}
-- {{role}}: {{{content}}}
-{{/each}}
-
 Here is the user's latest message:
 - user: {{{message}}}`;
 
 const chatPrompt = ai.definePrompt(
   {
     name: 'chatPrompt',
-    input: { schema: ChatInputSchema },
+    input: { schema: z.object({ message: z.string() }) },
     prompt: promptTemplate,
   }
 )
@@ -67,7 +62,8 @@ const chatFlow = ai.defineFlow(
       model: 'googleai/gemini-1.5-flash',
       tools: [listTenants, listProperties, getTenantByName, addTenant],
       prompt: chatPrompt,
-      input: input,
+      history: input.history,
+      input: { message: input.message },
     });
 
     return response.text;
