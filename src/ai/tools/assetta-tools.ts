@@ -8,18 +8,17 @@ import { z } from 'zod';
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import type { Tenant } from '@/lib/types';
-import { firebaseConfig } from '@/firebase/config';
-
 
 // Server-side Firebase Admin SDK initialization
-let adminApp: App;
+let adminApp: App | undefined;
 function getAdminFirestore(): Firestore {
-  if (!getApps().length) {
-    // In a local development environment authenticated with gcloud,
-    // initializeApp() will automatically use the Application Default Credentials.
-    adminApp = initializeApp();
-  } else {
-    adminApp = getApps()[0];
+  if (!adminApp) {
+    const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (getApps().length === 0) {
+        adminApp = initializeApp(serviceAccount ? { credential: cert(serviceAccount) } : {});
+    } else {
+        adminApp = getApps()[0];
+    }
   }
   return getFirestore(adminApp);
 }
