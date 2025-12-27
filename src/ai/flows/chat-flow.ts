@@ -66,7 +66,8 @@ const chatFlow = ai.defineFlow(
     const response = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
       tools: [listTenants, listProperties, getTenantByName, addTenant],
-      prompt: await chatPrompt(input),
+      prompt: chatPrompt,
+      input: input,
     });
 
     return response.text;
