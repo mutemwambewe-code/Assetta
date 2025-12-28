@@ -22,6 +22,7 @@ import { sendInvoiceEmail } from '@/app/actions/send-invoice-email';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { InvoicePreview } from './invoice-preview';
+import { useSearchParams } from 'next/navigation';
 
 const invoiceItemSchema = z.object({
   description: z.string().min(1, 'Description is required.'),
@@ -41,11 +42,13 @@ export function InvoiceComposer() {
   const { tenants, addInvoice, isInitialized } = useTenants();
   const { toast } = useToast();
   const [isSending, setIsSending] = useState(false);
+  const searchParams = useSearchParams();
+  const tenantIdFromParams = searchParams.get('tenantId');
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tenantId: '',
+      tenantId: tenantIdFromParams || '',
       dueDate: addDays(new Date(), 14),
       items: [{ description: 'Monthly Rent', amount: 0 }],
       notes: 'Please pay the amount due by the specified date. Payments can be made via Mobile Money or Bank Transfer.',
@@ -60,6 +63,12 @@ export function InvoiceComposer() {
   const watchedValues = useWatch({ control: form.control });
   const selectedTenantId = form.watch('tenantId');
   const selectedTenant = useMemo(() => tenants.find(t => t.id === selectedTenantId), [tenants, selectedTenantId]);
+  
+  useEffect(() => {
+    if (tenantIdFromParams) {
+        form.setValue('tenantId', tenantIdFromParams);
+    }
+  }, [tenantIdFromParams, form]);
   
   useEffect(() => {
     if (selectedTenant) {
@@ -102,7 +111,12 @@ export function InvoiceComposer() {
                 title: 'Invoice Sent!',
                 description: `An invoice has been sent to ${selectedTenant.name}.`,
             });
-            form.reset();
+            form.reset({
+                tenantId: '',
+                dueDate: addDays(new Date(), 14),
+                items: [{ description: 'Monthly Rent', amount: 0 }],
+                notes: 'Please pay the amount due by the specified date. Payments can be made via Mobile Money or Bank Transfer.',
+            });
         } else {
             toast({
                 variant: 'destructive',
@@ -137,7 +151,7 @@ export function InvoiceComposer() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Select Tenant</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a tenant to invoice" />

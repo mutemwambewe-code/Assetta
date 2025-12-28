@@ -5,14 +5,31 @@ import { AutomatedReminder } from "@/components/communication/automated-reminder
 import { MessageLogs } from "@/components/communication/message-logs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, MessagesSquare, ArrowLeft, FileText } from "lucide-react";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { InvoiceComposer } from "@/components/communication/invoice-composer";
 
 function CommunicationPage({ title }: { title?: string }) {
   const [message, setMessage] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'compose';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', value);
+    window.history.pushState({ ...window.history.state, as: newUrl.pathname + newUrl.search, url: newUrl.pathname + newUrl.search }, '', newUrl);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -29,7 +46,7 @@ function CommunicationPage({ title }: { title?: string }) {
         </Button>
       </div>
 
-      <Tabs defaultValue="compose" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="compose">
             <MessagesSquare className="mr-2 h-4 w-4" />

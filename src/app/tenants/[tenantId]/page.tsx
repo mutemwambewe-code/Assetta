@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
-import { ArrowLeft, Edit, Mail, MessageSquare, Phone, Trash2, FileText, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, MessageSquare, Phone, Trash2, FileText, FileSpreadsheet, Send } from 'lucide-react';
 import Link from 'next/link';
 import { LogPayment } from '@/components/tenants/log-payment';
 import { EditTenant } from '@/components/tenants/edit-tenant';
@@ -145,6 +146,11 @@ function TenantDetailPage({ title }: { title?: string }) {
                     <Button className="w-full">
                         <MessageSquare className="mr-2" />
                         Send Reminder
+                    </Button>
+                </Link>
+                <Link href={`/communication?tab=invoice&tenantId=${tenant.id}`} className="w-full col-span-2">
+                    <Button variant='outline' className='w-full'>
+                        <Send className='mr-2' /> Send Invoice
                     </Button>
                 </Link>
                 <EditTenant tenant={tenant}>
