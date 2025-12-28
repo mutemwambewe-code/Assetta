@@ -26,10 +26,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { SendInvoice } from '@/components/tenants/send-invoice';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { InvoiceHistory } from '@/components/tenants/invoice-history';
-
 
 const statusStyles = {
   Paid: 'bg-accent text-accent-foreground border-transparent',
@@ -80,7 +76,7 @@ function TenantDetailPage({ title }: { title?: string }) {
             <div className='flex-1'>
                 <h1 className="text-2xl font-bold tracking-tight">{tenant.name}</h1>
                 <p className="text-muted-foreground">
-                    Tenant details, payment history, and invoices.
+                    Tenant details, payment history, and communications.
                 </p>
             </div>
             <Button variant="outline" onClick={() => router.back()}>
@@ -145,27 +141,22 @@ function TenantDetailPage({ title }: { title?: string }) {
                         Log Payment
                     </Button>
                 </LogPayment>
-                 <SendInvoice tenant={tenant}>
-                    <Button variant="outline" className="w-full">
-                      <FileText className="mr-2" /> Send Invoice
-                    </Button>
-                </SendInvoice>
-                <Link href={`/communication?tenantId=${tenant.id}`} className='w-full col-span-2'>
+                <Link href={`/communication?tenantId=${tenant.id}`} className='w-full'>
                     <Button className="w-full">
                         <MessageSquare className="mr-2" />
                         Send Reminder
                     </Button>
                 </Link>
                 <EditTenant tenant={tenant}>
-                    <Button variant='outline' className='w-full'>
-                        <Edit className='mr-2' /> Edit
+                    <Button variant='outline' className='w-full col-span-2'>
+                        <Edit className='mr-2' /> Edit Tenant Details
                     </Button>
                 </EditTenant>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="w-full">
+                        <Button variant="destructive" className="w-full col-span-2">
                             <Trash2 className="mr-2" />
-                            Delete
+                            Delete Tenant
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -188,52 +179,41 @@ function TenantDetailPage({ title }: { title?: string }) {
         </div>
 
         <div className="lg:col-span-2">
-            <Tabs defaultValue="payments" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="payments"><FileSpreadsheet className="mr-2 h-4 w-4" /> Payment History</TabsTrigger>
-                    <TabsTrigger value="invoices"><FileText className="mr-2 h-4 w-4" /> Invoice History</TabsTrigger>
-                </TabsList>
-                <TabsContent value="payments">
-                  <Card className="h-full mt-4">
-                    <CardHeader>
-                      <CardTitle>Payment History</CardTitle>
-                      <CardDescription>
-                        A complete record of all payments made by {tenant.name}.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {tenant.paymentHistory.length > 0 ? (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Date</TableHead>
-                              <TableHead>Amount</TableHead>
-                              <TableHead>Method</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {tenant.paymentHistory.map((payment) => (
-                              <TableRow key={payment.id}>
-                                <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
-                                <TableCell>ZMW {payment.amount.toLocaleString()}</TableCell>
-                                <TableCell>{payment.method}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      ) : (
-                        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                            <h2 className="text-xl font-semibold">No Payments Recorded</h2>
-                            <p className="text-muted-foreground mt-2">Log a payment to see the history here.</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                <TabsContent value="invoices">
-                    <InvoiceHistory tenantId={tenant.id} />
-                </TabsContent>
-            </Tabs>
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Payment History</CardTitle>
+              <CardDescription>
+                A complete record of all payments made by {tenant.name}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {tenant.paymentHistory.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Method</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tenant.paymentHistory.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
+                        <TableCell>ZMW {payment.amount.toLocaleString()}</TableCell>
+                        <TableCell>{payment.method}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                    <h2 className="text-xl font-semibold">No Payments Recorded</h2>
+                    <p className="text-muted-foreground mt-2">Log a payment to see the history here.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

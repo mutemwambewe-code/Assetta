@@ -4,10 +4,11 @@
 import { AutomatedReminder } from "@/components/communication/automated-reminder";
 import { MessageLogs } from "@/components/communication/message-logs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, MessagesSquare, ArrowLeft } from "lucide-react";
+import { History, MessagesSquare, ArrowLeft, FileText } from "lucide-react";
 import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { InvoiceComposer } from "@/components/communication/invoice-composer";
 
 function CommunicationPage({ title }: { title?: string }) {
   const [message, setMessage] = useState("");
@@ -17,9 +18,9 @@ function CommunicationPage({ title }: { title?: string }) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Messaging</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Communication Center</h1>
           <p className="text-muted-foreground">
-            Compose, view, and manage your tenant communications.
+            Compose messages, create invoices, and view communication history.
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
@@ -29,10 +30,14 @@ function CommunicationPage({ title }: { title?: string }) {
       </div>
 
       <Tabs defaultValue="compose" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="compose">
             <MessagesSquare className="mr-2 h-4 w-4" />
-            Compose & Send
+            SMS Reminders
+          </TabsTrigger>
+          <TabsTrigger value="invoice">
+            <FileText className="mr-2 h-4 w-4" />
+            Create Invoice
           </TabsTrigger>
           <TabsTrigger value="logs">
             <History className="mr-2 h-4 w-4" />
@@ -44,6 +49,9 @@ function CommunicationPage({ title }: { title?: string }) {
             <AutomatedReminder message={message} setMessage={setMessage} />
           </Suspense>
         </TabsContent>
+         <TabsContent value="invoice">
+            <InvoiceComposer />
+        </TabsContent>
         <TabsContent value="logs">
             <MessageLogs />
         </TabsContent>
@@ -52,5 +60,5 @@ function CommunicationPage({ title }: { title?: string }) {
   );
 }
 
-CommunicationPage.title = 'Messaging';
+CommunicationPage.title = 'Communication Center';
 export default CommunicationPage;
