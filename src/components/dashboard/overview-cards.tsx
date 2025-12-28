@@ -65,14 +65,14 @@ export function OverviewCards() {
         icon: Home,
         description: 'Across all properties',
         href: '/properties',
-        reportHref: '/reports'
+        reportHref: '/reports?highlight=occupancy'
     },
     {
         title: 'Occupied Units',
         value: occupiedUnits,
         icon: Users,
         href: '/tenants',
-        reportHref: '/reports',
+        reportHref: '/reports?highlight=occupancy',
         description: (
         <span className="flex items-center gap-1">
             <TrendingUp className="h-4 w-4 text-accent" />
@@ -86,7 +86,7 @@ export function OverviewCards() {
         icon: DollarSign,
         description: `ZMW ${outstandingRent.toLocaleString()} outstanding`,
         href: '/reports',
-        reportHref: '/reports'
+        reportHref: '/reports?highlight=rental-income'
     },
     {
         title: 'Outstanding Rent (Month)',
@@ -94,7 +94,7 @@ export function OverviewCards() {
         icon: FileText,
         description: 'From all unpaid tenants',
         href: '/tenants?filter=Overdue,Pending',
-        reportHref: '/reports'
+        reportHref: '/reports?highlight=outstanding-rent'
     },
     {
         title: 'Tenants in Arrears',
@@ -104,7 +104,7 @@ export function OverviewCards() {
         className: 'text-yellow-600 dark:text-yellow-400',
         iconClassName: 'bg-yellow-500/10',
         href: '/tenants?filter=Overdue',
-        reportHref: '/reports'
+        reportHref: '/reports?highlight=outstanding-rent'
     },
     {
         title: 'Lease Expirations (30d)',

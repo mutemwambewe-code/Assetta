@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTenants } from '@/components/tenants/tenant-provider';
 import { useProperties } from '@/components/properties/property-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,12 +31,32 @@ import { useRouter } from 'next/navigation';
 import { addMonths, endOfMonth, endOfYear, format, getYear, startOfMonth, startOfYear, subMonths } from 'date-fns';
 import { LeaseExpiryReport } from '@/components/reports/lease-expiry-report';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 function ReportsPage({ title }: { title?: string }) {
   const { tenants, isInitialized: tenantsInitialized } = useTenants();
   const { properties, isInitialized: propertiesInitialized } = useProperties();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [dateRange, setDateRange] = useState('this_month');
+  const [highlightedCard, setHighlightedCard] = useState<string | null>(null);
+
+  useEffect(() => {
+    const highlight = searchParams.get('highlight');
+    if (highlight) {
+      const element = document.getElementById(highlight);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightedCard(highlight);
+        const timer = setTimeout(() => {
+          setHighlightedCard(null);
+          // Optional: remove the query param from URL without reloading
+          window.history.replaceState(null, '', window.location.pathname);
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [searchParams]);
 
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
@@ -184,7 +205,7 @@ function ReportsPage({ title }: { title?: string }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card id="rental-income" className={cn('transition-all', highlightedCard === 'rental-income' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rental Income</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -194,7 +215,7 @@ function ReportsPage({ title }: { title?: string }) {
             <p className="text-xs text-muted-foreground">in selected period</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card id="outstanding-rent" className={cn('transition-all', highlightedCard === 'outstanding-rent' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Outstanding Rent</CardTitle>
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
@@ -204,7 +225,7 @@ function ReportsPage({ title }: { title?: string }) {
             <p className="text-xs text-muted-foreground">across all properties</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card id="occupancy" className={cn('transition-all', highlightedCard === 'occupancy' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -214,7 +235,7 @@ function ReportsPage({ title }: { title?: string }) {
             <p className="text-xs text-muted-foreground">across all properties</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card id="collection-rate" className={cn('transition-all', highlightedCard === 'collection-rate' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
