@@ -20,11 +20,6 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    allowedDevOrigins: [
-        "https://9000-firebase-studio-1759299167204.cluster-cbeiita7rbe7iuwhvjs5zww2i4.cloudworkstations.dev",
-    ]
-  },
   env: {
     NEXT_PUBLIC_AFRICASTALKING_USERNAME: process.env.AFRICASTALKING_USERNAME,
     NEXT_PUBLIC_AFRICASTALKING_SENDER_ID: process.env.AFRICASTALKING_SENDER_ID,
