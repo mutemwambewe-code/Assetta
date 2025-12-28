@@ -1,14 +1,14 @@
-
 'use client';
 
 import { createContext, useContext, ReactNode, useEffect, useCallback, useMemo } from 'react';
-import type { Tenant, Payment } from '@/lib/types';
+import type { Tenant, Payment, Invoice } from '@/lib/types';
 import { isAfter, startOfMonth, parseISO, isWithinInterval, addDays, differenceInDays } from 'date-fns';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useUser } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useProperties } from '../properties/property-provider';
 
 type TenantContextType = {
   tenants: Tenant[];
@@ -16,6 +16,8 @@ type TenantContextType = {
   updateTenant: (tenant: Tenant) => void;
   deleteTenant: (tenantId: string) => void;
   logPayment: (tenantId: string, payment: Omit<Payment, 'id'>) => void;
+  addInvoice: (invoice: Omit<Invoice, 'id'>) => Promise<Invoice | undefined>;
+  getInvoicesForTenant: (tenantId: string) => Promise<Invoice[]>;
   isInitialized: boolean;
 };
 
@@ -53,10 +55,16 @@ const calculateRentDetails = (tenant: Tenant): { rentStatus: Tenant['rentStatus'
 export function TenantProvider({ children }: { children: ReactNode }) {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
+  const { properties } = useProperties();
 
   const tenantsCollection = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return collection(firestore, 'users', user.uid, 'tenants');
+  }, [firestore, user]);
+  
+  const invoicesCollection = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, 'users', user.uid, 'invoices');
   }, [firestore, user]);
 
   const { data: tenantsData, isLoading: isTenantsLoading } = useCollection<Tenant>(tenantsCollection);
@@ -64,14 +72,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const tenants = useMemo(() => {
     return (tenantsData || []).map(tenant => {
       const { rentStatus, nextDueDate } = calculateRentDetails(tenant);
+      const property = properties.find(p => p.name === tenant.property);
       return {
         ...tenant,
         rentStatus,
         nextDueDate,
-        paymentHistory: tenant.paymentHistory || []
+        paymentHistory: tenant.paymentHistory || [],
+        propertyId: property?.id,
       }
     });
-  }, [tenantsData]);
+  }, [tenantsData, properties]);
 
   const addTenant = useCallback(async (tenantData: Omit<Tenant, 'id' | 'avatarUrl' | 'rentStatus' | 'paymentHistorySummary' | 'paymentHistory' | 'nextDueDate'>) => {
     if (!tenantsCollection) {
@@ -79,6 +89,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       return;
     }
     const newDocRef = doc(tenantsCollection);
+    const property = properties.find(p => p.name === tenantData.property);
+
     const newTenant: Omit<Tenant, 'rentStatus' | 'nextDueDate'> & { paymentHistory: Payment[] } = {
         ...tenantData,
         email: tenantData.email || '',
@@ -86,6 +98,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         avatarUrl: '',
         paymentHistorySummary: 'New tenant.',
         paymentHistory: [],
+        propertyId: property?.id,
     };
     const { rentStatus, nextDueDate } = calculateRentDetails(newTenant as Tenant);
     const tenantWithStatus: Tenant = {
@@ -94,7 +107,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         nextDueDate,
     }
     await setDoc(newDocRef, tenantWithStatus);
-  }, [tenantsCollection]);
+  }, [tenantsCollection, properties]);
 
   const updateTenant = useCallback(async (tenant: Tenant) => {
     if (!tenantsCollection) return;
@@ -136,6 +149,28 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     await updateTenant(updatedTenant);
   }, [tenants, tenantsCollection, updateTenant]);
 
+  const addInvoice = useCallback(async (invoiceData: Omit<Invoice, 'id'>) => {
+    if (!invoicesCollection) {
+        console.error("Invoices collection not available. Cannot add invoice.");
+        return;
+    }
+    const newDocRef = doc(invoicesCollection);
+    const newInvoice: Invoice = {
+        ...invoiceData,
+        id: newDocRef.id,
+    };
+    await setDoc(newDocRef, newInvoice);
+    return newInvoice;
+  }, [invoicesCollection]);
+  
+  const getInvoicesForTenant = useCallback(async (tenantId: string) => {
+    if (!invoicesCollection) return [];
+    const { getDocs, query, where } = await import('firebase/firestore');
+    const q = query(invoicesCollection, where("tenantId", "==", tenantId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as Invoice);
+  }, [invoicesCollection]);
+
   const isInitialized = !isUserLoading && !isTenantsLoading;
 
   const value = {
@@ -144,6 +179,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     updateTenant,
     deleteTenant,
     logPayment,
+    addInvoice,
+    getInvoicesForTenant,
     isInitialized
   };
 

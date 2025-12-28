@@ -15,6 +15,7 @@ export type Tenant = {
   paymentHistorySummary: string;
   paymentHistory: Payment[];
   nextDueDate?: string;
+  propertyId?: string; // Added propertyId
 };
 
 export type Payment = {
@@ -76,3 +77,22 @@ export type Expense = {
   description: string;
   amount: number;
 }
+
+export type Invoice = {
+  id: string;
+  tenantId: string;
+  propertyId: string;
+  issueDate: string;
+  dueDate: string;
+  items: { description: string; amount: number }[];
+  totalAmount: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue';
+  notes?: string;
+  tenantName: string;
+  propertyName: string;
+};
+
+export type InvoiceItem = {
+    description: string;
+    amount: number;
+};

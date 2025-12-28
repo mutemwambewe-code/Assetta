@@ -105,6 +105,20 @@ service cloud.firestore {
           allow update: if isOwner(userId);
           allow delete: if isOwner(userId);
       }
+      
+      /**
+       * @description Rules for invoices associated with a user.
+       * @path /users/{userId}/invoices/{invoiceId}
+       * @allow (create, get, list, update, delete) - A user can manage invoices under their user ID.
+       * @principle Enforces user-ownership for all operations on invoices.
+       */
+      match /invoices/{invoiceId} {
+          allow get: if isOwner(userId);
+          allow list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update: if isOwner(userId);
+          allow delete: if isOwner(userId);
+      }
     }
   }
 }

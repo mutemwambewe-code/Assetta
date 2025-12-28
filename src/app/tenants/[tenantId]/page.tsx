@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
-import { ArrowLeft, Edit, Mail, MessageSquare, Phone, Trash2, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, MessageSquare, Phone, Trash2, FileText, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
 import { LogPayment } from '@/components/tenants/log-payment';
 import { EditTenant } from '@/components/tenants/edit-tenant';
@@ -27,6 +26,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { SendInvoice } from '@/components/tenants/send-invoice';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { InvoiceHistory } from '@/components/tenants/invoice-history';
 
 
 const statusStyles = {
@@ -78,7 +80,7 @@ function TenantDetailPage({ title }: { title?: string }) {
             <div className='flex-1'>
                 <h1 className="text-2xl font-bold tracking-tight">{tenant.name}</h1>
                 <p className="text-muted-foreground">
-                    Tenant details and payment history.
+                    Tenant details, payment history, and invoices.
                 </p>
             </div>
             <Button variant="outline" onClick={() => router.back()}>
@@ -143,7 +145,12 @@ function TenantDetailPage({ title }: { title?: string }) {
                         Log Payment
                     </Button>
                 </LogPayment>
-                <Link href={`/communication?tenantId=${tenant.id}`} className='w-full'>
+                 <SendInvoice tenant={tenant}>
+                    <Button variant="outline" className="w-full">
+                      <FileText className="mr-2" /> Send Invoice
+                    </Button>
+                </SendInvoice>
+                <Link href={`/communication?tenantId=${tenant.id}`} className='w-full col-span-2'>
                     <Button className="w-full">
                         <MessageSquare className="mr-2" />
                         Send Reminder
@@ -181,41 +188,52 @@ function TenantDetailPage({ title }: { title?: string }) {
         </div>
 
         <div className="lg:col-span-2">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Payment History</CardTitle>
-              <CardDescription>
-                A complete record of all payments made by {tenant.name}.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {tenant.paymentHistory.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tenant.paymentHistory.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
-                        <TableCell>ZMW {payment.amount.toLocaleString()}</TableCell>
-                        <TableCell>{payment.method}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                    <h2 className="text-xl font-semibold">No Payments Recorded</h2>
-                    <p className="text-muted-foreground mt-2">Log a payment to see the history here.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            <Tabs defaultValue="payments" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="payments"><FileSpreadsheet className="mr-2 h-4 w-4" /> Payment History</TabsTrigger>
+                    <TabsTrigger value="invoices"><FileText className="mr-2 h-4 w-4" /> Invoice History</TabsTrigger>
+                </TabsList>
+                <TabsContent value="payments">
+                  <Card className="h-full mt-4">
+                    <CardHeader>
+                      <CardTitle>Payment History</CardTitle>
+                      <CardDescription>
+                        A complete record of all payments made by {tenant.name}.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {tenant.paymentHistory.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Amount</TableHead>
+                              <TableHead>Method</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {tenant.paymentHistory.map((payment) => (
+                              <TableRow key={payment.id}>
+                                <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
+                                <TableCell>ZMW {payment.amount.toLocaleString()}</TableCell>
+                                <TableCell>{payment.method}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                            <h2 className="text-xl font-semibold">No Payments Recorded</h2>
+                            <p className="text-muted-foreground mt-2">Log a payment to see the history here.</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="invoices">
+                    <InvoiceHistory tenantId={tenant.id} />
+                </TabsContent>
+            </Tabs>
         </div>
       </div>
     </div>

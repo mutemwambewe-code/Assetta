@@ -108,6 +108,33 @@
             "category": { "type": "string" }
         },
         "required": ["id", "title", "content", "category"]
+    },
+    "Invoice": {
+        "title": "Invoice",
+        "description": "An invoice for a tenant.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "tenantId": { "type": "string" },
+            "propertyId": { "type": "string" },
+            "issueDate": { "type": "string", "format": "date" },
+            "dueDate": { "type": "string", "format": "date" },
+            "items": { 
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "description": { "type": "string" },
+                        "amount": { "type": "number" }
+                    },
+                    "required": ["description", "amount"]
+                }
+            },
+            "totalAmount": { "type": "number" },
+            "status": { "type": "string", "enum": ["draft", "sent", "paid", "overdue"] },
+            "notes": { "type": "string" }
+        },
+        "required": ["id", "tenantId", "issueDate", "dueDate", "items", "totalAmount", "status"]
     }
   },
   "auth": {
@@ -132,6 +159,10 @@
     "/users/{userId}/templates/{templateId}": {
         "schema": { "$ref": "#/entities/Template" },
         "description": "Stores message templates for a user."
+    },
+    "/users/{userId}/invoices/{invoiceId}": {
+        "schema": { "$ref": "#/entities/Invoice" },
+        "description": "Stores invoices for a user."
     }
   }
 }
