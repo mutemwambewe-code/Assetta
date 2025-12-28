@@ -114,7 +114,7 @@ export function OverviewCards() {
         className: 'text-blue-600 dark:text-blue-400',
         iconClassName: 'bg-blue-500/10',
         href: '/tenants',
-        reportHref: '/reports'
+        reportHref: '/reports?highlight=lease-expiry'
     },
     ];
   return (

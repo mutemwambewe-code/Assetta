@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTenants } from '@/components/tenants/tenant-provider';
 import { useProperties } from '@/components/properties/property-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Home, Users, FileText, Download, ArrowLeft, TrendingUp, TrendingDown, Clock } from 'lucide-react';
+import { DollarSign, Home, Users, FileText, Download, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -32,8 +32,9 @@ import { addMonths, endOfMonth, endOfYear, format, getYear, startOfMonth, startO
 import { LeaseExpiryReport } from '@/components/reports/lease-expiry-report';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { Suspense } from 'react';
 
-function ReportsPage({ title }: { title?: string }) {
+function ReportsPageContent() {
   const { tenants, isInitialized: tenantsInitialized } = useTenants();
   const { properties, isInitialized: propertiesInitialized } = useProperties();
   const router = useRouter();
@@ -51,7 +52,10 @@ function ReportsPage({ title }: { title?: string }) {
         const timer = setTimeout(() => {
           setHighlightedCard(null);
           // Optional: remove the query param from URL without reloading
-          window.history.replaceState(null, '', window.location.pathname);
+           const newUrl = new URL(window.location.href);
+           newUrl.searchParams.delete('highlight');
+           window.history.replaceState({ ...window.history.state, as: newUrl.pathname + newUrl.search, url: newUrl.pathname + newUrl.search }, '', newUrl);
+
         }, 2000);
         return () => clearTimeout(timer);
       }
@@ -205,7 +209,7 @@ function ReportsPage({ title }: { title?: string }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card id="rental-income" className={cn('transition-all', highlightedCard === 'rental-income' && 'ring-2 ring-primary ring-offset-2')}>
+        <Card id="rental-income" className={cn('transition-all duration-300', highlightedCard === 'rental-income' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rental Income</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -215,7 +219,7 @@ function ReportsPage({ title }: { title?: string }) {
             <p className="text-xs text-muted-foreground">in selected period</p>
           </CardContent>
         </Card>
-        <Card id="outstanding-rent" className={cn('transition-all', highlightedCard === 'outstanding-rent' && 'ring-2 ring-primary ring-offset-2')}>
+        <Card id="outstanding-rent" className={cn('transition-all duration-300', highlightedCard === 'outstanding-rent' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Outstanding Rent</CardTitle>
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
@@ -225,7 +229,7 @@ function ReportsPage({ title }: { title?: string }) {
             <p className="text-xs text-muted-foreground">across all properties</p>
           </CardContent>
         </Card>
-        <Card id="occupancy" className={cn('transition-all', highlightedCard === 'occupancy' && 'ring-2 ring-primary ring-offset-2')}>
+        <Card id="occupancy" className={cn('transition-all duration-300', highlightedCard === 'occupancy' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -235,7 +239,7 @@ function ReportsPage({ title }: { title?: string }) {
             <p className="text-xs text-muted-foreground">across all properties</p>
           </CardContent>
         </Card>
-        <Card id="collection-rate" className={cn('transition-all', highlightedCard === 'collection-rate' && 'ring-2 ring-primary ring-offset-2')}>
+        <Card id="collection-rate" className={cn('transition-all duration-300', highlightedCard === 'collection-rate' && 'ring-2 ring-primary ring-offset-2')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -251,10 +255,12 @@ function ReportsPage({ title }: { title?: string }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <FinancialReport payments={reportData.allPayments} tenants={reportData.tenants} />
-          <LeaseExpiryReport tenants={reportData.tenants} />
+          <div id="lease-expiry">
+            <LeaseExpiryReport tenants={reportData.tenants} />
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 gap-6">
+        <div id="occupancy-report" className="grid grid-cols-1 gap-6">
             <OccupancyReport properties={reportData.properties} tenants={reportData.tenants} />
         </div>
 
@@ -264,6 +270,15 @@ function ReportsPage({ title }: { title?: string }) {
     </div>
   );
 }
+
+function ReportsPage({ title }: { title?: string }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ReportsPageContent />
+    </Suspense>
+  )
+}
+
 
 ReportsPage.title = "Reports & Analytics";
 export default ReportsPage;
