@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { useTenants } from '../tenants/tenant-provider';
 import { isWithinInterval, addDays, startOfMonth, parseISO, isBefore, endOfMonth, getMonth, getYear } from 'date-fns';
 import { useProperties } from '../properties/property-provider';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
 import { useRouter } from 'next/navigation';
 
@@ -139,25 +138,16 @@ export function OverviewCards() {
                 </CardContent>
             </Link>
             <div className='px-4 pb-2'>
-                 <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className='w-full justify-start text-muted-foreground'
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                <span>View in Report</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                             <DropdownMenuItem onSelect={() => router.push(card.reportHref)}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                <span>View & Highlight</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                <Link href={card.reportHref} passHref>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className='w-full justify-start text-muted-foreground'
+                    >
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        <span>View in Report</span>
+                    </Button>
+                </Link>
             </div>
           </Card>
       ))}
