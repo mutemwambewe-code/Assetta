@@ -81,15 +81,16 @@ export function LogPayment({ tenant, children }: LogPaymentProps) {
         <DialogHeader>
           <DialogTitle>Log Payment for {tenant.name}</DialogTitle>
           <DialogDescription>
-            Record a new rent payment for this tenant. Rent amount: ZMW {tenant.rentAmount.toLocaleString()}
+            Record a new rent payment. Rent: ZMW {tenant.rentAmount.toLocaleString()}. 
+            {tenant.nextDueDate && ` Next due: ${format(new Date(tenant.nextDueDate), 'PPP')}`}
           </DialogDescription>
         </DialogHeader>
         {isAlreadyPaid && (
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>Already Paid</AlertTitle>
+            <AlertTitle>Paid Up</AlertTitle>
             <AlertDescription>
-              This tenant has already paid their rent for the current month. Logging another payment is not recommended unless it's for a different purpose.
+              This tenant's rent is paid up. Logging a new payment will extend their next due date.
             </AlertDescription>
           </Alert>
         )}

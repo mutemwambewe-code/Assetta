@@ -14,6 +14,7 @@ export type Tenant = {
   leaseEndDate: string;
   paymentHistorySummary: string;
   paymentHistory: Payment[];
+  nextDueDate?: string;
 };
 
 export type Payment = {
