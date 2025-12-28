@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useTenants } from '@/components/tenants/tenant-provider';
 import { useProperties } from '@/components/properties/property-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,6 @@ import {
 import { FinancialReport } from '@/components/reports/financial-report';
 import { OccupancyReport } from '@/components/reports/occupancy-report';
 import { TenantReportTable } from '@/components/reports/tenant-report-table';
-import { useRouter } from 'next/navigation';
 import { addMonths, endOfMonth, endOfYear, format, getYear, startOfMonth, startOfYear, subMonths } from 'date-fns';
 import { LeaseExpiryReport } from '@/components/reports/lease-expiry-report';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -49,14 +48,15 @@ function ReportsPageContent() {
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setHighlightedCard(highlight);
+        
         const timer = setTimeout(() => {
           setHighlightedCard(null);
-          // Optional: remove the query param from URL without reloading
-           const newUrl = new URL(window.location.href);
-           newUrl.searchParams.delete('highlight');
-           window.history.replaceState({ ...window.history.state, as: newUrl.pathname + newUrl.search, url: newUrl.pathname + newUrl.search }, '', newUrl);
+          // Clean up URL without reloading
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('highlight');
+          window.history.replaceState({ ...window.history.state, as: newUrl.pathname + newUrl.search, url: newUrl.pathname + newUrl.search }, '', newUrl);
+        }, 2000); // Highlight for 2 seconds
 
-        }, 2000);
         return () => clearTimeout(timer);
       }
     }

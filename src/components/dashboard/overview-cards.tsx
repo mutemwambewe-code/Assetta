@@ -65,14 +65,14 @@ export function OverviewCards() {
         icon: Home,
         description: 'Across all properties',
         href: '/properties',
-        reportHref: '/reports?highlight=occupancy'
+        reportHref: '/reports?highlight=occupancy-report'
     },
     {
         title: 'Occupied Units',
         value: occupiedUnits,
         icon: Users,
         href: '/tenants',
-        reportHref: '/reports?highlight=occupancy',
+        reportHref: '/reports?highlight=occupancy-report',
         description: (
         <span className="flex items-center gap-1">
             <TrendingUp className="h-4 w-4 text-accent" />
@@ -122,44 +122,43 @@ export function OverviewCards() {
       {cardData.map((card) => (
           <Card 
             key={card.title} 
-            className="transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer"
-            onClick={() => router.push(card.href)}
+            className="transition-all hover:shadow-lg hover:scale-[1.02] flex flex-col"
           >
-            <CardContent className="p-4 flex items-start gap-4">
-              <div className={cn("p-3 rounded-lg bg-secondary", card.iconClassName)}>
-                  <card.icon className={cn('h-6 w-6 text-muted-foreground', card.className)} />
-              </div>
-              <div className='flex-1'>
-                  <p className="text-sm text-muted-foreground">{card.title}</p>
-                  <p className={cn('text-2xl font-bold', card.className)}>
-                    {card.value}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{card.description}</p>
-              </div>
-               <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className='h-8 w-8 -mr-2 -mt-2'
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <MoreVertical className="h-4 w-4" />
-                            <span className="sr-only">More options for {card.title}</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => router.push(card.href)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            <span>View Details</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => router.push(card.reportHref)}>
-                            <FileSpreadsheet className="mr-2 h-4 w-4" />
-                            <span>View in Report</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </CardContent>
+            <Link href={card.href} className='flex-grow'>
+                <CardContent className="p-4 flex items-start gap-4">
+                  <div className={cn("p-3 rounded-lg bg-secondary", card.iconClassName)}>
+                      <card.icon className={cn('h-6 w-6 text-muted-foreground', card.className)} />
+                  </div>
+                  <div className='flex-1'>
+                      <p className="text-sm text-muted-foreground">{card.title}</p>
+                      <p className={cn('text-2xl font-bold', card.className)}>
+                        {card.value}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{card.description}</p>
+                  </div>
+                </CardContent>
+            </Link>
+            <div className='px-4 pb-2'>
+                 <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className='w-full justify-start text-muted-foreground'
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                <span>View in Report</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                             <DropdownMenuItem onSelect={() => router.push(card.reportHref)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>View & Highlight</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+            </div>
           </Card>
       ))}
     </div>
