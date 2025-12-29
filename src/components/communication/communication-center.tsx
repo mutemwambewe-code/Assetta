@@ -1,20 +1,43 @@
 'use client';
 
-import { AutomatedReminder } from "@/components/communication/automated-reminder";
-import { MessageLogs } from "@/components/communication/message-logs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, MessagesSquare, ArrowLeft, FileText } from "lucide-react";
-import { useState, Suspense, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { useRouter, useSearchParams } from "next/navigation";
-import { InvoiceComposer } from "@/components/communication/invoice-composer";
+import { useState, Suspense, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { History, MessagesSquare, ArrowLeft, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Skeleton } from '../ui/skeleton';
+
+// Dynamically import each tab's content
+const AutomatedReminder = dynamic(
+  () => import('@/components/communication/automated-reminder').then(mod => mod.AutomatedReminder),
+  {
+    loading: () => <Skeleton className="h-[500px] w-full" />,
+    ssr: false,
+  }
+);
+
+const InvoiceComposer = dynamic(
+  () => import('@/components/communication/invoice-composer').then(mod => mod.InvoiceComposer),
+  {
+    loading: () => <Skeleton className="h-[500px] w-full" />,
+    ssr: false,
+  }
+);
+
+const MessageLogs = dynamic(
+  () => import('@/components/communication/message-logs').then(mod => mod.MessageLogs),
+  {
+    loading: () => <Skeleton className="h-[500px] w-full" />,
+    ssr: false,
+  }
+);
 
 export function CommunicationCenter() {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'compose';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'compose');
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -40,8 +63,8 @@ export function CommunicationCenter() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
         </Button>
       </div>
 
@@ -60,16 +83,21 @@ export function CommunicationCenter() {
             Message Logs
           </TabsTrigger>
         </TabsList>
+        
         <TabsContent value="compose">
-          <Suspense fallback={<div>Loading composer...</div>}>
+          <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
             <AutomatedReminder message={message} setMessage={setMessage} />
           </Suspense>
         </TabsContent>
-         <TabsContent value="invoice">
+        <TabsContent value="invoice">
+          <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
             <InvoiceComposer />
+          </Suspense>
         </TabsContent>
         <TabsContent value="logs">
+          <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
             <MessageLogs />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
