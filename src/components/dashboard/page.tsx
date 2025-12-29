@@ -3,14 +3,31 @@
 
 import { AddTenant } from '@/components/tenants/add-tenant';
 import { OverviewCards } from '@/components/dashboard/overview-cards';
-import { RentStatusChart } from '@/components/dashboard/rent-status-chart';
-import TenantActivity from '@/components/dashboard/tenant-activity';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Receipt } from 'lucide-react';
 import Link from 'next/link';
 import { AddEntityButton } from '@/components/dashboard/add-entity-button';
 import { useProperties } from '../properties/property-provider';
 import { useTenants } from '../tenants/tenant-provider';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '../ui/skeleton';
+
+const RentStatusChart = dynamic(
+  () => import('@/components/dashboard/rent-status-chart').then(mod => mod.RentStatusChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px]" />,
+  }
+);
+
+const TenantActivity = dynamic(
+  () => import('@/components/dashboard/tenant-activity'),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px]" />,
+  }
+);
+
 
 export default function DashboardPage({ title }: { title?: string }) {
   const { isInitialized: propertiesReady } = useProperties();
