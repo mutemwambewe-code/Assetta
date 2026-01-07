@@ -4,26 +4,12 @@ export const AppLogo = ({ className }: { className?: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 216 216"
-      className={cn("text-foreground", className)}
+      viewBox="0 0 56 84"
+      className={cn("text-accent", className)}
       fill="currentColor"
       aria-label="Assetta Logo"
     >
-      <path
-        d="M94.8 160H65.2L48 184V72L94.8 160z"
-        className="text-accent"
-        fill="currentColor"
-      />
-      <path
-        d="M112 120l48-80h56L131.2 160H112z"
-        className="text-primary"
-        fill="currentColor"
-      />
-      <path
-        d="M160 120l48 80H120l-8-13.3L160 120z"
-        className="text-primary"
-        fill="currentColor"
-      />
+        <path d="M28.53,0A28.53,28.53,0,0,0,0,28.53V84H16.91V34.09H39.87V22.65H16.91V28.53a11.62,11.62,0,1,1,23.24,0V84h16V28.53A28.53,28.53,0,0,0,28.53,0Z"/>
     </svg>
   );
 };
