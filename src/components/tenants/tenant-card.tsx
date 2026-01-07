@@ -33,10 +33,10 @@ interface TenantCardProps {
 }
 
 const statusStyles = {
-  Paid: 'bg-success text-success-foreground border-transparent',
-  Pending: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30 dark:text-yellow-400',
-  Overdue: 'bg-destructive/20 text-destructive border-destructive/30',
-};
+  Paid: 'success',
+  Pending: 'secondary',
+  Overdue: 'destructive',
+} as const;
 
 export function TenantCard({ tenant }: TenantCardProps) {
   const { deleteTenant } = useTenants();
@@ -93,7 +93,7 @@ export function TenantCard({ tenant }: TenantCardProps) {
                     <p className="text-muted-foreground">Rent</p>
                     <p className="font-semibold">ZMW {tenant.rentAmount.toLocaleString()}</p>
                 </div>
-                <Badge className={cn('text-xs', statusStyles[tenant.rentStatus])}>
+                <Badge variant={statusStyles[tenant.rentStatus]} className="text-xs">
                     {tenant.rentStatus}
                 </Badge>
             </div>

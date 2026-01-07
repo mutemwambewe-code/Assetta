@@ -29,10 +29,10 @@ import {
 } from "@/components/ui/alert-dialog"
 
 const statusStyles = {
-  Paid: 'bg-success text-success-foreground border-transparent',
-  Pending: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30 dark:text-yellow-400',
-  Overdue: 'bg-destructive/20 text-destructive border-destructive/30',
-};
+  Paid: 'success',
+  Pending: 'secondary',
+  Overdue: 'destructive',
+} as const;
 
 function TenantDetailPage({ title }: { title?: string }) {
   const params = useParams();
@@ -99,7 +99,7 @@ function TenantDetailPage({ title }: { title?: string }) {
               <CardDescription>
                 {tenant.property} - Unit {tenant.unit}
               </CardDescription>
-               <Badge className={cn('text-sm mt-2', statusStyles[tenant.rentStatus])}>
+               <Badge variant={statusStyles[tenant.rentStatus]} className="text-sm mt-2">
                 {tenant.rentStatus}
               </Badge>
             </CardHeader>

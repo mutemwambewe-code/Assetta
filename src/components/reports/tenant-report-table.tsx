@@ -18,10 +18,10 @@ interface TenantReportTableProps {
 }
 
 const statusStyles = {
-    Paid: 'bg-success text-success-foreground border-transparent',
-    Pending: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30 dark:text-yellow-400',
-    Overdue: 'bg-destructive/20 text-destructive border-destructive/30',
-};
+  Paid: 'success',
+  Pending: 'secondary',
+  Overdue: 'destructive',
+} as const;
 
 export function TenantReportTable({ tenants }: TenantReportTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,7 +104,7 @@ export function TenantReportTable({ tenants }: TenantReportTableProps) {
                     <TableCell className="hidden lg:table-cell">{format(new Date(tenant.leaseEndDate), 'PPP')}</TableCell>
                     <TableCell>ZMW {tenant.rentAmount.toLocaleString()}</TableCell>
                     <TableCell>
-                      <Badge className={cn('text-xs', statusStyles[tenant.rentStatus])}>
+                      <Badge variant={statusStyles[tenant.rentStatus]} className="text-xs">
                         {tenant.rentStatus}
                       </Badge>
                     </TableCell>
