@@ -74,8 +74,8 @@ export function OverviewCards() {
         reportHref: '/reports?highlight=occupancy-report',
         description: (
         <span className="flex items-center gap-1">
-            <TrendingUp className="h-4 w-4 text-accent" />
-            <span className="text-accent">{occupancyRate}%</span> occupancy
+            <TrendingUp className="h-4 w-4 text-success" />
+            <span className="text-success">{occupancyRate}%</span> occupancy
         </span>
         ),
     },

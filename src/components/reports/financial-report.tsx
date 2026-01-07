@@ -19,7 +19,7 @@ interface FinancialReportProps {
 }
 
 const statusStyles = {
-  Paid: 'bg-accent text-accent-foreground border-transparent',
+  Paid: 'bg-success text-success-foreground border-transparent',
   Pending: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30 dark:text-yellow-400',
   Overdue: 'bg-destructive/20 text-destructive border-destructive/30',
 };
