@@ -104,7 +104,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="mb-8 flex flex-col items-center gap-4 text-center">
+      <div className="mb-8 flex flex-col gap-4 text-center">
           <AppWordmark className="h-12" />
         <p className="text-muted-foreground max-w-xs">Where your assets thrive, because we make them better.</p>
       </div>
