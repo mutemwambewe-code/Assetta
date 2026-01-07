@@ -7,13 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function SettingsPage({ title }: { title?: string }) {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const router = useRouter();
+  const { user, isUserLoading } = useUser();
 
   const handleReplayTutorial = () => {
     toast({
@@ -36,6 +40,46 @@ function SettingsPage({ title }: { title?: string }) {
             Back
         </Button>
       </div>
+
+       <Card>
+        <CardHeader>
+          <CardTitle>Account Information</CardTitle>
+          <CardDescription>
+            Your personal account details.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isUserLoading ? (
+            <div className='space-y-4'>
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-8 w-1/2" />
+            </div>
+          ) : user ? (
+            <>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor='displayName'>Full Name</Label>
+                <p id='displayName' className='text-muted-foreground'>{user.displayName || 'Not set'}</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor='email'>Email Address</Label>
+                <div className='flex items-center gap-2'>
+                  <p id='email' className='text-muted-foreground'>{user.email}</p>
+                  {user.emailVerified ? (
+                    <Badge variant="success" className="gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive">Not Verified</Badge>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className='text-muted-foreground'>Could not load user information.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
