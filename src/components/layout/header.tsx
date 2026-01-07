@@ -122,7 +122,7 @@ export function Header({ pageTitle }: HeaderProps) {
             </SheetContent>
         </Sheet>
         <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
-             <AppWordmark className="h-8" />
+             <AppLogo className="h-8" />
         </Link>
        </div>
       
