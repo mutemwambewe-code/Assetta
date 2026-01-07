@@ -122,7 +122,7 @@ export function Header({ pageTitle }: HeaderProps) {
             </SheetContent>
         </Sheet>
         <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
-             <AppLogo className="h-8" />
+             <AppWordmark className="h-8" />
         </Link>
        </div>
       
@@ -138,7 +138,14 @@ export function Header({ pageTitle }: HeaderProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="overflow-hidden rounded-full">
-            <AppLogo className="h-6 w-6 text-accent" />
+            <Avatar>
+                <AvatarImage asChild src={user?.photoURL || ''}>
+                    <Image src={user?.photoURL || ''} alt={user?.displayName || 'User'} width={36} height={36} />
+                </AvatarImage>
+                <AvatarFallback>
+                    {user?.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
+                </AvatarFallback>
+            </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
