@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import React from 'react';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
-import { AppLogo } from './app-logo';
+import { AppWordmark } from './app-wordmark';
 
 interface HeaderProps {
   pageTitle: string;
@@ -82,8 +82,7 @@ export function Header({ pageTitle }: HeaderProps) {
                     href="/dashboard"
                     className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
                     >
-                    <AppLogo className="h-6 w-6 text-accent" />
-                    <span className="font-bold text-xl text-foreground">Assetta</span>
+                    <AppWordmark className="h-8" />
                 </Link>
             </SheetHeader>
             <ScrollArea className="flex-1">
@@ -122,8 +121,7 @@ export function Header({ pageTitle }: HeaderProps) {
             </SheetContent>
         </Sheet>
         <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
-            <AppLogo className="h-6 w-6 text-accent" />
-            <span className="font-bold text-xl">Assetta</span>
+             <AppWordmark className="h-8" />
         </Link>
        </div>
       

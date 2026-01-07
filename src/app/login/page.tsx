@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { AppLogo } from '@/components/layout/app-logo';
+import { AppWordmark } from '@/components/layout/app-wordmark';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address.'),
@@ -104,11 +104,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="mb-8 flex flex-col items-center gap-2 text-center">
-          <div className="flex items-center gap-2 text-primary">
-            <AppLogo className="h-10 w-10 text-accent" />
-            <h1 className="text-4xl font-bold text-primary">Assetta</h1>
-          </div>
+      <div className="mb-8 flex flex-col items-center gap-4 text-center">
+          <AppWordmark className="h-12" />
         <p className="text-muted-foreground max-w-xs">Where your assets thrive, because we make them better.</p>
       </div>
       <Card className="w-full max-w-sm">

@@ -7,6 +7,7 @@ export const AppLogo = ({ className }: { className?: string }) => {
       viewBox="0 0 216 216"
       className={cn("text-foreground", className)}
       fill="currentColor"
+      aria-label="Assetta Logo"
     >
       <path
         d="M94.8 160H65.2L48 184V72L94.8 160z"
