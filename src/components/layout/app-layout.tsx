@@ -8,9 +8,11 @@ import { Header } from './header';
 import { navLinks, settingsLink } from './nav-links';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Building, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Separator } from '../ui/separator';
+import { IntroTutorial } from '../tutorial/intro-tutorial';
+import { AppLogo } from './app-logo';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -53,7 +55,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             href="/dashboard"
             className="group flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
           >
-            <Building className="h-6 w-6" />
+            <AppLogo className="h-6 w-6 text-accent" />
             <span className="sr-only">Assetta</span>
           </Link>
           <TooltipProvider>
@@ -107,6 +109,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           pageTitle={pageTitle}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:px-6 sm:py-6">{children}</main>
+        <IntroTutorial />
       </div>
     </div>
   );

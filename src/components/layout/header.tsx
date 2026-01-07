@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { PanelLeft, Settings, Sun, Moon, Building, LogOut } from 'lucide-react';
+import { PanelLeft, Settings, Sun, Moon, LogOut } from 'lucide-react';
 import { useTheme } from '@/components/providers/app-providers';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import React from 'react';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
+import { AppLogo } from './app-logo';
 
 interface HeaderProps {
   pageTitle: string;
@@ -81,7 +82,7 @@ export function Header({ pageTitle }: HeaderProps) {
                     href="/dashboard"
                     className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
                     >
-                    <Building className="h-6 w-6" />
+                    <AppLogo className="h-6 w-6 text-accent" />
                     <span className="font-bold text-xl text-foreground">Assetta</span>
                 </Link>
             </SheetHeader>
@@ -121,7 +122,7 @@ export function Header({ pageTitle }: HeaderProps) {
             </SheetContent>
         </Sheet>
         <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
-            <Building className="h-6 w-6" />
+            <AppLogo className="h-6 w-6 text-accent" />
             <span className="font-bold text-xl">Assetta</span>
         </Link>
        </div>
