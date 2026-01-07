@@ -15,17 +15,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    try {
-      const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
-      if (!hasSeenTutorial) {
-        setIsTutorialOpen(true);
-      }
-    } catch (error) {
-      console.error('Failed to access localStorage for tutorial state', error);
-    }
+    // This effect is now empty, so the tutorial will not open automatically.
   }, []);
 
   const startTutorial = () => {
