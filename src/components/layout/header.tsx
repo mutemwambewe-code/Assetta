@@ -25,6 +25,7 @@ import React from 'react';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
 import { AppWordmark } from './app-wordmark';
+import { AppLogo } from './app-logo';
 
 interface HeaderProps {
   pageTitle: string;
@@ -137,12 +138,7 @@ export function Header({ pageTitle }: HeaderProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="overflow-hidden rounded-full">
-            <Avatar className="h-9 w-9">
-              {user?.photoURL && (
-                <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />
-              )}
-              <AvatarFallback>{user?.displayName?.charAt(0) ?? user?.email?.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <AppLogo className="h-6 w-6 text-accent" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
