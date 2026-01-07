@@ -23,7 +23,21 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_AFRICASTALKING_USERNAME: process.env.AFRICASTALKING_USERNAME,
     NEXT_PUBLIC_AFRICASTALKING_SENDER_ID: process.env.AFRICASTALKING_SENDER_ID,
-  }
+  },
+  // Adding headers to allow service worker registration
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
