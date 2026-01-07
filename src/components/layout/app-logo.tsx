@@ -9,7 +9,7 @@ export const AppLogo = ({ className }: { className?: string }) => {
       fill="currentColor"
       aria-label="Assetta Logo"
     >
-      <path d="M154.2,216,128,172.4,101.8,216l-47-73.4,22.2-34.6h46L100.8,154.4,128,110l52.2,81.4Z M202.2,24l-88.4,138-44.2-69-67.4,105.2h46L128,126l82.2,127.8h43.6Z" />
+        <path d="M113.3,24.5l-88,192h42.4l19.9-44h96.8l19.9,44h42.4l-88-192H113.3z M128,68.5l34.4,76h-68.8L128,68.5z"/>
     </svg>
   );
 };
