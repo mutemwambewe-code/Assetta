@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, sendEmailVerification } from 'firebase/auth';
 
 const formSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -34,6 +34,7 @@ function SettingsPage({ title }: { title?: string }) {
   const { user, isUserLoading } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -78,6 +79,29 @@ function SettingsPage({ title }: { title?: string }) {
         });
     } finally {
         setIsSubmitting(false);
+    }
+  }
+
+  async function handleSendVerification() {
+    if (!auth.currentUser) {
+        toast({ variant: "destructive", title: "Error", description: "You are not logged in." });
+        return;
+    }
+    setIsSendingVerification(true);
+    try {
+        await sendEmailVerification(auth.currentUser);
+        toast({
+            title: "Verification Email Sent",
+            description: "Please check your inbox for a verification link.",
+        });
+    } catch (error: any) {
+         toast({
+            variant: "destructive",
+            title: "Error Sending Email",
+            description: error.message || "Could not send verification email. Please try again.",
+        });
+    } finally {
+        setIsSendingVerification(false);
     }
   }
 
@@ -147,7 +171,7 @@ function SettingsPage({ title }: { title?: string }) {
                   </div>
                   <div className="flex flex-col gap-1">
                     <Label htmlFor='email'>Email Address</Label>
-                    <div className='flex items-center gap-2'>
+                    <div className='flex items-center gap-2 flex-wrap'>
                       <p id='email' className='text-muted-foreground'>{user.email}</p>
                       {user.emailVerified ? (
                         <Badge variant="success" className="gap-1">
@@ -155,7 +179,13 @@ function SettingsPage({ title }: { title?: string }) {
                           Verified
                         </Badge>
                       ) : (
-                        <Badge variant="destructive">Not Verified</Badge>
+                        <div className='flex items-center gap-2'>
+                            <Badge variant="destructive">Not Verified</Badge>
+                            <Button size="sm" variant="outline" onClick={handleSendVerification} disabled={isSendingVerification}>
+                               {isSendingVerification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Send Verification
+                            </Button>
+                        </div>
                       )}
                     </div>
                   </div>
