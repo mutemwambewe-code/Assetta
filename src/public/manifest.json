@@ -1,17 +1,27 @@
 {
   "name": "Assetta",
   "short_name": "Assetta",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
+  "theme_color": "#3F51B5",
   "description": "Where your assets thrive, because we make them better.",
-  "theme_color": "#183D7A",
   "icons": [
     {
-      "src": "logo.svg",
-      "sizes": "48x48 72x72 96x96 128x128 256x256 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "https://storage.googleapis.com/pr-pro-u-prod-user-assets/firebase-rules-project/4a9d7b9d-a417-4835-9762-52a1a8a25c7b.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://storage.googleapis.com/pr-pro-u-prod-user-assets/firebase-rules-project/e36923b0-0b61-4623-a511-9f20e4e6c1e5.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "https://storage.googleapis.com/pr-pro-u-prod-user-assets/firebase-rules-project/e36923b0-0b61-4623-a511-9f20e4e6c1e5.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
