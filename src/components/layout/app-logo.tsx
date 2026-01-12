@@ -1,14 +1,16 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export const AppLogo = ({ className }: { className?: string }) => {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 256 256"
-      className={cn("text-primary", className)}
-      fill="currentColor"
-    >
-      <path d="M240 128a16 16 0 0 1-16 16h-48a16 16 0 0 1-16-16V80a16 16 0 0 1 16-16h48a16 16 0 0 1 16 16Zm-96 0a16 16 0 0 1-16 16H80a16 16 0 0 1-16-16V80a16 16 0 0 1 16-16h48a16 16 0 0 1 16 16Zm-96-32v64a16 16 0 0 1-16 16H32a16 16 0 0 1-16-16V96a16 16 0 0 1 16-16h16a16 16 0 0 1 16 16Z" />
-    </svg>
+    <div className={cn("relative aspect-square", className)}>
+      <Image
+        src="/logo.png"
+        alt="App Logo"
+        fill
+        className="object-contain"
+        priority
+      />
+    </div>
   );
 };

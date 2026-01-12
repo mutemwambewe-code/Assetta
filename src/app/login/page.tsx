@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,37 +76,37 @@ export default function LoginPage() {
 
   async function handlePasswordReset() {
     if (!resetEmail) {
-        toast({
-            variant: "destructive",
-            title: "Email required",
-            description: "Please enter your email address to reset your password.",
-        });
-        return;
+      toast({
+        variant: "destructive",
+        title: "Email required",
+        description: "Please enter your email address to reset your password.",
+      });
+      return;
     }
     setIsResetting(true);
     try {
-        await sendPasswordResetEmail(auth, resetEmail);
-        toast({
-            title: "Password Reset Email Sent",
-            description: `If an account exists for ${resetEmail}, you will receive a password reset link.`,
-        });
-        setResetDialogOpen(false);
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({
+        title: "Password Reset Email Sent",
+        description: `If an account exists for ${resetEmail}, you will receive a password reset link.`,
+      });
+      setResetDialogOpen(false);
     } catch (error: any) {
-        console.error("Password reset error:", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not send password reset email. Please try again.",
-        });
+      console.error("Password reset error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not send password reset email. Please try again.",
+      });
     } finally {
-        setIsResetting(false);
+      setIsResetting(false);
     }
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="mb-8 flex w-full max-w-sm flex-col items-center gap-4">
-          <AppWordmark className="h-12 ml-4" />
+      <div className="mb-8 flex w-full max-w-sm flex-col items-center gap-4 mx-auto">
+        <Image src="/login-heading.png" width={240} height={60} alt="Assetta" />
         <p className="text-muted-foreground max-w-xs self-center text-center">Where your assets thrive, because we make them better.</p>
       </div>
       <Card className="w-full max-w-sm">
@@ -154,32 +155,32 @@ export default function LoginPage() {
               Sign up
             </Link>
           </div>
-           <div className="mt-2 text-center text-sm">
-              <AlertDialog open={isResetDialogOpen} onOpenChange={setResetDialogOpen}>
-                <AlertDialogTrigger asChild>
-                   <Button variant="link" className="px-0">Forgot Password?</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Reset Password</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Enter your email address and we&apos;ll send you a link to reset your password.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <Input 
-                        type="email" 
-                        placeholder="Enter your email"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                    />
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handlePasswordReset} disabled={isResetting}>
-                        {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Send Reset Link'}
-                    </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-             </AlertDialog>
+          <div className="mt-2 text-center text-sm">
+            <AlertDialog open={isResetDialogOpen} onOpenChange={setResetDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="link" className="px-0">Forgot Password?</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset Password</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Enter your email address and we&apos;ll send you a link to reset your password.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                />
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handlePasswordReset} disabled={isResetting}>
+                    {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Send Reset Link'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardContent>
       </Card>

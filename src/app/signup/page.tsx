@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AppWordmark } from '@/components/layout/app-wordmark';
 
 const formSchema = z.object({
@@ -70,8 +71,8 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-       <div className="mb-8 flex w-full max-w-sm flex-col items-center gap-4">
-          <AppWordmark className="h-12 ml-4" />
+      <div className="mb-8 flex w-full max-w-sm flex-col items-center gap-4">
+        <Image src="/login-heading.png" width={240} height={60} alt="Assetta" />
         <p className="text-muted-foreground max-w-xs self-center text-center">Where your assets thrive, because we make them better.</p>
       </div>
       <Card className="w-full max-w-sm">

@@ -29,10 +29,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   let pageTitle = '';
   if (Children.only(children) && React.isValidElement(children)) {
-      const child = children as React.ReactElement;
-      if (child.type && (child.type as any).title) {
-        pageTitle = (child.type as any).title;
-      }
+    const child = children as React.ReactElement;
+    if (child.type && (child.type as any).title) {
+      pageTitle = (child.type as any).title;
+    }
   }
 
   if (isUserLoading && !isAuthPage) {
@@ -42,7 +42,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (isAuthPage) {
     return <>{children}</>;
   }
@@ -53,15 +53,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-col items-center gap-4 px-2 py-4">
           <Link
             href="/dashboard"
-            className="group flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
+            className="group flex h-14 w-14 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
           >
-            <AppLogo className="h-6 w-6 text-accent" />
+            <AppLogo className="h-10 w-10 text-accent" />
             <span className="sr-only">Assetta</span>
           </Link>
           <TooltipProvider>
             {navLinks.map(({ href, label, icon: Icon, isPrimary }, index) => (
               <React.Fragment key={href}>
-              {index === 2 && <Separator className="my-2" />}
+                {index === 2 && <Separator className="my-2" />}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
@@ -92,7 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   href={settingsLink.href}
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                      pathname.startsWith(settingsLink.href) && 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    pathname.startsWith(settingsLink.href) && 'bg-sidebar-accent text-sidebar-accent-foreground'
                   )}
                 >
                   <settingsLink.icon className="h-5 w-5" />
@@ -105,7 +105,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
       <div className="flex flex-1 flex-col sm:pl-16">
-        <Header 
+        <Header
           pageTitle={pageTitle}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:px-6 sm:py-6">{children}</main>

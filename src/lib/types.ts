@@ -16,6 +16,7 @@ export type Tenant = {
   paymentHistory: Payment[];
   nextDueDate?: string;
   propertyId?: string; // Added propertyId
+  balance?: number; // Added balance for improved rent tracking
 };
 
 export type Payment = {
@@ -50,15 +51,15 @@ export type OverviewStats = {
 };
 
 export type MessageLog = {
-    id: string; // This can be the local temporary ID or the final provider ID
-    providerId?: string; // The final ID from the SMS provider (e.g., Africa's Talking)
-    tenantId: string;
-    tenantName: string;
-    message: string;
-    date: string;
-    method: 'SMS' | 'WhatsApp';
-    direction?: 'incoming' | 'outgoing'; // Add direction
-    status?: string; // For delivery reports
+  id: string; // This can be the local temporary ID or the final provider ID
+  providerId?: string; // The final ID from the SMS provider (e.g., Africa's Talking)
+  tenantId: string;
+  tenantName: string;
+  message: string;
+  date: string;
+  method: 'SMS' | 'WhatsApp';
+  direction?: 'incoming' | 'outgoing'; // Add direction
+  status?: string; // For delivery reports
 }
 
 export type Template = {
@@ -93,6 +94,6 @@ export type Invoice = {
 };
 
 export type InvoiceItem = {
-    description: string;
-    amount: number;
+  description: string;
+  amount: number;
 };

@@ -43,10 +43,10 @@ export function Header({ pageTitle }: HeaderProps) {
   React.useEffect(() => {
     const mainEl = document.querySelector('main');
     const handleScroll = (e: Event) => {
-        const target = e.currentTarget as HTMLElement;
-        if(target) {
-            setShowTitle(target.scrollTop > 20);
-        }
+      const target = e.currentTarget as HTMLElement;
+      if (target) {
+        setShowTitle(target.scrollTop > 20);
+      }
     };
     mainEl?.addEventListener('scroll', handleScroll);
     return () => mainEl?.removeEventListener('scroll', handleScroll);
@@ -57,80 +57,80 @@ export function Header({ pageTitle }: HeaderProps) {
       setMobileMenuOpen(false);
     }
   }, [pathname]);
-  
+
   const handleLogout = async () => {
     await signOut(auth);
     router.push('/login');
   };
 
   return (
-    <header 
-        className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6"
-        style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
+    <header
+      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6"
+      style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
     >
-       <div className='flex items-center gap-4'>
+      <div className='flex items-center gap-4'>
         <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
+          <SheetTrigger asChild>
             <Button size="icon" variant="outline" className="sm:hidden">
-                <PanelLeft className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
+              <PanelLeft className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
             </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border flex flex-col p-0">
+          </SheetTrigger>
+          <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border flex flex-col p-0">
             <SheetHeader className="p-4 border-b border-sidebar-border">
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                 <Link
-                    href="/dashboard"
-                    className="group flex h-10 shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
-                    >
-                    <AppWordmark className="h-8" />
-                </Link>
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <Link
+                href="/dashboard"
+                className="group flex h-auto shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
+              >
+                <AppWordmark className="h-20" />
+              </Link>
             </SheetHeader>
             <ScrollArea className="flex-1">
-                <nav className="grid gap-4 text-lg font-medium p-4">
-                    {navLinks.map(({ href, label, icon: Icon }, index) => (
-                    <React.Fragment key={href}>
+              <nav className="grid gap-4 text-lg font-medium p-4">
+                {navLinks.map(({ href, label, icon: Icon }, index) => (
+                  <React.Fragment key={href}>
                     {index === 2 && <Separator className="my-2 bg-sidebar-border" />}
                     <Link
-                        href={href}
-                        className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
+                      href={href}
+                      className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
                         pathname.startsWith(href)
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
-                        )}
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
                     >
-                        <Icon className="h-5 w-5" />
-                        {label}
+                      <Icon className="h-5 w-5" />
+                      {label}
                     </Link>
-                    </React.Fragment>
-                    ))}
-                </nav>
+                  </React.Fragment>
+                ))}
+              </nav>
             </ScrollArea>
-             <div className="mt-auto border-t border-sidebar-border p-4">
-                 <Link
-                    href={settingsLink.href}
-                    className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
-                    pathname.startsWith(settingsLink.href)
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                >
-                    <settingsLink.icon className="h-5 w-5" />
-                    {settingsLink.label}
-                </Link>
-             </div>
-            </SheetContent>
+            <div className="mt-auto border-t border-sidebar-border p-4">
+              <Link
+                href={settingsLink.href}
+                className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
+                  pathname.startsWith(settingsLink.href)
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <settingsLink.icon className="h-5 w-5" />
+                {settingsLink.label}
+              </Link>
+            </div>
+          </SheetContent>
         </Sheet>
-        <Link href="/dashboard" className="hidden items-center gap-2 text-primary sm:flex">
-             <AppWordmark className="h-8" />
+        <Link href="/dashboard" className="hidden h-auto items-center gap-2 text-primary sm:flex">
+          <AppWordmark className="h-20" />
         </Link>
-       </div>
-      
+      </div>
+
       <div className="flex-1">
         <div className={cn(
-            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform transition-all duration-300",
-            showTitle ? "opacity-100" : "opacity-0 -translate-y-4 pointer-events-none"
-          )}>
+          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform transition-all duration-300",
+          showTitle ? "opacity-100" : "opacity-0 -translate-y-4 pointer-events-none"
+        )}>
           <h1 className="font-semibold text-lg">{pageTitle}</h1>
         </div>
       </div>
@@ -139,12 +139,12 @@ export function Header({ pageTitle }: HeaderProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="overflow-hidden rounded-full">
             <Avatar>
-                <AvatarImage asChild src={user?.photoURL || ''}>
-                    <Image src={user?.photoURL || ''} alt={user?.displayName || 'User'} width={36} height={36} />
-                </AvatarImage>
-                <AvatarFallback>
-                    {user?.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
-                </AvatarFallback>
+              <AvatarImage asChild src={user?.photoURL || ''}>
+                <Image src={user?.photoURL || ''} alt={user?.displayName || 'User'} width={36} height={36} />
+              </AvatarImage>
+              <AvatarFallback>
+                {user?.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
+              </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -152,13 +152,13 @@ export function Header({ pageTitle }: HeaderProps) {
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-             <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
-              <Settings className="w-4 h-4"/>
+            <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
+              <Settings className="w-4 h-4" />
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? <Sun className="w-4 h-4 mr-2"/> : <Moon className="w-4 h-4 mr-2"/>}
+            {theme === 'dark' ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
             <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
