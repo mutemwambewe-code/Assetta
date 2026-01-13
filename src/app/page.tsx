@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Home() {
   const { user, isUserLoading } = useUser();
@@ -20,7 +21,11 @@ export default function Home() {
   }, [user, isUserLoading, router]);
 
   return (
-    <div className="flex h-screen w-full items-center justify-center">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-background gap-4">
+      <div className="flex w-full max-w-sm flex-col items-center gap-2">
+        <Image src="/login-heading.png" width={240} height={60} alt="Assetta" priority />
+        <p className="text-muted-foreground max-w-xs self-center text-center">Where your assets thrive, because we make them better.</p>
+      </div>
       <Loader2 className="h-8 w-8 animate-spin" />
     </div>
   );
