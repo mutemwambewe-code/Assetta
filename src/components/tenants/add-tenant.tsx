@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -32,6 +31,7 @@ import type { Property } from '@/lib/types';
 import { ScrollArea } from '../ui/scroll-area';
 import { countries } from '@/lib/countries';
 import { Combobox } from '../ui/combobox';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -95,11 +95,26 @@ const MobileDatePicker = ({
 
 
 export function AddTenant({ asChild, className }: { asChild?: boolean; className?: string }) {
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { tenants, addTenant, isInitialized: tenantsReady } = useTenants();
   const { properties, isInitialized: propertiesReady } = useProperties();
   const { toast } = useToast();
   const [isMobile, setIsMobile] = useState(false);
+
+  const isDialogOpen = searchParams.get('dialog') === 'add-tenant';
+
+  const setDialogOpen = (open: boolean) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (open) {
+      newParams.set('dialog', 'add-tenant');
+    } else {
+      newParams.delete('dialog');
+    }
+    router.replace(`${pathname}?${newParams.toString()}`);
+  };
+
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -162,7 +177,7 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
       title: 'Tenant Added!',
       description: `${values.name} has been added to your tenant list.`,
     });
-    setOpen(false);
+    setDialogOpen(false);
     form.reset();
   }
   
@@ -197,18 +212,17 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
 
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {asChild ? (
-            <span className={cn('cursor-pointer', className)}>
-                <Plus className="mr-2" /> Add Tenant
-            </span>
-        ) : (
-            <Button variant="outline" className={className}>
-                <Plus className="mr-2" /> Add Tenant
-            </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+        <button
+            onClick={() => setDialogOpen(true)}
+            className={cn(
+                'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+                asChild ? '' : 'bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2',
+                className
+            )}
+        >
+            <Plus className="mr-2" /> Add Tenant
+        </button>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Tenant</DialogTitle>

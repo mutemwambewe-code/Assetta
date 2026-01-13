@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -121,11 +122,7 @@ export function TenantList() {
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h2 className="text-xl font-semibold">No tenants yet</h2>
             <p className="text-muted-foreground mt-2">Add your first tenant to get started.</p>
-            <AddTenant>
-              <Button className='mt-4'>
-                <Plus className="mr-2 h-4 w-4" /> Add Tenant
-              </Button>
-            </AddTenant>
+            <AddTenant />
         </div>
     )
   }
@@ -166,11 +163,7 @@ export function TenantList() {
               </div>
             )}
           )}
-          <AddTenant>
-             <Button className="h-10">
-                <Plus className="mr-2 h-4 w-4" /> Add Tenant
-             </Button>
-          </AddTenant>
+          <AddTenant className='h-10' />
         </div>
       </div>
 
