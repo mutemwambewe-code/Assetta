@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ClientProviders } from '@/components/providers/client-providers';
 import { AppLogo } from '@/components/layout/app-logo';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
 
 export const metadata: Metadata = {
   title: 'Assetta',
@@ -24,7 +25,10 @@ export default function RootLayout({
         <meta name="theme-color" content="#183D7A" />
       </head>
       <body className="font-body antialiased">
-        <ClientProviders>{children}</ClientProviders>
+        <ClientProviders>
+          {children}
+          <InstallPrompt />
+        </ClientProviders>
         <script
           dangerouslySetInnerHTML={{
             __html: `

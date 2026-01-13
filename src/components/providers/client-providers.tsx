@@ -10,6 +10,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Toaster } from "@/components/ui/toaster"
 import { TutorialProvider } from '../tutorial/tutorial-provider';
 import { IntroTutorial } from '../tutorial/intro-tutorial';
+import { InstallPrompt } from '../pwa/install-prompt';
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -20,8 +21,12 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
             <TenantProvider>
               <TemplateProvider>
                 <MessageLogProvider>
-                  <AppLayout>{children}</AppLayout>
-                  {/* <IntroTutorial /> */}
+                  <AppLayout>
+                    <>
+                      {children}
+                      <InstallPrompt />
+                    </>
+                  </AppLayout>
                 </MessageLogProvider>
               </TemplateProvider>
             </TenantProvider>
