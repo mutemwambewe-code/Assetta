@@ -95,7 +95,7 @@ const MobileDatePicker = ({
 };
 
 
-export function AddTenant({ asChild, className }: { asChild?: boolean; className?: string }) {
+export function AddTenant({ children, asChild, className }: { children?: React.ReactNode; asChild?: boolean; className?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -214,16 +214,20 @@ export function AddTenant({ asChild, className }: { asChild?: boolean; className
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
-        <button
-            onClick={() => setDialogOpen(true)}
-            className={cn(
-                'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-                asChild ? '' : 'bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2',
-                className
-            )}
-        >
-            <Plus className="mr-2" /> Add Tenant
-        </button>
+        {children ? (
+          <div onClick={() => setDialogOpen(true)}>{children}</div>
+        ) : (
+            <button
+                onClick={() => setDialogOpen(true)}
+                className={cn(
+                    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+                    asChild ? '' : 'bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2',
+                    className
+                )}
+            >
+                <Plus className="mr-2" /> Add Tenant
+            </button>
+        )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Tenant</DialogTitle>
