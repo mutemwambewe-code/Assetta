@@ -30,7 +30,7 @@ import {
 
 const statusStyles = {
   Paid: 'success',
-  Pending: 'secondary',
+  Pending: 'warning',
   Overdue: 'destructive',
 } as const;
 
@@ -119,6 +119,12 @@ function TenantDetailPage({ title }: { title?: string }) {
                         <span className='text-muted-foreground'>Rent Amount:</span>
                         <span className='font-semibold'>ZMW {tenant.rentAmount.toLocaleString()}</span>
                      </div>
+                      {tenant.balance && tenant.balance > 0 && (
+                        <div className='flex justify-between items-center text-sm'>
+                            <span className='text-muted-foreground'>Outstanding Balance:</span>
+                            <span className='font-semibold text-destructive'>ZMW {tenant.balance.toLocaleString()}</span>
+                        </div>
+                      )}
                       {tenant.nextDueDate && (
                        <div className='flex justify-between items-center text-sm'>
                           <span className='text-muted-foreground'>Next Due Date:</span>

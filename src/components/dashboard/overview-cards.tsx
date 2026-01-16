@@ -18,7 +18,7 @@ export function OverviewCards() {
     const totalUnits = properties.reduce((sum, prop) => sum + prop.units, 0);
 
     const occupiedUnits = tenants.length;
-    const overdueTenants = tenants.filter(t => t.rentStatus === 'Overdue').length;
+    const tenantsInArrears = tenants.filter(t => t.rentStatus === 'Overdue' || t.rentStatus === 'Pending').length;
 
     const today = new Date();
     const next30Days = addDays(today, 30);
@@ -39,17 +39,6 @@ export function OverviewCards() {
 
 
     const occupancyRate = totalUnits > 0 ? ((occupiedUnits / totalUnits) * 100).toFixed(1) : '0.0';
-
-    const rentDueThisMonth = tenants
-      .filter(tenant => {
-        const leaseStart = parseISO(tenant.leaseStartDate);
-        const leaseEnd = parseISO(tenant.leaseEndDate);
-        const monthStart = startOfMonth(today);
-        const monthEnd = endOfMonth(today);
-        // Active if lease starts before end of month and ends after start of month
-        return isBefore(leaseStart, monthEnd) && isBefore(monthStart, leaseEnd);
-      })
-      .reduce((sum, tenant) => sum + tenant.rentAmount, 0);
 
     const upcomingExpirations = tenants.filter(tenant => {
         const leaseEndDate = parseISO(tenant.leaseEndDate);
@@ -74,13 +63,13 @@ export function OverviewCards() {
         reportHref: '/reports?highlight=occupancy-report',
         description: (
         <span className="flex items-center gap-1">
-            <TrendingUp className="h-4 w-4 text-success" />
-            <span className="text-success">{occupancyRate}%</span> occupancy
+            <TrendingUp className="h-4 w-4 text-accent" />
+            <span className="text-accent">{occupancyRate}%</span> occupancy
         </span>
         ),
     },
     {
-        title: 'Rent Collected (Month)',
+        title: 'Rent Collected (This Month)',
         value: `ZMW ${rentCollected.toLocaleString()}`,
         icon: DollarSign,
         description: `ZMW ${outstandingRent.toLocaleString()} outstanding`,
@@ -88,21 +77,13 @@ export function OverviewCards() {
         reportHref: '/reports?highlight=rental-income'
     },
     {
-        title: 'Outstanding Rent (Month)',
-        value: `ZMW ${outstandingRent.toLocaleString()}`,
-        icon: FileText,
-        description: 'From all unpaid tenants',
-        href: '/tenants?filter=Overdue,Pending',
-        reportHref: '/reports?highlight=outstanding-rent'
-    },
-    {
-        title: 'Tenants in Arrears',
-        value: overdueTenants,
+        title: 'Tenants with Arrears',
+        value: tenantsInArrears,
         icon: AlertTriangle,
         description: 'Require follow-up',
         className: 'text-yellow-600 dark:text-yellow-400',
         iconClassName: 'bg-yellow-500/10',
-        href: '/tenants?filter=Overdue',
+        href: '/tenants?filter=Overdue,Pending',
         reportHref: '/reports?highlight=outstanding-rent'
     },
     {
