@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AddTenant } from '@/components/tenants/add-tenant';
@@ -11,7 +10,7 @@ import { useProperties } from '../properties/property-provider';
 import { useTenants } from '../tenants/tenant-provider';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '../ui/skeleton';
-import { OccupancyChart } from './occupancy-chart';
+import { RentStatusChart } from './rent-status-chart';
 
 const TenantActivity = dynamic(
   () => import('@/components/dashboard/tenant-activity'),
@@ -55,7 +54,7 @@ export default function DashboardPage({ title }: { title?: string }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
-          <OccupancyChart />
+          <RentStatusChart />
         </div>
         <div className="lg:col-span-2">
           <TenantActivity />
