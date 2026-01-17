@@ -97,3 +97,16 @@ export type InvoiceItem = {
   description: string;
   amount: number;
 };
+
+export type UtilityBill = {
+  id: string;
+  propertyId: string;
+  propertyName: string;
+  utilityType: 'Water' | 'Electricity' | 'Garbage' | 'Security' | 'Internet' | 'Other';
+  billingPeriodStart: string;
+  billingPeriodEnd: string;
+  amount: number;
+  dueDate: string;
+  status: 'Paid' | 'Pending' | 'Overdue';
+  billUrl?: string;
+};

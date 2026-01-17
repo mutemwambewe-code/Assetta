@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
-import { ArrowLeft, Building, MapPin, Users, Tag, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Users, Tag, Edit, Trash2, ReceiptText, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -28,18 +28,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useUtility } from '@/components/utilities/utility-provider';
+import { format } from 'date-fns';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { EditUtilityBill } from '@/components/utilities/edit-utility-bill';
 
-const statusStyles = {
+const rentStatusStyles = {
   Paid: 'success',
   Pending: 'warning',
   Overdue: 'destructive',
 } as const;
+
+const utilityStatusStyles = {
+  Paid: 'success',
+  Pending: 'warning',
+  Overdue: 'destructive',
+} as const;
+
 
 function PropertyDetailPage({ title }: { title?: string }) {
   const params = useParams();
   const router = useRouter();
   const { tenants } = useTenants();
   const { properties, deleteProperty } = useProperties();
+  const { utilityBills, deleteUtilityBill } = useUtility();
   const { toast } = useToast();
   
   const propertyId = params.propertyId as string;
@@ -66,6 +78,7 @@ function PropertyDetailPage({ title }: { title?: string }) {
 
   const tenantsInProperty = tenants.filter(t => t.property === property.name);
   const occupancyRate = property.units > 0 ? (tenantsInProperty.length / property.units) * 100 : 0;
+  const billsForProperty = utilityBills.filter(b => b.propertyId === property.id).slice(0, 5); // show recent 5
 
   const handleRowClick = (tenantId: string) => {
     router.push(`/tenants/${tenantId}`);
@@ -79,6 +92,14 @@ function PropertyDetailPage({ title }: { title?: string }) {
     });
     router.push('/properties');
   }
+
+   const handleRemoveBill = (billId: string) => {
+    deleteUtilityBill(billId);
+    toast({
+      title: "Utility Bill Deleted",
+      description: "The bill has been removed from your records.",
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto">
@@ -200,7 +221,7 @@ function PropertyDetailPage({ title }: { title?: string }) {
                             </TableCell>
                             <TableCell className="hidden sm:table-cell">{tenant.unit}</TableCell>
                             <TableCell>
-                                <Badge variant={statusStyles[tenant.rentStatus]} className="text-xs">
+                                <Badge variant={rentStatusStyles[tenant.rentStatus]} className="text-xs">
                                     {tenant.rentStatus}
                                 </Badge>
                             </TableCell>
@@ -215,6 +236,84 @@ function PropertyDetailPage({ title }: { title?: string }) {
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
                     <h2 className="text-xl font-semibold">No Tenants in this Property</h2>
                     <p className="text-muted-foreground mt-2">Add a tenant to see them listed here.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <CardTitle>Utility Bills</CardTitle>
+                  <CardDescription>
+                    Recent utility bills for {property.name}.
+                  </CardDescription>
+                </div>
+                <Link href="/utilities">
+                  <Button variant="outline">Manage Utilities</Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {billsForProperty.length > 0 ? (
+                <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Period</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                           <TableHead className='text-right'></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {billsForProperty.map((bill) => (
+                          <TableRow key={bill.id}>
+                            <TableCell className="font-medium">{bill.utilityType}</TableCell>
+                            <TableCell>{format(new Date(bill.billingPeriodEnd), 'MMM yyyy')}</TableCell>
+                            <TableCell>ZMW {bill.amount.toLocaleString()}</TableCell>
+                            <TableCell>
+                                <Badge variant={utilityStatusStyles[bill.status]} className="text-xs">
+                                    {bill.status}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <AlertDialog>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal /></Button></DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <EditUtilityBill bill={bill}><DropdownMenuItem onSelect={e => e.preventDefault()}>Edit</DropdownMenuItem></EditUtilityBill>
+                                            <DropdownMenuSeparator/>
+                                            <AlertDialogTrigger asChild><DropdownMenuItem className='text-destructive' onSelect={e => e.preventDefault()}>Delete</DropdownMenuItem></AlertDialogTrigger>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete this utility bill record.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleRemoveBill(bill.id)} className="bg-destructive hover:bg-destructive/90">
+                                            Yes, delete
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                </div>
+              ) : (
+                <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                    <ReceiptText className='h-10 w-10 mx-auto text-muted-foreground' />
+                    <h2 className="text-xl font-semibold mt-2">No Utility Bills</h2>
+                    <p className="text-muted-foreground mt-2">No utility bills have been recorded for this property yet.</p>
                 </div>
               )}
             </CardContent>

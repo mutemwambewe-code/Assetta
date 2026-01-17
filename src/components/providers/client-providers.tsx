@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { TutorialProvider } from '../tutorial/tutorial-provider';
 import { IntroTutorial } from '../tutorial/intro-tutorial';
 import { InstallPrompt } from '../pwa/install-prompt';
+import { UtilityProvider } from '../utilities/utility-provider';
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -21,12 +22,14 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
             <TenantProvider>
               <TemplateProvider>
                 <MessageLogProvider>
-                  <AppLayout>
-                    <>
-                      {children}
-                      <InstallPrompt />
-                    </>
-                  </AppLayout>
+                  <UtilityProvider>
+                    <AppLayout>
+                      <>
+                        {children}
+                        <InstallPrompt />
+                      </>
+                    </AppLayout>
+                  </UtilityProvider>
                 </MessageLogProvider>
               </TemplateProvider>
             </TenantProvider>

@@ -135,6 +135,24 @@
             "notes": { "type": "string" }
         },
         "required": ["id", "tenantId", "issueDate", "dueDate", "items", "totalAmount", "status"]
+    },
+    "UtilityBill": {
+      "title": "Utility Bill",
+      "description": "A record of a utility bill for a property.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "propertyId": { "type": "string" },
+        "propertyName": { "type": "string" },
+        "utilityType": { "type": "string", "enum": ["Water", "Electricity", "Garbage", "Security", "Internet", "Other"] },
+        "billingPeriodStart": { "type": "string", "format": "date" },
+        "billingPeriodEnd": { "type": "string", "format": "date" },
+        "amount": { "type": "number" },
+        "dueDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Paid", "Pending", "Overdue"] },
+        "billUrl": { "type": "string" }
+      },
+      "required": ["propertyId", "propertyName", "utilityType", "billingPeriodStart", "billingPeriodEnd", "amount", "dueDate", "status"]
     }
   },
   "auth": {
@@ -163,6 +181,10 @@
     "/users/{userId}/invoices/{invoiceId}": {
         "schema": { "$ref": "#/entities/Invoice" },
         "description": "Stores invoices for a user."
+    },
+    "/users/{userId}/utilitybills/{utilityBillId}": {
+      "schema": { "$ref": "#/entities/UtilityBill" },
+      "description": "Stores utility bills for a user's properties."
     }
   }
 }

@@ -1,19 +1,20 @@
-
 'use client';
 
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Home, Users, AlertTriangle, FileText, Clock, MoreVertical, TrendingUp, Eye, FileSpreadsheet } from 'lucide-react';
+import { DollarSign, Home, Users, AlertTriangle, FileText, Clock, MoreVertical, TrendingUp, Eye, FileSpreadsheet, ReceiptText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTenants } from '../tenants/tenant-provider';
 import { isWithinInterval, addDays, startOfMonth, parseISO, isBefore, endOfMonth, getMonth, getYear } from 'date-fns';
 import { useProperties } from '../properties/property-provider';
 import { Button } from '../ui/button';
 import { useRouter } from 'next/navigation';
+import { useUtility } from '../utilities/utility-provider';
 
 export function OverviewCards() {
     const { tenants } = useTenants();
     const { properties } = useProperties();
+    const { utilityBills } = useUtility();
     const router = useRouter();
     const totalUnits = properties.reduce((sum, prop) => sum + prop.units, 0);
 
@@ -45,15 +46,36 @@ export function OverviewCards() {
         return isWithinInterval(leaseEndDate, { start: today, end: next30Days });
     }).length;
 
+    const { utilitiesThisMonth, overdueUtilities } = utilityBills.reduce((acc, bill) => {
+        const dueDate = parseISO(bill.dueDate);
+        if (getMonth(dueDate) === getMonth(today) && getYear(dueDate) === getYear(today)) {
+            acc.utilitiesThisMonth += bill.amount;
+        }
+        if (bill.status === 'Overdue') {
+            acc.overdueUtilities++;
+        }
+        return acc;
+    }, { utilitiesThisMonth: 0, overdueUtilities: 0 });
+
 
     const cardData = [
     {
-        title: 'Total Units',
-        value: totalUnits,
-        icon: Home,
-        description: 'Across all properties',
-        href: '/properties',
-        reportHref: '/reports?highlight=occupancy-report'
+        title: 'Rent Collected (This Month)',
+        value: `ZMW ${rentCollected.toLocaleString()}`,
+        icon: DollarSign,
+        description: `ZMW ${outstandingRent.toLocaleString()} outstanding`,
+        href: '/reports',
+        reportHref: '/reports?highlight=rental-income'
+    },
+     {
+        title: 'Utilities (This Month)',
+        value: `ZMW ${utilitiesThisMonth.toLocaleString()}`,
+        icon: ReceiptText,
+        description: `${overdueUtilities} bill(s) overdue`,
+        className: overdueUtilities > 0 ? 'text-yellow-600 dark:text-yellow-400' : '',
+        iconClassName: overdueUtilities > 0 ? 'bg-yellow-500/10' : '',
+        href: '/utilities',
+        reportHref: '/utilities'
     },
     {
         title: 'Occupied Units',
@@ -67,14 +89,6 @@ export function OverviewCards() {
             <span className="text-accent">{occupancyRate}%</span> occupancy
         </span>
         ),
-    },
-    {
-        title: 'Rent Collected (This Month)',
-        value: `ZMW ${rentCollected.toLocaleString()}`,
-        icon: DollarSign,
-        description: `ZMW ${outstandingRent.toLocaleString()} outstanding`,
-        href: '/reports',
-        reportHref: '/reports?highlight=rental-income'
     },
     {
         title: 'Tenants with Arrears',

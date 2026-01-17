@@ -11,6 +11,7 @@ import { useTenants } from '../tenants/tenant-provider';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '../ui/skeleton';
 import { RentStatusChart } from './rent-status-chart';
+import { useUtility } from '../utilities/utility-provider';
 
 const TenantActivity = dynamic(
   () => import('@/components/dashboard/tenant-activity'),
@@ -24,7 +25,8 @@ const TenantActivity = dynamic(
 export default function DashboardPage({ title }: { title?: string }) {
   const { isInitialized: propertiesReady } = useProperties();
   const { isInitialized: tenantsReady } = useTenants();
-  const isReady = propertiesReady && tenantsReady;
+  const { isInitialized: utilitiesReady } = useUtility();
+  const isReady = propertiesReady && tenantsReady && utilitiesReady;
 
   return (
     <div className="flex flex-col gap-6">
