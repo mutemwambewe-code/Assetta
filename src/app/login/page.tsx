@@ -106,7 +106,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8 flex w-full max-w-sm flex-col items-center gap-2 mx-auto">
         <Image src="/login-heading.png" width={240} height={60} alt="Assetta" />
-        <p className="text-muted-foreground max-w-xs self-center text-center">Where your assets thrive, because we make them better.</p>
+        <p className="text-muted-foreground text-center">Your assets - optimized.</p>
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>

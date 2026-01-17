@@ -24,7 +24,7 @@ export default function Home() {
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background gap-4">
       <div className="flex w-full max-w-sm flex-col items-center gap-2">
         <Image src="/login-heading.png" width={240} height={60} alt="Assetta" priority />
-        <p className="text-muted-foreground max-w-xs self-center text-center">Where your assets thrive, because we make them better.</p>
+        <p className="text-muted-foreground text-center">Your assets - optimized.</p>
       </div>
       <Loader2 className="h-8 w-8 animate-spin" />
     </div>
