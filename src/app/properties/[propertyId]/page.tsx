@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
-import { ArrowLeft, Building, MapPin, Users, Tag, Edit, Trash2, ReceiptText, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Users, Tag, Edit, Trash2, ReceiptText, MoreHorizontal, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,7 @@ import { useUtility } from '@/components/utilities/utility-provider';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { EditUtilityBill } from '@/components/utilities/edit-utility-bill';
+import { AddUtilityBill } from '@/components/utilities/add-utility-bill';
 
 const rentStatusStyles = {
   Paid: 'success',
@@ -249,9 +250,17 @@ function PropertyDetailPage({ title }: { title?: string }) {
                     Recent utility bills for {property.name}.
                   </CardDescription>
                 </div>
-                <Link href="/utilities">
-                  <Button variant="outline">Manage Utilities</Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <AddUtilityBill propertyId={property.id}>
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Bill
+                    </Button>
+                  </AddUtilityBill>
+                  <Link href="/utilities">
+                    <Button variant="outline">Manage All</Button>
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

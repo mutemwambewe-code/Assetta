@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,7 +40,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export function AddUtilityBill({ children }: { children?: React.ReactNode }) {
+export function AddUtilityBill({ children, propertyId }: { children?: React.ReactNode, propertyId?: string }) {
   const [open, setOpen] = useState(false);
   const { addUtilityBill, isInitialized } = useUtility();
   const { properties, isInitialized: propertiesReady } = useProperties();
@@ -49,11 +49,24 @@ export function AddUtilityBill({ children }: { children?: React.ReactNode }) {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      propertyId: '',
+      propertyId: propertyId || '',
       utilityType: 'Electricity',
       amount: 0,
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        propertyId: propertyId || '',
+        utilityType: 'Electricity',
+        amount: 0,
+        billingPeriodStart: new Date(),
+        billingPeriodEnd: new Date(),
+        dueDate: new Date(),
+      });
+    }
+  }, [open, propertyId, form]);
 
   function onSubmit(values: FormData) {
     const selectedProperty = properties.find(p => p.id === values.propertyId);
@@ -76,12 +89,11 @@ export function AddUtilityBill({ children }: { children?: React.ReactNode }) {
     });
     
     setOpen(false);
-    form.reset();
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {children ? <div onClick={() => setOpen(true)}>{children}</div> :
+      {children ? <DialogTrigger asChild>{children}</DialogTrigger> :
         <Button onClick={() => setOpen(true)}>
             <Plus className="mr-2" /> Add Bill
         </Button>
@@ -100,7 +112,7 @@ export function AddUtilityBill({ children }: { children?: React.ReactNode }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Property</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!!propertyId}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a property" />
