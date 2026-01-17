@@ -12,6 +12,7 @@ import { TutorialProvider } from '../tutorial/tutorial-provider';
 import { IntroTutorial } from '../tutorial/intro-tutorial';
 import { InstallPrompt } from '../pwa/install-prompt';
 import { UtilityProvider } from '../utilities/utility-provider';
+import { FeedbackPrompt } from '../feedback/feedback-prompt';
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -27,6 +28,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
                       <>
                         {children}
                         <InstallPrompt />
+                        <FeedbackPrompt />
                       </>
                     </AppLayout>
                   </UtilityProvider>
