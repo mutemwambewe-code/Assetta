@@ -5,8 +5,8 @@ import { AppLogo } from '@/components/layout/app-logo';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 
 export const metadata: Metadata = {
-  title: 'PropEase Zambia',
-  description: 'Modern property management for Zambian landlords.',
+  title: 'Assetta',
+  description: 'Your assets - optimized. Modern property management for Zambian landlords.',
   manifest: '/manifest.json',
 };
 
@@ -28,21 +28,6 @@ export default function RootLayout({
         <ClientProviders>
           {children}
         </ClientProviders>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                  }).catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                  });
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );
