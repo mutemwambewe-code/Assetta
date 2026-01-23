@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, Edit, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Edit, Loader2, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { updateProfile, sendEmailVerification } from 'firebase/auth';
+import { useSubscription } from '@/hooks/use-subscription';
 
 const formSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -30,10 +31,14 @@ function SettingsPage({ title }: { title?: string }) {
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading: isAuthUserLoading } = useUser();
+  const { userProfile, isLoading: isProfileLoading } = useSubscription();
+
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
+  
+  const isUserLoading = isAuthUserLoading || isProfileLoading;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -135,8 +140,9 @@ function SettingsPage({ title }: { title?: string }) {
               <div className='space-y-4'>
                 <Skeleton className="h-8 w-3/4" />
                 <Skeleton className="h-8 w-1/2" />
+                 <Skeleton className="h-8 w-1/4" />
               </div>
-            ) : user ? (
+            ) : user && userProfile ? (
               <>
                 {isEditing ? (
                   <Form {...form}>
@@ -187,6 +193,13 @@ function SettingsPage({ title }: { title?: string }) {
                               </Button>
                           </div>
                         )}
+                      </div>
+                    </div>
+                     <div className="flex flex-col gap-1">
+                      <Label htmlFor='role'>Account Role</Label>
+                      <div className='flex items-center gap-2'>
+                        <p id='role' className='text-muted-foreground'>{userProfile.role}</p>
+                        {userProfile.role === 'ADMIN' && <Badge variant="success" className='gap-1'><ShieldCheck className="h-3 w-3"/> Administrator</Badge>}
                       </div>
                     </div>
                   </>
