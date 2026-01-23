@@ -15,18 +15,10 @@ import Link from 'next/link';
 const pricingPlans = [
   {
     id: 'monthly' as const,
-    title: 'Monthly',
-    price: 100,
+    title: 'Monthly Subscription',
+    price: 350,
     pricePer: 'per month',
     features: ['Manage unlimited properties', 'Manage unlimited tenants', 'SMS and Email reminders', 'Access to all reports'],
-  },
-  {
-    id: 'yearly' as const,
-    title: 'Yearly',
-    price: 1000,
-    pricePer: 'per year',
-    features: ['All monthly features', '12 months for the price of 10', 'Priority support'],
-    isPopular: true,
   },
 ];
 
@@ -66,17 +58,17 @@ function SubscriptionButton({
   return (
     <Button onClick={handleSubscription} disabled={isPending || isDisabled}>
       {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-      {`Subscribe ${plan.charAt(0).toUpperCase() + plan.slice(1)}`}
+      {`Subscribe Now`}
     </Button>
   );
 }
 
 
 function PricingCard({ plan, userProfile, subscription }: { plan: typeof pricingPlans[0], userProfile: UserProfile, subscription: ReturnType<typeof useSubscription>['subscription'] }) {
+  const { isGated } = useSubscription();
   return (
-    <Card className={plan.isPopular ? 'border-primary' : ''}>
+    <Card className={isGated ? 'border-primary' : ''}>
       <CardHeader>
-        {plan.isPopular && <Badge className="w-fit mb-2">Most Popular</Badge>}
         <CardTitle>{plan.title}</CardTitle>
         <CardDescription>
           <span className="text-3xl font-bold">ZMW {plan.price}</span>

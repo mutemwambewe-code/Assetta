@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, collection, setDoc } from 'firebase/firestore';
+import { doc, collection, setDoc, getDoc } from 'firebase/firestore';
 import { User, onIdTokenChanged } from 'firebase/auth';
 import { addDays, isAfter } from 'date-fns';
 
@@ -41,21 +41,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { user, isUserLoading: isAuthLoading, auth } = useUser();
   const firestore = useFirestore();
 
-  const userProfileCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'users') : null),
-    [firestore]
-  );
-
   const userProfileRef = useMemoFirebase(
-    () => (user && userProfileCollection ? doc(userProfileCollection, user.uid) : null),
-    [user, userProfileCollection]
+    () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
   );
   
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
   const onSignup = useCallback(async (newUser: User) => {
-    if (!userProfileCollection) return;
-    const userProfileRef = doc(userProfileCollection, newUser.uid);
+    if (!firestore) return;
+    const userProfileDocRef = doc(firestore, 'users', newUser.uid);
+
+    // Check if the document already exists
+    const docSnap = await getDoc(userProfileDocRef);
+    if (docSnap.exists()) {
+      // User profile already created, do nothing.
+      return;
+    }
 
     const thirtyDaysFromNow = addDays(new Date(), 30);
 
@@ -71,8 +73,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       plan: null,
       current_period_end: null,
     };
-    await setDoc(userProfileRef, newUserProfile);
-  }, [userProfileCollection]);
+    await setDoc(userProfileDocRef, newUserProfile);
+  }, [firestore]);
   
   useEffect(() => {
     if (!auth) return;
@@ -92,8 +94,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       return { status: null, plan: null, isTrial: false, isActive: false, isGated: true, trial_end_date: null, current_period_end: null };
     }
     
+    // Admin always has access
     if (userProfile.role === 'ADMIN') {
-        return { status: 'ACTIVE', plan: 'yearly', isTrial: false, isActive: true, isGated: false, trial_end_date: null, current_period_end: null };
+        return { status: 'ACTIVE', plan: 'yearly', isTrial: false, isActive: true, isGated: false, trial_end_date: null, current_period_end: 'perpetual' };
     }
 
     let status = userProfile.subscription_status;
@@ -108,6 +111,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     
     const isTrial = status === 'TRIAL';
     const isActive = status === 'ACTIVE';
+    // Gated if not in trial and not active
     const isGated = !isTrial && !isActive;
 
     return {
