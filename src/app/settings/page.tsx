@@ -11,15 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle, Edit, Loader2 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { updateProfile, sendEmailVerification } from 'firebase/auth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BillingClient } from '@/components/billing/billing-client';
 
 const formSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -31,14 +29,11 @@ function SettingsPage({ title }: { title?: string }) {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
-
-  const defaultTab = searchParams.get('tab') === 'billing' ? 'billing' : 'account';
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -108,19 +103,13 @@ function SettingsPage({ title }: { title?: string }) {
         setIsSendingVerification(false);
     }
   }
-  
-  const handleTabChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.set('tab', value);
-    router.replace(`/settings?${newParams.toString()}`);
-  }
 
   return (
     <div className="max-w-4xl mx-auto grid gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your account, subscription, and app preferences.</p>
+          <p className="text-muted-foreground">Manage your account and app preferences.</p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -128,125 +117,114 @@ function SettingsPage({ title }: { title?: string }) {
         </Button>
       </div>
 
-      <Tabs defaultValue={defaultTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="billing">Billing & Subscription</TabsTrigger>
-        </TabsList>
-        <TabsContent value="account" className="mt-6">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Account Information</CardTitle>
-                    <CardDescription>Your personal account details.</CardDescription>
-                  </div>
-                  {!isEditing && (
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                      <Edit className="mr-2 h-4 w-4" /> Edit
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {isUserLoading ? (
-                    <div className='space-y-4'>
-                      <Skeleton className="h-8 w-3/4" />
-                      <Skeleton className="h-8 w-1/2" />
-                    </div>
-                  ) : user ? (
-                    <>
-                      {isEditing ? (
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name="displayName"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Full Name</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
-                              <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Changes
-                              </Button>
-                            </div>
-                          </form>
-                        </Form>
-                      ) : (
-                        <>
-                          <div className="flex flex-col gap-1">
-                            <Label htmlFor='displayName'>Full Name</Label>
-                            <p id='displayName' className='text-muted-foreground'>{user.displayName || 'Not set'}</p>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <Label htmlFor='email'>Email Address</Label>
-                            <div className='flex items-center gap-2 flex-wrap'>
-                              <p id='email' className='text-muted-foreground'>{user.email}</p>
-                              {user.emailVerified ? (
-                                <Badge variant="success" className="gap-1">
-                                  <CheckCircle className="h-3 w-3" />
-                                  Verified
-                                </Badge>
-                              ) : (
-                                <div className='flex items-center gap-2'>
-                                    <Badge variant="destructive">Not Verified</Badge>
-                                    <Button size="sm" variant="outline" onClick={handleSendVerification} disabled={isSendingVerification}>
-                                      {isSendingVerification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                      Send Verification
-                                    </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <p className='text-muted-foreground'>Could not load user information.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Appearance</CardTitle>
-                  <CardDescription>Customize the look and feel of the app.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="dark-mode">Dark Mode</Label>
-                    <Switch
-                      id="dark-mode"
-                      checked={theme === 'dark'}
-                      onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tutorial</CardTitle>
-                  <CardDescription>Need a refresher? Replay the introductory tutorial.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={handleReplayTutorial}>Replay Tutorial</Button>
-                </CardContent>
-              </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>Your personal account details.</CardDescription>
             </div>
-        </TabsContent>
-        <TabsContent value="billing" className="mt-6">
-            <BillingClient />
-        </TabsContent>
-      </Tabs>
+            {!isEditing && (
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Edit className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isUserLoading ? (
+              <div className='space-y-4'>
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-8 w-1/2" />
+              </div>
+            ) : user ? (
+              <>
+                {isEditing ? (
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="displayName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Save Changes
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor='displayName'>Full Name</Label>
+                      <p id='displayName' className='text-muted-foreground'>{user.displayName || 'Not set'}</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor='email'>Email Address</Label>
+                      <div className='flex items-center gap-2 flex-wrap'>
+                        <p id='email' className='text-muted-foreground'>{user.email}</p>
+                        {user.emailVerified ? (
+                          <Badge variant="success" className="gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Verified
+                          </Badge>
+                        ) : (
+                          <div className='flex items-center gap-2'>
+                              <Badge variant="destructive">Not Verified</Badge>
+                              <Button size="sm" variant="outline" onClick={handleSendVerification} disabled={isSendingVerification}>
+                                {isSendingVerification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Send Verification
+                              </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <p className='text-muted-foreground'>Could not load user information.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>Customize the look and feel of the app.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="dark-mode">Dark Mode</Label>
+              <Switch
+                id="dark-mode"
+                checked={theme === 'dark'}
+                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tutorial</CardTitle>
+            <CardDescription>Need a refresher? Replay the introductory tutorial.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleReplayTutorial}>Replay Tutorial</Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -66,7 +66,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       email: newUser.email,
       name: newUser.displayName,
       phone: newUser.phoneNumber,
-      role: 'ADMIN', // Assign ADMIN role on signup
+      role: 'USER', // Assign USER role on signup
       trial_start_date: new Date().toISOString(),
       trial_end_date: thirtyDaysFromNow.toISOString(),
       subscription_status: 'TRIAL',

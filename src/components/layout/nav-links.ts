@@ -1,4 +1,4 @@
-import { Home, Users, MessageSquare, BarChart, Settings, type LucideIcon, Building, ReceiptText } from 'lucide-react';
+import { Home, Users, MessageSquare, BarChart, Settings, type LucideIcon, Building, ReceiptText, CreditCard } from 'lucide-react';
 
 export type NavLink = {
   href: string;
@@ -20,4 +20,10 @@ export const settingsLink: NavLink = {
   href: '/settings',
   label: 'Settings',
   icon: Settings,
+};
+
+export const billingLink: NavLink = {
+  href: '/billing',
+  label: 'Billing',
+  icon: CreditCard,
 };
