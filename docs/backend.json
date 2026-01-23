@@ -1,52 +1,60 @@
 {
   "entities": {
-    "User": {
+    "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+      "title": "User Profile",
       "type": "object",
-      "description": "Represents a user of the Assetta platform.",
+      "description": "Represents a user of the Assetta platform, including subscription and role information.",
       "properties": {
-        "id": {
+        "uid": {
           "type": "string",
-          "description": "Unique identifier for the user entity."
+          "description": "Unique identifier for the user, matching Firebase Auth UID."
         },
-        "firstName": {
+        "name": {
           "type": "string",
-          "description": "The first name of the user."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the user."
+          "description": "The full name of the user."
         },
         "email": {
           "type": "string",
           "description": "The email address of the user.",
           "format": "email"
         },
-        "phoneNumber": {
+        "phone": {
           "type": "string",
           "description": "The phone number of the user."
         },
-        "createdAt": {
+        "role": {
           "type": "string",
-          "description": "Timestamp indicating when the user account was created.",
-          "format": "date-time"
+          "description": "The user's role in the system.",
+          "enum": ["USER", "ADMIN"]
         },
-        "updatedAt": {
+        "trial_start_date": {
           "type": "string",
-          "description": "Timestamp indicating when the user account was last updated.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The start date of the user's free trial."
+        },
+        "trial_end_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The end date of the user's free trial."
+        },
+        "subscription_status": {
+          "type": "string",
+          "enum": ["TRIAL", "ACTIVE", "INACTIVE", "CANCELED", "PAST_DUE", null],
+          "description": "The current status of the user's subscription."
+        },
+        "plan": {
+          "type": "string",
+          "enum": ["monthly", "yearly", null],
+          "description": "The user's active subscription plan."
+        },
+        "current_period_end": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date when the current subscription period ends."
         }
       },
-      "required": [
-        "id",
-        "firstName",
-        "lastName",
-        "email",
-        "phoneNumber",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["uid", "role"]
     },
     "Property": {
       "title": "Property",
@@ -162,6 +170,10 @@
     ]
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profile and subscription data."
+    },
     "/users/{userId}/properties/{propertyId}": {
       "schema": { "$ref": "#/entities/Property" },
       "description": "Stores properties owned by a user."

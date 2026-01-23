@@ -1,9 +1,8 @@
-
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, collection, setDoc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { addDays, isAfter } from 'date-fns';
 
@@ -28,6 +27,7 @@ interface SubscriptionState {
   isTrial: boolean;
   isActive: boolean;
   isGated: boolean;
+  isAdmin: boolean;
 }
 
 interface SubscriptionContextType {
@@ -53,7 +53,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!firestore) return;
     const userProfileDocRef = doc(firestore, 'users', newUser.uid);
 
-    // Check if the document already exists to prevent overwriting
     const docSnap = await getDoc(userProfileDocRef);
     if (docSnap.exists()) {
       return;
@@ -66,7 +65,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       email: newUser.email,
       name: newUser.displayName,
       phone: newUser.phoneNumber,
-      role: 'USER',
+      role: 'USER', // Default role is USER
       trial_start_date: new Date().toISOString(),
       trial_end_date: thirtyDaysFromNow.toISOString(),
       subscription_status: 'TRIAL',
@@ -77,20 +76,36 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [firestore]);
   
   useEffect(() => {
-    // This robustly creates a user profile if one doesn't exist for a logged-in user.
     if (user && !isProfileLoading && !userProfile) {
       onSignup(user);
     }
   }, [user, isProfileLoading, userProfile, onSignup]);
 
   const subscription = useMemo<SubscriptionState>(() => {
-    if (!userProfile) {
-      return { status: null, plan: null, isTrial: false, isActive: false, isGated: true, trial_end_date: null, current_period_end: null };
-    }
-    
-    // Admin always has access
+    const defaultState = {
+        status: null,
+        plan: null,
+        isTrial: false,
+        isActive: false,
+        isGated: true,
+        isAdmin: false,
+        trial_end_date: null,
+        current_period_end: null,
+    };
+
+    if (!userProfile) return defaultState;
+
+    // Admin check is the highest priority
     if (userProfile.role === 'ADMIN') {
-        return { status: 'ACTIVE', plan: 'yearly', isTrial: false, isActive: true, isGated: false, trial_end_date: null, current_period_end: 'perpetual' };
+        return {
+            ...defaultState,
+            status: 'ACTIVE',
+            plan: 'yearly', // Or some other admin identifier
+            isActive: true,
+            isGated: false,
+            isAdmin: true,
+            current_period_end: 'perpetual',
+        };
     }
 
     let status = userProfile.subscription_status;
@@ -105,7 +120,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     
     const isTrial = status === 'TRIAL';
     const isActive = status === 'ACTIVE';
-    // Gated if not in trial and not active
+    // Gated if not admin, not in trial, and not active
     const isGated = !isTrial && !isActive;
 
     return {
@@ -114,6 +129,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       isTrial,
       isActive,
       isGated,
+      isAdmin: false,
       trial_end_date: userProfile.trial_end_date,
       current_period_end: userProfile.current_period_end,
     };

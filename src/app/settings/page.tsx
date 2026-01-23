@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, Edit, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Edit, Loader2, ShieldCheck, CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { updateProfile, sendEmailVerification } from 'firebase/auth';
 import { useSubscription } from '@/hooks/use-subscription';
+import Link from 'next/link';
 
 const formSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -209,6 +210,21 @@ function SettingsPage({ title }: { title?: string }) {
               <p className='text-muted-foreground'>Could not load user information.</p>
             )}
           </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Billing & Subscription</CardTitle>
+                <CardDescription>Manage your subscription plan and payment details.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Link href="/billing">
+                    <Button>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Manage Subscription
+                    </Button>
+                </Link>
+            </CardContent>
         </Card>
 
         <Card>
