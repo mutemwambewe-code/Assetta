@@ -1,9 +1,10 @@
+
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, collection, setDoc, getDoc } from 'firebase/firestore';
-import { User, onIdTokenChanged } from 'firebase/auth';
+import { User } from 'firebase/auth';
 import { addDays, isAfter } from 'date-fns';
 
 export interface UserProfile {
@@ -38,7 +39,7 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const { user, isUserLoading: isAuthLoading, auth } = useUser();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
 
   const userProfileRef = useMemoFirebase(
@@ -52,10 +53,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!firestore) return;
     const userProfileDocRef = doc(firestore, 'users', newUser.uid);
 
-    // Check if the document already exists
+    // Check if the document already exists to prevent overwriting
     const docSnap = await getDoc(userProfileDocRef);
     if (docSnap.exists()) {
-      // User profile already created, do nothing.
       return;
     }
 
@@ -66,7 +66,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       email: newUser.email,
       name: newUser.displayName,
       phone: newUser.phoneNumber,
-      role: 'USER', // Assign USER role on signup
+      role: 'USER',
       trial_start_date: new Date().toISOString(),
       trial_end_date: thirtyDaysFromNow.toISOString(),
       subscription_status: 'TRIAL',
@@ -77,17 +77,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [firestore]);
   
   useEffect(() => {
-    if (!auth) return;
-    const unsub = onIdTokenChanged(auth, async (newUser) => {
-        if (newUser) {
-            const metadata = newUser.metadata;
-            if (metadata.creationTime === metadata.lastSignInTime) {
-                await onSignup(newUser);
-            }
-        }
-    });
-    return () => unsub();
-  }, [auth, onSignup]);
+    // This robustly creates a user profile if one doesn't exist for a logged-in user.
+    if (user && !isProfileLoading && !userProfile) {
+      onSignup(user);
+    }
+  }, [user, isProfileLoading, userProfile, onSignup]);
 
   const subscription = useMemo<SubscriptionState>(() => {
     if (!userProfile) {
