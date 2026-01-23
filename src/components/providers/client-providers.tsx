@@ -13,31 +13,34 @@ import { IntroTutorial } from '../tutorial/intro-tutorial';
 import { InstallPrompt } from '../pwa/install-prompt';
 import { UtilityProvider } from '../utilities/utility-provider';
 import { FeedbackPrompt } from '../feedback/feedback-prompt';
+import { SubscriptionProvider } from '@/hooks/use-subscription';
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <AppProviders>
       <FirebaseClientProvider>
-        <TutorialProvider>
-          <PropertyProvider>
-            <TenantProvider>
-              <TemplateProvider>
-                <MessageLogProvider>
-                  <UtilityProvider>
-                    <AppLayout>
-                      <>
-                        {children}
-                        <InstallPrompt />
-                        <FeedbackPrompt />
-                      </>
-                    </AppLayout>
-                  </UtilityProvider>
-                </MessageLogProvider>
-              </TemplateProvider>
-            </TenantProvider>
-          </PropertyProvider>
-          <Toaster />
-        </TutorialProvider>
+        <SubscriptionProvider>
+          <TutorialProvider>
+            <PropertyProvider>
+              <TenantProvider>
+                <TemplateProvider>
+                  <MessageLogProvider>
+                    <UtilityProvider>
+                      <AppLayout>
+                        <>
+                          {children}
+                          <InstallPrompt />
+                          <FeedbackPrompt />
+                        </>
+                      </AppLayout>
+                    </UtilityProvider>
+                  </MessageLogProvider>
+                </TemplateProvider>
+              </TenantProvider>
+            </PropertyProvider>
+            <Toaster />
+          </TutorialProvider>
+        </SubscriptionProvider>
       </FirebaseClientProvider>
     </AppProviders>
   );

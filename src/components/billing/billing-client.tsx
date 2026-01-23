@@ -107,10 +107,10 @@ function PricingCard({ plan, userProfile, subscription }: { plan: typeof pricing
 }
 
 export function BillingClient() {
-  const { userProfile, subscription } = useSubscription();
+  const { userProfile, subscription, isLoading } = useSubscription();
   const { toast } = useToast();
 
-  if (!userProfile) {
+  if (isLoading || !userProfile) {
     return <div>Loading billing information...</div>;
   }
   
@@ -118,12 +118,7 @@ export function BillingClient() {
   const isActive = subscription.status === 'ACTIVE';
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Billing &amp; Subscription</h1>
-        <p className="text-muted-foreground">Manage your Assetta plan.</p>
-      </div>
-
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Current Plan</CardTitle>
@@ -155,7 +150,7 @@ export function BillingClient() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {pricingPlans.map(plan => (
           <PricingCard key={plan.id} plan={plan} userProfile={userProfile} subscription={subscription} />
         ))}
