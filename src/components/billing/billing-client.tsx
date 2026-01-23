@@ -1,9 +1,10 @@
+
 'use client';
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Loader2, AlertCircle } from 'lucide-react';
+import { Check, Loader2, AlertCircle, ReceiptText } from 'lucide-react';
 import { useSubscription, type UserProfile } from '@/hooks/use-subscription';
 import { Badge } from '../ui/badge';
 import { format } from 'date-fns';
@@ -67,7 +68,7 @@ function SubscriptionButton({
 function PricingCard({ plan, userProfile, subscription }: { plan: typeof pricingPlans[0], userProfile: UserProfile, subscription: ReturnType<typeof useSubscription>['subscription'] }) {
   const { isGated } = useSubscription();
   return (
-    <Card className={isGated ? 'border-primary' : ''}>
+    <Card className={isGated ? 'border-primary shadow-lg' : ''}>
       <CardHeader>
         <CardTitle>{plan.title}</CardTitle>
         <CardDescription>
@@ -110,10 +111,10 @@ export function BillingClient() {
   const isActive = subscription.status === 'ACTIVE';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Current Plan</CardTitle>
+          <CardTitle>Current Subscription</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
@@ -121,10 +122,10 @@ export function BillingClient() {
             <p className="font-semibold">{subscription.plan ? `${subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)} Plan` : 'No Active Plan'}</p>
           </div>
           {isTrial && subscription.trial_end_date && (
-             <p>Your free trial ends on {format(new Date(subscription.trial_end_date), 'PPP')}.</p>
+             <p className="text-muted-foreground">Your free trial ends on <span className="font-bold text-foreground">{format(new Date(subscription.trial_end_date), 'PPP')}</span>.</p>
           )}
           {isActive && subscription.current_period_end && (
-              <p>Your subscription will renew on {format(new Date(subscription.current_period_end), 'PPP')}.</p>
+              <p className="text-muted-foreground">Your subscription will renew on <span className="font-bold text-foreground">{format(new Date(subscription.current_period_end), 'PPP')}</span>.</p>
           )}
           {!isActive && !isTrial && (
             <p className="text-destructive">Your subscription is inactive. Please choose a plan to continue using Assetta's features.</p>
@@ -142,11 +143,33 @@ export function BillingClient() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {pricingPlans.map(plan => (
-          <PricingCard key={plan.id} plan={plan} userProfile={userProfile} subscription={subscription} />
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+            <CardTitle>Choose Your Plan</CardTitle>
+            <CardDescription>Select a plan to unlock all of Assetta's features.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl">
+                {pricingPlans.map(plan => (
+                    <PricingCard key={plan.id} plan={plan} userProfile={userProfile} subscription={subscription} />
+                ))}
+            </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+          <CardHeader>
+            <CardTitle>Payment History</CardTitle>
+            <CardDescription>A record of your subscription payments.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-10 border-2 border-dashed rounded-lg bg-muted/50">
+                <ReceiptText className="mx-auto h-10 w-10 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold">No Payments Yet</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Your payment history will appear here once you subscribe.</p>
+            </div>
+          </CardContent>
+        </Card>
     </div>
   );
 }
