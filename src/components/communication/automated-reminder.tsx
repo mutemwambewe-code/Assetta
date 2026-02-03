@@ -1,14 +1,14 @@
 
 'use client';
 
-import { automatedCommunication, type AutomatedCommunicationOutput } from '@/ai/flows/automated-communication';
+
 import { useTenants } from '@/components/tenants/tenant-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, Dispatch, SetStateAction } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,25 +44,25 @@ type FormData = z.infer<typeof formSchema>;
 const tags = ['name', 'rent_due', 'arrears', 'due_date', 'property', 'lease_end_date'];
 
 interface AutomatedReminderProps {
-    message: string;
-    setMessage: (message: string) => void;
+  message: string;
+  setMessage: Dispatch<SetStateAction<string>>;
 }
 
 const replacePlaceholders = (message: string, tenant?: Tenant): string => {
-    if (!tenant) return message;
+  if (!tenant) return message;
 
-    const arrears = tenant.rentStatus === 'Overdue' ? tenant.rentAmount : 0;
-    const dueDate = new Date(); // Using today as a proxy for due date
-    dueDate.setDate(5); // Assuming due date is the 5th
-  
-    return message
-      .replace(/{{name}}/g, tenant.name)
-      .replace(/{{rent_due}}/g, tenant.rentAmount.toLocaleString())
-      .replace(/{{arrears}}/g, arrears.toLocaleString())
-      .replace(/{{due_date}}/g, dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }))
-      .replace(/{{property}}/g, tenant.property)
-      .replace(/{{lease_end_date}}/g, new Date(tenant.leaseEndDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
-  };
+  const arrears = tenant.rentStatus === 'Overdue' ? tenant.rentAmount : 0;
+  const dueDate = new Date(); // Using today as a proxy for due date
+  dueDate.setDate(5); // Assuming due date is the 5th
+
+  return message
+    .replace(/{{name}}/g, tenant.name)
+    .replace(/{{rent_due}}/g, tenant.rentAmount.toLocaleString())
+    .replace(/{{arrears}}/g, arrears.toLocaleString())
+    .replace(/{{due_date}}/g, dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }))
+    .replace(/{{property}}/g, tenant.property)
+    .replace(/{{lease_end_date}}/g, new Date(tenant.leaseEndDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+};
 
 export function AutomatedReminder({ message, setMessage }: AutomatedReminderProps) {
   const searchParams = useSearchParams();
@@ -77,7 +77,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const [isTextareaHighlighted, setIsTextareaHighlighted] = useState(false);
   const [editableRecipients, setEditableRecipients] = useState<Tenant[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -92,7 +92,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const selectedTenantId = watch('tenantId');
   const recipientType = watch('recipientType');
   const groupId = watch('groupId');
-  
+
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
 
   const getRecipientsForGroup = (selectedGroupId: string | undefined): Tenant[] => {
@@ -107,7 +107,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     }
     return [];
   };
-  
+
   const handleGroupSelection = (value: string) => {
     const newRecipients = getRecipientsForGroup(value);
     setValue('groupId', value);
@@ -128,14 +128,14 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     { id: 'all', name: 'All Tenants' },
     { id: 'arrears', name: 'Tenants in Arrears' },
     { id: 'pending', name: 'Tenants with Pending Payments' },
-    ...properties.map(p => ({id: `prop-${p.id}`, name: `All Tenants in ${p.name}`})),
+    ...properties.map(p => ({ id: `prop-${p.id}`, name: `All Tenants in ${p.name}` })),
   ];
-  
+
   useEffect(() => {
     const tenantIdFromParams = searchParams.get('tenantId');
     if (tenantIdFromParams) {
-        setValue('tenantId', tenantIdFromParams);
-        setValue('recipientType', 'individual');
+      setValue('tenantId', tenantIdFromParams);
+      setValue('recipientType', 'individual');
     }
   }, [searchParams, setValue]);
 
@@ -149,8 +149,8 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     } else if (recipientType === 'group' && groupId) {
       recipients = editableRecipients;
     }
-    
-    if(recipients.length === 0) {
+
+    if (recipients.length === 0) {
       toast({
         variant: "destructive",
         title: "No recipients found",
@@ -159,7 +159,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
       setIsSending(false);
       return;
     }
-    
+
     let allSuccessful = true;
     let firstErrorMessage = '';
 
@@ -221,16 +221,16 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     setMessage(content);
     setActiveTab('write');
     setTimeout(() => {
-        messageBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setIsTextareaHighlighted(true);
-        setTimeout(() => setIsTextareaHighlighted(false), 1500);
+      messageBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setIsTextareaHighlighted(true);
+      setTimeout(() => setIsTextareaHighlighted(false), 1500);
     }, 100);
   }
 
   const handleTabChange = (tabValue: string) => {
     setActiveTab(tabValue);
     if (tabValue === 'preview') {
-        setPreviewMessage(replacePlaceholders(message, previewTenant));
+      setPreviewMessage(replacePlaceholders(message, previewTenant));
     }
   }
 
@@ -240,22 +240,22 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
     <Card className="mt-4 border-none shadow-none">
       <Form {...form}>
         <form>
-            <CardHeader>
-                <CardTitle>Compose Message</CardTitle>
-                <CardDescription>Select recipients and write your message.</CardDescription>
-            </CardHeader>
+          <CardHeader>
+            <CardTitle>Compose Message</CardTitle>
+            <CardDescription>Select recipients and write your message.</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-6">
-            
+
             <Controller
               name="recipientType"
               control={control}
               render={({ field }) => (
                 <RadioGroup
                   onValueChange={(value) => {
-                      field.onChange(value);
-                      setValue('tenantId', '');
-                      setValue('groupId', '');
-                      setEditableRecipients([]);
+                    field.onChange(value);
+                    setValue('tenantId', '');
+                    setValue('groupId', '');
+                    setEditableRecipients([]);
                   }}
                   defaultValue={field.value}
                   className="flex items-center space-x-4"
@@ -276,7 +276,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                 </RadioGroup>
               )}
             />
-            
+
             {recipientType === 'individual' ? (
               <div className="space-y-2">
                 <Label htmlFor="tenantId">Select Tenant</Label>
@@ -284,10 +284,10 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                   name="tenantId"
                   control={control}
                   render={({ field }) => (
-                    <Select 
+                    <Select
                       onValueChange={(value) => {
                         field.onChange(value);
-                      }} 
+                      }}
                       defaultValue={field.value}
                       value={field.value}
                     >
@@ -307,140 +307,140 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                 {errors.tenantId && <p className="text-sm text-destructive">{errors.tenantId.message}</p>}
               </div>
             ) : (
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="groupId">Select Group</Label>
-                         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={popoverOpen}
-                              className="w-full justify-between"
-                            >
-                              {groupId
-                                ? bulkGroups.find((group) => group.id === groupId)?.name
-                                : "Select a bulk group"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                            <Command>
-                              <CommandInput placeholder="Search groups..." />
-                              <CommandList>
-                                <CommandEmpty>No group found.</CommandEmpty>
-                                <CommandGroup>
-                                  {bulkGroups.map((group) => (
-                                    <CommandItem
-                                      key={group.id}
-                                      value={group.id}
-                                      onSelect={() => {
-                                        handleGroupSelection(group.id);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          groupId === group.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {group.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                    </div>
-                    {editableRecipients.length > 0 && (
-                        <Collapsible className='-mx-4' defaultOpen>
-                            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md bg-muted/50 px-4 py-2 text-sm font-medium hover:bg-muted">
-                                <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4" />
-                                    <span>{editableRecipients.length} Recipient{editableRecipients.length > 1 ? 's' : ''} Selected</span>
-                                </div>
-                                <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <ScrollArea className="h-48 rounded-md border mt-2">
-                                <div className="p-2 space-y-1">
-                                    {editableRecipients.map(tenant => (
-                                    <div key={tenant.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
-                                        <Avatar className="h-8 w-8">
-                                            {tenant.avatarUrl && <AvatarImage asChild src={tenant.avatarUrl}><Image src={tenant.avatarUrl} alt={tenant.name} width={32} height={32} /></AvatarImage>}
-                                            <AvatarFallback>{tenant.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium">{tenant.name}</p>
-                                            <p className="text-xs text-muted-foreground">{tenant.phone}</p>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 rounded-full"
-                                            onClick={() => handleRemoveRecipient(tenant.id)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                            <span className="sr-only">Remove {tenant.name}</span>
-                                        </Button>
-                                    </div>
-                                    ))}
-                                </div>
-                                </ScrollArea>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    )}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="groupId">Select Group</Label>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={popoverOpen}
+                        className="w-full justify-between"
+                      >
+                        {groupId
+                          ? bulkGroups.find((group) => group.id === groupId)?.name
+                          : "Select a bulk group"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search groups..." />
+                        <CommandList>
+                          <CommandEmpty>No group found.</CommandEmpty>
+                          <CommandGroup>
+                            {bulkGroups.map((group) => (
+                              <CommandItem
+                                key={group.id}
+                                value={group.id}
+                                onSelect={() => {
+                                  handleGroupSelection(group.id);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    groupId === group.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {group.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
+                {editableRecipients.length > 0 && (
+                  <Collapsible className='-mx-4' defaultOpen>
+                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md bg-muted/50 px-4 py-2 text-sm font-medium hover:bg-muted">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span>{editableRecipients.length} Recipient{editableRecipients.length > 1 ? 's' : ''} Selected</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ScrollArea className="h-48 rounded-md border mt-2">
+                        <div className="p-2 space-y-1">
+                          {editableRecipients.map(tenant => (
+                            <div key={tenant.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
+                              <Avatar className="h-8 w-8">
+                                {tenant.avatarUrl && <AvatarImage asChild src={tenant.avatarUrl}><Image src={tenant.avatarUrl} alt={tenant.name} width={32} height={32} /></AvatarImage>}
+                                <AvatarFallback>{tenant.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{tenant.name}</p>
+                                <p className="text-xs text-muted-foreground">{tenant.phone}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-full"
+                                onClick={() => handleRemoveRecipient(tenant.id)}
+                              >
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Remove {tenant.name}</span>
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </div>
             )}
 
 
             <div className="space-y-2" ref={messageBoxRef}>
-                <Tabs value={activeTab} onValueChange={handleTabChange}>
-                    <TabsList className='grid w-full grid-cols-2'>
-                        <TabsTrigger value="write"><Pencil className='mr-2'/> Write</TabsTrigger>
-                        <TabsTrigger value="preview" disabled={!previewTenant}><Eye className='mr-2' /> Preview</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="write" className='mt-4'>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                            {tags.map(tag => (
-                                <Badge 
-                                    key={tag}
-                                    variant="outline"
-                                    className="cursor-pointer hover:bg-accent"
-                                    onClick={() => handleTagClick(tag)}
-                                >
-                                    {tag.replace(/_/g, ' ')}
-                                </Badge>
-                            ))}
-                        </div>
-                        <Textarea 
-                            id="message" 
-                            value={message} 
-                            onChange={(e) => setMessage(e.target.value)} 
-                            rows={6}
-                            placeholder="Type your message here. Use tags like {{name}}."
-                            className={cn(
-                                'transition-all duration-300',
-                                isTextareaHighlighted && 'ring-2 ring-primary ring-offset-2'
-                            )}
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">
-                            {message.length} chars ({Math.ceil(message.length / 160)} SMS)
-                        </p>
-                    </TabsContent>
-                    <TabsContent value="preview" className='mt-4'>
-                        <div className="p-4 border rounded-md bg-muted/20 min-h-[170px] text-sm whitespace-pre-wrap">
-                            {previewMessage}
-                        </div>
-                         <p className="text-xs text-muted-foreground mt-2">
-                            {recipientType === 'group' && editableRecipients.length > 0
-                                ? `This is a preview using ${editableRecipients[0].name} as a sample. Each tenant in the group will receive a personalized message.`
-                                : `This is a preview for ${previewTenant?.name}.`
-                            }
-                        </p>
-                    </TabsContent>
-                </Tabs>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <TabsList className='grid w-full grid-cols-2'>
+                  <TabsTrigger value="write"><Pencil className='mr-2' /> Write</TabsTrigger>
+                  <TabsTrigger value="preview" disabled={!previewTenant}><Eye className='mr-2' /> Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="write" className='mt-4'>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {tags.map(tag => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => handleTagClick(tag)}
+                      >
+                        {tag.replace(/_/g, ' ')}
+                      </Badge>
+                    ))}
+                  </div>
+                  <Textarea
+                    id="message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={6}
+                    placeholder="Type your message here. Use tags like {{name}}."
+                    className={cn(
+                      'transition-all duration-300',
+                      isTextareaHighlighted && 'ring-2 ring-primary ring-offset-2'
+                    )}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {message.length} chars ({Math.ceil(message.length / 160)} SMS)
+                  </p>
+                </TabsContent>
+                <TabsContent value="preview" className='mt-4'>
+                  <div className="p-4 border rounded-md bg-muted/20 min-h-[170px] text-sm whitespace-pre-wrap">
+                    {previewMessage}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {recipientType === 'group' && editableRecipients.length > 0
+                      ? `This is a preview using ${editableRecipients[0].name} as a sample. Each tenant in the group will receive a personalized message.`
+                      : `This is a preview for ${previewTenant?.name}.`
+                    }
+                  </p>
+                </TabsContent>
+              </Tabs>
             </div>
 
           </CardContent>
@@ -459,8 +459,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   );
 }
 
-    
 
-    
 
-    
+
+

@@ -65,8 +65,7 @@ export function Header({ pageTitle }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6"
-      style={{ WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' }}
+      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 header-glass sm:px-6"
     >
       <div className='flex items-center gap-4'>
         <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>

@@ -1,6 +1,19 @@
-
-import type { Firestore, DocumentData, Query } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert, getApp } from 'firebase-admin/app';
+import { getFirestore, Firestore, DocumentData, Query } from 'firebase-admin/firestore';
 import type { Tenant } from './types';
+
+// Initialize Firebase Admin
+const serviceAccount = JSON.parse(
+    process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'
+);
+
+if (!getApps().length) {
+    initializeApp({
+        credential: cert(serviceAccount),
+    });
+}
+
+export const adminDb = getFirestore();
 
 // This file contains server-side helper functions for interacting with Firestore using the Admin SDK.
 
@@ -13,13 +26,13 @@ import type { Tenant } from './types';
 function normalizePhoneNumber(phoneNumber: string): string {
     let cleanNumber = phoneNumber.replace(/\s/g, ''); // Remove spaces
     if (!cleanNumber.startsWith('+')) {
-      // This is a naive assumption. A more robust solution might use a library
-      // to handle different country code formats if your app supports multiple countries.
-      if (cleanNumber.length === 12 && cleanNumber.startsWith('260')) {
-          cleanNumber = `+${cleanNumber}`;
-      } else if (cleanNumber.length === 9 && !cleanNumber.startsWith('0')) {
-          cleanNumber = `+260${cleanNumber}`;
-      }
+        // This is a naive assumption. A more robust solution might use a library
+        // to handle different country code formats if your app supports multiple countries.
+        if (cleanNumber.length === 12 && cleanNumber.startsWith('260')) {
+            cleanNumber = `+${cleanNumber}`;
+        } else if (cleanNumber.length === 9 && !cleanNumber.startsWith('0')) {
+            cleanNumber = `+260${cleanNumber}`;
+        }
     }
     return cleanNumber;
 }
@@ -33,7 +46,7 @@ function normalizePhoneNumber(phoneNumber: string): string {
  */
 export async function findUserByPhoneNumber(db: Firestore, phoneNumber: string): Promise<{ uid: string; tenant: Tenant } | null> {
     const normalizedNumber = normalizePhoneNumber(phoneNumber);
-    
+
     // We need to query across all 'tenants' subcollections.
     const tenantsQuery = db.collectionGroup('tenants') as Query<Tenant>;
     const snapshot = await tenantsQuery.get();
@@ -119,7 +132,7 @@ export async function addIncomingMessageToLog(db: Firestore, uid: string, tenant
  */
 export async function updateMessageDeliveryStatus(db: Firestore, uid: string, localMessageId: string, status: string, providerId: string) {
     const messageRef = db.collection('users').doc(uid).collection('messagelogs').doc(localMessageId);
-    
+
     await messageRef.update({
         status: status,
         providerId: providerId,

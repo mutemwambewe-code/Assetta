@@ -19,11 +19,26 @@ export type Tenant = {
   balance?: number; // Added balance for improved rent tracking
 };
 
+export type Subscription = {
+  id: string;
+  userId: string;
+  status: 'active' | 'past_due' | 'canceled' | 'trialing' | 'incomplete';
+  plan: 'basic' | 'pro';
+  currentPeriodEnd: string; // ISO Date
+  providerId?: string; // Lenco ID
+  createdAt: string;
+};
+
 export type Payment = {
   id: string;
+  userId?: string;
+  tenantId?: string;
+  propertyId?: string;
   date: string;
   amount: number;
   method: 'Mobile Money' | 'Bank Transfer' | 'Cash';
+  status: 'pending' | 'completed' | 'failed';
+  reference?: string; // Lenco Reference or Manual Ref
 };
 
 export type EnrichedPayment = Payment & {
@@ -96,4 +111,54 @@ export type Invoice = {
 export type InvoiceItem = {
   description: string;
   amount: number;
+};
+
+export type Lease = {
+  id: string;
+  userId: string;
+  tenantId: string;
+  propertyId: string;
+  startDate: string;
+  endDate: string;
+  rentAmount: number;
+  status: 'draft' | 'signed' | 'active' | 'terminated';
+  pdfUrl?: string;
+  signatureStatus?: 'pending' | 'signed';
+};
+
+export type MaintenanceTicket = {
+  id: string;
+  userId: string;
+  propertyId: string;
+  tenantId: string;
+  category: 'Plumbing' | 'Electrical' | 'Structural' | 'Other';
+  description: string;
+  photos: string[];
+  status: 'open' | 'in_progress' | 'resolved';
+  cost: number;
+  assignedVendorId?: string;
+  createdAt: string;
+};
+
+export type Vendor = {
+  id: string;
+  userId: string;
+  name: string;
+  category: string;
+  phone: string;
+  email?: string;
+  rating?: number;
+};
+
+export type TaxReturn = {
+  id: string;
+  userId: string;
+  period: string; // e.g., "10-2023"
+  grossRent: number;
+  expenses: number;
+  taxableIncome: number;
+  taxDue: number;
+  status: 'draft' | 'filed';
+  filedDate?: string;
+  receiptUrl?: string;
 };

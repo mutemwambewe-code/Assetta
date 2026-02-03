@@ -54,17 +54,17 @@ export function LogPayment({ tenant, children }: LogPaymentProps) {
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-        form.reset({
-            amount: tenant.rentAmount,
-            date: format(new Date(), 'yyyy-MM-dd'),
-            method: 'Mobile Money',
-        });
+      form.reset({
+        amount: tenant.rentAmount,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        method: 'Mobile Money',
+      });
     }
     setOpen(isOpen);
   }
 
   function onSubmit(values: FormData) {
-    logPayment(tenant.id, values);
+    logPayment(tenant.id, { ...values, status: 'completed' });
     toast({
       title: 'Payment Logged!',
       description: `Payment of ZMW ${values.amount.toLocaleString()} for ${tenant.name} has been recorded.`,
@@ -81,7 +81,7 @@ export function LogPayment({ tenant, children }: LogPaymentProps) {
         <DialogHeader>
           <DialogTitle>Log Payment for {tenant.name}</DialogTitle>
           <DialogDescription>
-            Record a new rent payment. Rent: ZMW {tenant.rentAmount.toLocaleString()}. 
+            Record a new rent payment. Rent: ZMW {tenant.rentAmount.toLocaleString()}.
             {tenant.nextDueDate && ` Next due: ${format(new Date(tenant.nextDueDate), 'PPP')}`}
           </DialogDescription>
         </DialogHeader>
@@ -109,7 +109,7 @@ export function LogPayment({ tenant, children }: LogPaymentProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="date"

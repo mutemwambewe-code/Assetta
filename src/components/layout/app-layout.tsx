@@ -13,19 +13,27 @@ import { useUser } from '@/firebase';
 import { Separator } from '../ui/separator';
 import { IntroTutorial } from '../tutorial/intro-tutorial';
 import { AppLogo } from './app-logo';
+import { useSubscriptionGate } from '@/hooks/use-subscription-gate';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
+  const { canAccess, loading: subLoading } = useSubscriptionGate();
+
   const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isBillingPage = pathname === '/billing';
 
   useEffect(() => {
-    if (!isUserLoading && !user && !isAuthPage) {
+    if (isUserLoading || subLoading) return;
+
+    if (!user && !isAuthPage) {
       router.push('/login');
+    } else if (user && !canAccess('core') && !isBillingPage && !isAuthPage) {
+      router.push('/billing');
     }
-  }, [isUserLoading, user, isAuthPage, router]);
+  }, [isUserLoading, subLoading, user, isAuthPage, isBillingPage, router, canAccess]);
 
   let pageTitle = '';
   if (Children.only(children) && React.isValidElement(children)) {
