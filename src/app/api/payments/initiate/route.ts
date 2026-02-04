@@ -1,61 +1,107 @@
-
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+
+const LENCO_BASE_URL = 'https://api.lencopay.com/v1/payments/mobile-money';
+const TIMEOUT_MS = 20000;
+
+function generateReference() {
+    return `ASSETTA-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+}
+
+function validateZambianNumber(number: string) {
+    const clean = number.replace(/\s+/g, '');
+    return /^(?:\+260|260|0)?(95|96|97|76|77)\d{7}$/.test(clean);
+}
+
+function normalizeProvider(provider: string) {
+    const map: Record<string, string> = {
+        MTN: 'mtn',
+        AIRTEL: 'airtel',
+        ZAMTEL: 'zamtel'
+    };
+
+    const upper = provider.toUpperCase();
+    if (!map[upper]) throw new Error('Unsupported mobile money provider');
+    return map[upper];
+}
 
 export async function POST(req: NextRequest) {
     try {
-        const { amount, mobileNumber, provider } = await req.json(); // provider e.g., 'MTN', 'AIRTEL'
+        const body = await req.json();
 
-        // Validate inputs
-        if (!amount || !mobileNumber || !provider) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
+        const amount = Number(body.amount);
+        const mobileNumber = String(body.mobileNumber || '');
+        const provider = String(body.provider || '');
 
-        const lencoUrl = 'https://api.lencopay.com/v1/payments/mobile-money'; // Verify actual endpoint
+        if (!amount || amount <= 0)
+            return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+
+        if (!validateZambianNumber(mobileNumber))
+            return NextResponse.json({ error: 'Invalid Zambian mobile number' }, { status: 400 });
+
+        if (!provider)
+            return NextResponse.json({ error: 'Provider required' }, { status: 400 });
+
+        const mappedProvider = normalizeProvider(provider);
+
         const apiKey = process.env.LENCO_SECRET_KEY;
+        if (!apiKey)
+            return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
 
-        if (!apiKey) {
-            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        // Map provider to Lenco codes if necessary
-        // Example: MTN -> 'mtn-zm', Airtel -> 'airtel-zm'
-        const providerMap: Record<string, string> = {
-            'MTN': 'mtn',
-            'AIRTEL': 'airtel',
-            'ZAMTEL': 'zamtel'
+        const payload = {
+            amount,
+            currency: 'ZMW',
+            mobileNumber,
+            provider: mappedProvider,
+            reference: generateReference(),
+            description: 'Assetta Subscription Payment'
         };
 
-        const mappedProvider = providerMap[provider] || provider.toLowerCase();
-
-        console.log('Initiating Payment:', { amount, mobileNumber, provider, mappedProvider });
-
-        const response = await fetch(lencoUrl, {
+        const response = await fetch(LENCO_BASE_URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Idempotency-Key': crypto.randomUUID()
             },
-            body: JSON.stringify({
-                amount,
-                currency: 'ZMW',
-                mobileNumber,
-                provider: mappedProvider,
-                reference: `SUB-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                description: 'Assetta Pro Subscription'
-            })
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
 
-        const data = await response.json();
-        console.log('Lenco API Response:', response.status, data);
+        clearTimeout(timeout);
+
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            console.error('Lenco API Error:', data);
-            return NextResponse.json({ error: data.message || 'Payment initiation failed', details: data }, { status: response.status });
+            console.error('Lenco Payment Error:', data);
+            return NextResponse.json(
+                { error: 'Payment initiation failed' },
+                { status: 502 }
+            );
         }
 
-        return NextResponse.json(data);
-    } catch (error) {
-        console.error('Payment API Error:', error);
-        return NextResponse.json({ error: 'Internal server error', details: String(error) }, { status: 500 });
+        return NextResponse.json({
+            status: 'pending',
+            message: 'Payment prompt sent to customer phone',
+            reference: payload.reference
+        });
+
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            return NextResponse.json(
+                { error: 'Payment provider timeout' },
+                { status: 504 }
+            );
+        }
+
+        console.error('Payment Route Error:', error);
+
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
     }
 }
