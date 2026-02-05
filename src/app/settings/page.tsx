@@ -45,6 +45,9 @@ function SettingsPage({ title }: { title?: string }) {
     },
   });
 
+  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim());
+  const isAdmin = user?.email && adminEmails.includes(user.email);
+
   useEffect(() => {
     if (user) {
       form.reset({ displayName: user.displayName || '' });
@@ -174,7 +177,7 @@ function SettingsPage({ title }: { title?: string }) {
                       </form>
                     </Form>
                   ) : (
-                    <>
+                    <div className="space-y-4">
                       <div className="flex flex-col gap-1">
                         <Label htmlFor='displayName'>Full Name</Label>
                         <p id='displayName' className='text-muted-foreground'>{user.displayName || 'Not set'}</p>
@@ -198,20 +201,26 @@ function SettingsPage({ title }: { title?: string }) {
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <Label htmlFor='role'>Account Role</Label>
-                          <div className='flex items-center gap-2'>
-                            <p id='role' className='text-muted-foreground'>{userProfile?.role}</p>
-                            {userProfile?.role === 'ADMIN' && <Badge variant="success" className='gap-1'><ShieldCheck className="h-3 w-3" /> Administrator</Badge>}
-                          </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label htmlFor='role'>Account Status</Label>
+                        <div className='flex items-center gap-2'>
+                          {isAdmin ? (
+                            <Badge variant="success" className='gap-1'>
+                              <ShieldCheck className="h-3 w-3" /> Administrator
+                            </Badge>
+                          ) : (
+                            <p id='role' className='text-muted-foreground'>Standard User</p>
+                          )}
                         </div>
-                      </>
+                      </div>
+                    </div>
                   )}
-                    </>
-                  ) : (
-                  <p className='text-muted-foreground'>Could not load user information.</p>
+                </>
+              ) : (
+                <p className='text-muted-foreground'>Could not load user information.</p>
               )}
-                </CardContent>
+            </CardContent>
           </Card>
         </TabsContent>
 
