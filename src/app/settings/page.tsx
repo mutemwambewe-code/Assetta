@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, Edit, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Edit, Loader2, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
@@ -198,14 +198,20 @@ function SettingsPage({ title }: { title?: string }) {
                             </div>
                           )}
                         </div>
-                      </div>
-                    </>
+                        <div className="flex flex-col gap-1">
+                          <Label htmlFor='role'>Account Role</Label>
+                          <div className='flex items-center gap-2'>
+                            <p id='role' className='text-muted-foreground'>{userProfile?.role}</p>
+                            {userProfile?.role === 'ADMIN' && <Badge variant="success" className='gap-1'><ShieldCheck className="h-3 w-3" /> Administrator</Badge>}
+                          </div>
+                        </div>
+                      </>
                   )}
-                </>
-              ) : (
-                <p className='text-muted-foreground'>Could not load user information.</p>
+                    </>
+                  ) : (
+                  <p className='text-muted-foreground'>Could not load user information.</p>
               )}
-            </CardContent>
+                </CardContent>
           </Card>
         </TabsContent>
 

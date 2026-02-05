@@ -19,7 +19,7 @@ interface TenantReportTableProps {
 
 const statusStyles = {
   Paid: 'success',
-  Pending: 'secondary',
+  Pending: 'warning',
   Overdue: 'destructive',
 } as const;
 

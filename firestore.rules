@@ -24,19 +24,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for user-specific data.
+     * @description Rules for user-specific data, including their profile and subscription status.
      * @path /users/{userId}
-     * @allow (create) - A user can create their own user document if the userId matches their auth.uid.
-     * @allow (get, list, update, delete) - Only the user can read, update, or delete their own user document.
-     * @deny (create) - A user cannot create a document with a userId that does not match their auth.uid.
-     * @principle Enforces user-ownership for all operations.
+     * @allow (get, update) - A user can read or update their own profile document.
+     * @allow (create) - A user can create their own profile document.
+     * @deny (list, delete) - Users cannot list all profiles or delete their own profile.
+     * @principle Enforces user-ownership for profile management.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
+      allow get, update: if isOwner(userId);
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow list, delete: if false;
 
       /**
        * @description Rules for properties owned by a user.
@@ -148,8 +146,18 @@ service cloud.firestore {
       match /tax_returns/{returnId} {
           allow read, write: if isOwner(userId);
       }
-      
+
       match /payments/{paymentId} {
+          allow read, write: if isOwner(userId);
+      }
+
+       /**
+       * @description Rules for utility bills associated with a user.
+       * @path /users/{userId}/utilitybills/{utilityBillId}
+       * @allow (create, get, list, update, delete) - A user can manage utility bills under their user ID.
+       * @principle Enforces user-ownership for all operations on utility bills.
+       */
+      match /utilitybills/{utilityBillId} {
           allow read, write: if isOwner(userId);
       }
     }

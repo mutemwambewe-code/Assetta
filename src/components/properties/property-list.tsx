@@ -96,12 +96,7 @@ export function PropertyList() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <AddProperty>
-                      <Button className='w-full sm:w-auto'>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Property
-                      </Button>
-                    </AddProperty>
+                    <AddProperty />
                 </div>
             </div>
         </CardHeader>

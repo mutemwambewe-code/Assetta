@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -21,7 +20,9 @@ import { useProperties } from './property-provider';
 import { useToast } from '@/hooks/use-toast';
 import type { Property } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -32,10 +33,25 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export function AddProperty({ children, onPropertyAdded }: { children: React.ReactNode, onPropertyAdded?: (newProperty: Property) => void }) {
-  const [open, setOpen] = useState(false);
+export function AddProperty({ children, onPropertyAdded, asChild, className }: { children?: React.ReactNode, onPropertyAdded?: (newProperty: Property) => void, asChild?: boolean, className?: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { addProperty, isInitialized } = useProperties();
   const { toast } = useToast();
+
+  const isDialogOpen = searchParams.get('dialog') === 'add-property';
+
+  const setDialogOpen = (open: boolean) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (open) {
+      newParams.set('dialog', 'add-property');
+    } else {
+      newParams.delete('dialog');
+    }
+    router.replace(`${pathname}?${newParams.toString()}`);
+  };
+
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -66,13 +82,26 @@ export function AddProperty({ children, onPropertyAdded }: { children: React.Rea
         });
     }
 
-    setOpen(false);
+    setDialogOpen(false);
     form.reset();
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+      {children ? (
+        <div onClick={() => setDialogOpen(true)}>{children}</div>
+      ) : (
+        <button
+            onClick={() => setDialogOpen(true)}
+            className={cn(
+                'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+                asChild ? '' : 'bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2',
+                className
+            )}
+        >
+            <Plus className="mr-2" /> Add Property
+        </button>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Property</DialogTitle>

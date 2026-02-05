@@ -5,7 +5,7 @@ import React, { useState, useEffect, Children } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Header } from './header';
-import { navLinks, settingsLink } from './nav-links';
+import { navLinks, settingsLink, billingLink } from './nav-links';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2 } from 'lucide-react';
@@ -94,6 +94,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
           <Separator className="my-2" />
           <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                <Link
+                    href={billingLink.href}
+                    className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                    pathname.startsWith(billingLink.href) && 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    )}
+                >
+                    <billingLink.icon className="h-5 w-5" />
+                    <span className="sr-only">{billingLink.label}</span>
+                </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">{billingLink.label}</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link

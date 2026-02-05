@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AddTenant } from '@/components/tenants/add-tenant';
@@ -11,14 +10,8 @@ import { useProperties } from '../properties/property-provider';
 import { useTenants } from '../tenants/tenant-provider';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '../ui/skeleton';
-
-const RentStatusChart = dynamic(
-  () => import('@/components/dashboard/rent-status-chart').then(mod => mod.RentStatusChart),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="h-[400px]" />,
-  }
-);
+import { RentStatusChart } from './rent-status-chart';
+import { useUtility } from '../utilities/utility-provider';
 
 const TenantActivity = dynamic(
   () => import('@/components/dashboard/tenant-activity'),
@@ -32,7 +25,8 @@ const TenantActivity = dynamic(
 export default function DashboardPage({ title }: { title?: string }) {
   const { isInitialized: propertiesReady } = useProperties();
   const { isInitialized: tenantsReady } = useTenants();
-  const isReady = propertiesReady && tenantsReady;
+  const { isInitialized: utilitiesReady } = useUtility();
+  const isReady = propertiesReady && tenantsReady && utilitiesReady;
 
   return (
     <div className="flex flex-col gap-6">

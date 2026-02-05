@@ -46,6 +46,7 @@
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.475.0",
     "next": "15.5.9",
+    "next-pwa": "^5.6.0",
     "react": "18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "18.3.1",
@@ -64,5 +65,12 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "browserslist": "^4.23.0",
+    "@babel/compat-data": "^7.24.7",
+    "@babel/traverse": "^7.24.8",
+    "@babel/types": "^7.24.7",
+    "@babel/helper-validator-identifier": "^7.24.5"
   }
 }

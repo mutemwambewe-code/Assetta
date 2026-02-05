@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,14 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { AppWordmark } from '@/components/layout/app-wordmark';
+import { addDays } from 'date-fns';
+import type { UserProfile } from '@/hooks/use-subscription';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -29,6 +30,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -51,7 +53,23 @@ export default function SignupPage() {
         displayName: values.name,
       });
 
-      // router.push after the user creation and profile update is complete
+      // Create user profile document in Firestore
+      const userProfileRef = doc(firestore, 'users', user.uid);
+      const thirtyDaysFromNow = addDays(new Date(), 30);
+      const newUserProfile: UserProfile = {
+        uid: user.uid,
+        email: user.email,
+        name: values.name,
+        phone: user.phoneNumber,
+        role: 'USER', // Default role is USER
+        trial_start_date: new Date().toISOString(),
+        trial_end_date: thirtyDaysFromNow.toISOString(),
+        subscription_status: 'TRIAL',
+        plan: null,
+        current_period_end: null,
+      };
+      await setDoc(userProfileRef, newUserProfile);
+
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -71,14 +89,14 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="mb-8 flex w-full max-w-sm flex-col items-center gap-4">
+      <div className="mb-8 flex w-full max-w-sm flex-col items-center gap-2">
         <Image src="/login-heading.png" width={240} height={60} alt="Assetta" />
-        <p className="text-muted-foreground max-w-xs self-center text-center">Where your assets thrive, because we make them better.</p>
+        <p className="text-muted-foreground text-center">Your assets - optimized.</p>
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Sign Up</CardTitle>
-          <CardDescription>Enter your information to create an account.</CardDescription>
+          <CardDescription>Enter your information to create an account and start your 30-day free trial.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

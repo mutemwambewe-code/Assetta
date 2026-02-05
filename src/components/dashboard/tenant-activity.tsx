@@ -11,8 +11,9 @@ import {
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useRouter } from 'next/navigation';
 import { useTenants } from '../tenants/tenant-provider';
+import { Skeleton } from '../ui/skeleton';
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
+const COLORS = ['hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -28,7 +29,21 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export default function TenantActivity() {
   const router = useRouter();
-  const { tenants } = useTenants();
+  const { tenants, isInitialized } = useTenants();
+
+  if (!isInitialized) {
+      return (
+        <Card className="shadow-none h-full">
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="h-[300px] flex items-center justify-center">
+                <Skeleton className="h-48 w-48 rounded-full" />
+            </CardContent>
+        </Card>
+      );
+  }
 
   const statusData = [
     { name: 'Paid', value: tenants.filter(t => t.rentStatus === 'Paid').length },

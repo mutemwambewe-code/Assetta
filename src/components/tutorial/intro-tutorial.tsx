@@ -12,7 +12,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 const tutorialSteps = [
     {
         id: 'step-1',
-        title: "Welcome to PropBot!",
+        title: "Welcome to Assetta!",
         description: "Your modern solution for managing properties and tenants in Zambia. Let's take a quick tour of the key features.",
         imageHint: 'welcome illustration'
     },
