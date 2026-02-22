@@ -26,10 +26,12 @@ const pricingPlans = [
 function PricingCard({ plan, userProfile, subscription }: { plan: typeof pricingPlans[0], userProfile: UserProfile, subscription: ReturnType<typeof useSubscription>['subscription'] }) {
   const isGated = subscription.isGated;
 
-  // Create a stable reference for the payment session
+  const [refreshCounter, setRefreshCounter] = React.useState(0);
+
+  // Create a stable reference for the payment session, but refresh it if it fails or is closed
   const paymentReference = React.useMemo(() =>
-    `SUB-${Math.floor(Date.now() / 1000)}-${userProfile.uid}`,
-    [userProfile.uid]
+    `SUB-${Math.floor(Date.now() / 1000)}-${userProfile.uid}-${refreshCounter}`,
+    [userProfile.uid, refreshCounter]
   );
 
   return (
@@ -63,6 +65,7 @@ function PricingCard({ plan, userProfile, subscription }: { plan: typeof pricing
           onSuccess={() => {
             // Optional: Any additional client-side success handling
           }}
+          onClose={() => setRefreshCounter(prev => prev + 1)}
         />
       </CardFooter>
     </Card>

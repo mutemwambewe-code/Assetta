@@ -62,6 +62,13 @@ export async function GET(req: NextRequest) {
         }
 
         // Update Firestore
+        // Update the payment record status
+        const paymentDocRef = adminDb.collection('payments').doc(reference);
+        await paymentDocRef.update({
+            status: 'successful',
+            updatedAt: new Date().toISOString()
+        });
+
         // Add 30 days to current date
         const startDate = new Date();
         const endDate = new Date();
@@ -95,6 +102,20 @@ export async function GET(req: NextRequest) {
 
     } catch (error) {
         console.error('Verification error:', error);
+
+        // Try to mark as failed if it was a verification error
+        if (reference) {
+            try {
+                await adminDb.collection('payments').doc(reference).update({
+                    status: 'failed',
+                    error: (error as Error).message || 'Internal verification error',
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error('Failed to mark payment as failed:', e);
+            }
+        }
+
         return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
     }
 }
