@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
             currency: 'ZMW',
             mobileNumber,
             provider: mappedProvider,
-            reference: generateReference(),
+            reference: body.reference || generateReference(),
             description: 'Assetta Subscription Payment'
         };
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
-                'Idempotency-Key': crypto.randomUUID()
+                'Idempotency-Key': payload.reference
             },
             body: JSON.stringify(payload),
             signal: controller.signal

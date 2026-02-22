@@ -18,7 +18,14 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
+    // Stable reference for the session
+    const paymentReference = React.useMemo(() =>
+        `SUB-${Math.floor(Date.now() / 1000)}-manual-${Math.random().toString(36).substring(7)}`,
+        [isOpen] // Re-generate only if modal re-opens
+    );
+
     const handlePayment = async () => {
+        if (loading) return; // Prevent double trigger
         setLoading(true);
         try {
             const res = await fetch('/api/payments/initiate', {
@@ -27,7 +34,8 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
                 body: JSON.stringify({
                     amount: 150, // ZMW
                     mobileNumber: phone,
-                    provider: provider
+                    provider: provider,
+                    reference: paymentReference
                 })
             });
 
@@ -39,7 +47,7 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
 
             toast({
                 title: 'Payment Initiated',
-                description: 'Check your phone for the PIN prompt to complete the transaction.',
+                description: 'Please complete the PIN prompt on your phone.',
             });
 
             // Ideally start polling for status or wait for webhook
@@ -51,8 +59,7 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
                 description: error.message,
                 variant: 'destructive',
             });
-        } finally {
-            setLoading(false);
+            setLoading(false); // Reset on error so they can try again
         }
     };
 

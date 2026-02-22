@@ -25,6 +25,13 @@ const pricingPlans = [
 
 function PricingCard({ plan, userProfile, subscription }: { plan: typeof pricingPlans[0], userProfile: UserProfile, subscription: ReturnType<typeof useSubscription>['subscription'] }) {
   const isGated = subscription.isGated;
+
+  // Create a stable reference for the payment session
+  const paymentReference = React.useMemo(() =>
+    `SUB-${Math.floor(Date.now() / 1000)}-${userProfile.uid}`,
+    [userProfile.uid]
+  );
+
   return (
     <Card className={isGated ? 'border-primary shadow-lg' : ''}>
       <CardHeader>
@@ -47,7 +54,7 @@ function PricingCard({ plan, userProfile, subscription }: { plan: typeof pricing
       <CardFooter>
         <LencoPayment
           amount={plan.price}
-          reference={`SUB-${Date.now()}-${userProfile.uid}`}
+          reference={paymentReference}
           firstName={userProfile.name?.split(' ')[0] || ''}
           lastName={userProfile.name?.split(' ').slice(1).join(' ') || ''}
           email={userProfile.email || undefined}

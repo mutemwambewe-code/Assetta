@@ -128,10 +128,11 @@ export function LencoPayment({
                 },
                 onConfirmationPending: function () {
                     console.log("[LencoPayment] Payment confirmation pending");
-                    setLoading(false);
+                    // Keep loading as true to prevent repeat clicks during USSD session
+                    setLoading(true);
                     toast({
                         title: "Processing",
-                        description: "Your purchase will be completed when the payment is confirmed.",
+                        description: "Please complete the PIN prompt on your phone.",
                     });
                 },
             });
