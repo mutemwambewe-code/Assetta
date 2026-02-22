@@ -114,8 +114,10 @@ export function LencoPayment({
                 onClose: function () {
                     console.log("[LencoPayment] Widget closed by user");
                     setLoading(false);
-                    // Generate a NEW reference for the next attempt if they want to try again
-                    setCurrentReference(`${initialReference.split('-').slice(0, 2).join('-')}-${Date.now()}`);
+                    // DO NOT automatically change reference here. 
+                    // Let the user decide to click again if they want to retry.
+                    // If they click again, the currentReference (which is initialReference) will be used.
+                    // Lenco handles idempotency on their end for the same reference.
                     toast({
                         title: "Payment Closed",
                         description: "The payment window was closed.",

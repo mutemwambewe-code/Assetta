@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,20 +18,28 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
-    // Lock the reference in state so it doesn't change on re-renders
-    const [paymentReference, setPaymentReference] = useState(`SUB-${Math.floor(Date.now() / 1000)}-manual-${Math.random().toString(36).substring(7)}`);
+    // Lock the reference in state so it doesn't change on re-renders, but allow it to be refreshed
+    const [idSession] = useState(() => Math.random().toString(36).substring(7));
+    const [refreshCounter, setRefreshCounter] = useState(0);
 
-    // Reset reference and loading when modal opens
+    const paymentReference = useMemo(() => {
+        return `SUB-${Math.floor(Date.now() / 1000)}-manual-${idSession}-${refreshCounter}`;
+    }, [idSession, refreshCounter]);
+
+    const [initiated, setInitiated] = useState(false);
+
+    // Reset loading when modal opens, but KEEP the reference stable unless it's a fresh session
     useEffect(() => {
         if (isOpen) {
-            setPaymentReference(`SUB-${Math.floor(Date.now() / 1000)}-manual-${Math.random().toString(36).substring(7)}`);
             setLoading(false);
+            setInitiated(false);
         }
     }, [isOpen]);
 
     const handlePayment = async () => {
-        if (loading) return; // Prevent double trigger
+        if (loading || initiated) return; // Prevent double trigger
         setLoading(true);
+        setInitiated(true);
         try {
             console.log("[SubscriptionPaywallModal] Initiating payment with reference:", paymentReference);
             const res = await fetch('/api/payments/initiate', {
@@ -68,7 +76,14 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
                 variant: 'destructive',
             });
             setLoading(false); // Reset on error so they can try again
+            setInitiated(false); // Allow them to try again since it failed to initiate
         }
+    };
+
+    const handleRetry = () => {
+        setRefreshCounter(prev => prev + 1);
+        setInitiated(false);
+        setLoading(false);
     };
 
     return (
@@ -111,9 +126,14 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
                         />
                     </div>
                 </div>
-                <DialogFooter>
-                    <Button onClick={handlePayment} disabled={loading || !phone || phone.length < 10}>
-                        {loading ? 'Processing...' : 'Pay Now (ZMW 150)'}
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                    {initiated && !loading && (
+                        <Button variant="ghost" onClick={handleRetry} className="text-xs">
+                            Change Details / Retry
+                        </Button>
+                    )}
+                    <Button onClick={handlePayment} disabled={loading || initiated || !phone || phone.length < 10}>
+                        {loading ? 'Processing...' : initiated ? 'Payment Sent' : 'Pay Now (ZMW 150)'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
