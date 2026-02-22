@@ -5,31 +5,44 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const userId = searchParams.get('userId');
 
-    if (!userId) {
-        return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+    if (!userId || userId === 'undefined') {
+        console.warn('[Status API] Invalid userId provided:', userId);
+        return NextResponse.json({ status: 'none', message: 'User ID required' });
     }
 
     try {
+        console.log('[Status API] Checking status for user:', userId);
         const pendingQuery = await adminDb.collection('payments')
             .where('userId', '==', userId)
             .where('status', '==', 'pending')
-            .orderBy('createdAt', 'desc')
             .limit(1)
             .get();
 
         if (pendingQuery.empty) {
+            console.log('[Status API] No pending payments for user:', userId);
             return NextResponse.json({ status: 'none' });
         }
 
         const payment = pendingQuery.docs[0].data();
+        console.log('[Status API] Found pending payment:', payment.reference);
 
-        // Check for expiry (15 mins)
-        const createdAt = payment.createdAt.toDate ? payment.createdAt.toDate() : new Date(payment.createdAt);
+        // Handle dates (Firestore Timestamp vs ISO string)
+        let createdAt;
+        if (payment.createdAt && typeof payment.createdAt.toDate === 'function') {
+            createdAt = payment.createdAt.toDate();
+        } else {
+            createdAt = new Date(payment.createdAt || Date.now());
+        }
+
         const now = new Date();
         const diffMins = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
         if (diffMins >= 15) {
-            await pendingQuery.docs[0].ref.update({ status: 'expired', updatedAt: new Date().toISOString() });
+            console.log('[Status API] Payment expired:', payment.reference);
+            await pendingQuery.docs[0].ref.update({
+                status: 'expired',
+                updatedAt: new Date().toISOString()
+            });
             return NextResponse.json({ status: 'none' });
         }
 
@@ -40,12 +53,15 @@ export async function GET(req: NextRequest) {
                 amount: payment.amount,
                 provider: payment.provider,
                 mobileNumber: payment.mobileNumber,
-                createdAt: payment.createdAt
+                createdAt: createdAt.toISOString()
             }
         });
 
-    } catch (error) {
-        console.error('Status check error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[Status API] Error:', error);
+        return NextResponse.json({
+            error: 'Failed to check status',
+            details: error.message
+        }, { status: 500 });
     }
 }

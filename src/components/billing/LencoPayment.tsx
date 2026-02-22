@@ -73,6 +73,11 @@ export function LencoPayment({
         setCheckingStatus(true);
         try {
             const res = await fetch(`/api/payments/status?userId=${user.uid}`);
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("[LencoPayment] Status check error:", res.status, text.substring(0, 100));
+                return;
+            }
             const data = await res.json();
             if (data.status === 'pending') {
                 setPendingPayment(data.payment);
@@ -81,7 +86,7 @@ export function LencoPayment({
                 setPendingPayment(null);
             }
         } catch (error) {
-            console.error("[LencoPayment] Status check error:", error);
+            console.error("[LencoPayment] Status check parsing error:", error);
         } finally {
             setCheckingStatus(false);
         }
@@ -129,6 +134,10 @@ export function LencoPayment({
                 })
             });
 
+            if (!initRes.ok) {
+                const text = await initRes.text();
+                throw new Error(`Initiation error (${initRes.status})`);
+            }
             const initData = await initRes.json();
             if (!initRes.ok) throw new Error(initData.error || "Failed to initiate payment");
 
@@ -201,6 +210,10 @@ export function LencoPayment({
         try {
             console.log("[LencoPayment] Verifying reference:", reference);
             const res = await fetch(`/api/payments/verify?reference=${reference}`);
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Verification service error: ${res.status} - ${text.substring(0, 100)}`);
+            }
             const data = await res.json();
 
             if (res.ok && data.success) {

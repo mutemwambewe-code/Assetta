@@ -48,11 +48,15 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
         setCheckingStatus(true);
         try {
             const res = await fetch(`/api/payments/status?userId=${user.uid}`);
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("[Status API] Server returned error:", res.status, text.substring(0, 100));
+                return;
+            }
             const data = await res.json();
             if (data.status === 'pending') {
                 setPendingPayment(data.payment);
                 setInitiated(true);
-                // Pre-fill fields if we have them
                 setProvider(data.payment.provider || 'MTN');
                 setPhone(data.payment.mobileNumber || '');
             } else {
@@ -133,6 +137,10 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
         setLoading(true);
         try {
             const res = await fetch(`/api/payments/verify?reference=${ref}`);
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Server error: ${res.status}`);
+            }
             const data = await res.json();
             if (res.ok && data.success) {
                 toast({
