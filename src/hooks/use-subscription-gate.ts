@@ -4,33 +4,25 @@ import { useSubscription } from '@/hooks/use-subscription';
 
 export const useSubscriptionGate = () => {
     const { user } = useUser();
-    const { subscription, loading } = useSubscription();
+    const { subscription, isLoading: loading } = useSubscription();
 
     const checkAccess = (feature: 'tax' | 'leases' | 'reports' | 'core') => {
-        // 1. ADMIN BYPASS (Critical Rule 4) - Whitelisted in .env
-        const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim());
-        if (user?.email && adminEmails.includes(user.email)) return true;
+        // 1. ADMIN BYPASS (Critical Rule 4) - Check hook's isAdmin state
+        if (subscription.isAdmin) return true;
 
-        // 2. TRIAL LOGIC
-        // Assuming createdAt is accessible on User object or Metadata. 
-        // Firebase User object has metadata.creationTime
-        if (user?.metadata.creationTime) {
-            const trialDays = 30;
-            const creationTime = new Date(user.metadata.creationTime).getTime();
-            const now = new Date().getTime();
-            const diffDays = (now - creationTime) / (1000 * 3600 * 24);
-
-            if (diffDays < trialDays) return true;
-        }
+        // 2. TRIAL LOGIC - Check hook's isTrial state
+        if (subscription.isTrial) return true;
 
         // 3. SUBSCRIPTION CHECK
         if (loading) return false; // Fail safe
 
         // Check if subscription is active
-        const isActive = subscription?.status === 'active';
+        const isActive = subscription.isActive || subscription.status === 'ACTIVE';
 
         // 4. PLAN LEVEL ALIGNMENT
-        if (feature === 'tax' && subscription?.plan !== 'pro') return false;
+        // If we have specific plan requirements in the future, we can add them here.
+        // For now, any active subscription or trial has access to core features.
+        if (feature === 'tax' && subscription.plan === null) return false;
 
         return isActive;
     };

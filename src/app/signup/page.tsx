@@ -17,7 +17,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { addDays } from 'date-fns';
-import type { UserProfile } from '@/hooks/use-subscription';
+import { UserProfile } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),

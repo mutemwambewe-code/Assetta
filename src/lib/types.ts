@@ -175,4 +175,16 @@ export type UtilityBill = {
   status: 'Paid' | 'Pending' | 'Overdue';
   billUrl?: string;
 };
-};
+
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  name: string | null;
+  phone: string | null;
+  role: 'USER' | 'ADMIN';
+  trial_start_date: string | null;
+  trial_end_date: string | null;
+  subscription_status: 'TRIAL' | 'ACTIVE' | 'INACTIVE' | 'CANCELED' | 'PAST_DUE' | null;
+  plan: 'monthly' | 'yearly' | null;
+  current_period_end: string | null;
+}

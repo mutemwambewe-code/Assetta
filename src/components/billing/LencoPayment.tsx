@@ -12,6 +12,17 @@ interface LencoPaymentProps {
     amount: number;
     email?: string;
     className?: string;
+    reference: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    billing?: {
+        streetAddress?: string;
+        city?: string;
+        state?: string;
+        postalCode?: string;
+        country?: string;
+    };
     onSuccess?: () => void;
 }
 
@@ -21,17 +32,52 @@ declare global {
     }
 }
 
-export function LencoPayment({ amount, email, className, onSuccess }: LencoPaymentProps) {
+export function LencoPayment({
+    amount,
+    email,
+    className,
+    reference,
+    firstName,
+    lastName,
+    phone,
+    billing,
+    onSuccess
+}: LencoPaymentProps) {
     const { user } = useUser();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const [scriptLoaded, setScriptLoaded] = useState(false);
 
+    // Determine script URL based on environment
+    const isSandbox = process.env.NEXT_PUBLIC_LENCO_IS_SANDBOX === 'true';
+    const scriptUrl = isSandbox
+        ? "https://sandbox.lenco.co/js/v1/inline.js"
+        : "https://pay.lenco.co/js/v1/inline.js";
+
+    useEffect(() => {
+        console.log(`[LencoPayment] Environment: ${isSandbox ? 'Sandbox' : 'Production'}`);
+        console.log(`[LencoPayment] Script URL: ${scriptUrl}`);
+        console.log(`[LencoPayment] Public Key present: ${!!process.env.NEXT_PUBLIC_LENCO_PUBLIC_KEY}`);
+    }, [isSandbox, scriptUrl]);
+
     const handlePayment = () => {
+        const publicKey = process.env.NEXT_PUBLIC_LENCO_PUBLIC_KEY;
+
         if (!scriptLoaded) {
+            console.warn("[LencoPayment] Attempted payment before script loaded.");
             toast({
                 title: "System Loading",
                 description: "Payment system is initializing. Please try again in a moment.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (!publicKey) {
+            console.error("[LencoPayment] Missing NEXT_PUBLIC_LENCO_PUBLIC_KEY");
+            toast({
+                title: "Configuration Error",
+                description: "Payment system public key is missing. Please contact support.",
                 variant: "destructive"
             });
             return;
@@ -50,26 +96,30 @@ export function LencoPayment({ amount, email, className, onSuccess }: LencoPayme
 
         try {
             if (typeof window.LencoPay === 'undefined') {
-                throw new Error("LencoPay SDK not loaded");
+                throw new Error("LencoPay SDK not found on window object");
             }
 
+            console.log("[LencoPayment] Opening widget with reference:", reference);
+
             window.LencoPay.getPaid({
-                key: process.env.NEXT_PUBLIC_LENCO_PUBLIC_KEY,
-                reference: `SUB-${Date.now()}-${user?.uid || 'guest'}`,
+                key: publicKey,
+                reference: reference || `SUB-${Date.now()}-${user?.uid || 'guest'}`,
                 email: email || user?.email,
                 amount: amount,
                 currency: "ZMW",
                 channels: ["card", "mobile-money"],
                 customer: {
-                    firstName: user?.displayName?.split(' ')[0] || 'Customer',
-                    lastName: user?.displayName?.split(' ').slice(1).join(' ') || '',
-                    phone: "0970000000", // Optional: Provide actual phone if available
+                    firstName: firstName || user?.displayName?.split(' ')[0] || 'Customer',
+                    lastName: lastName || user?.displayName?.split(' ').slice(1).join(' ') || '',
+                    phone: phone || "0970000000",
                 },
+                billing: billing,
                 onSuccess: function (response: any) {
-                    console.log("Payment success:", response);
+                    console.log("[LencoPayment] Payment success response:", response);
                     verifyPayment(response.reference);
                 },
                 onClose: function () {
+                    console.log("[LencoPayment] Widget closed by user");
                     setLoading(false);
                     toast({
                         title: "Payment Cancelled",
@@ -77,6 +127,7 @@ export function LencoPayment({ amount, email, className, onSuccess }: LencoPayme
                     });
                 },
                 onConfirmationPending: function () {
+                    console.log("[LencoPayment] Payment confirmation pending");
                     setLoading(false);
                     toast({
                         title: "Processing",
@@ -85,11 +136,11 @@ export function LencoPayment({ amount, email, className, onSuccess }: LencoPayme
                 },
             });
         } catch (error) {
-            console.error("Payment init error:", error);
+            console.error("[LencoPayment] Widget initialization error:", error);
             setLoading(false);
             toast({
                 title: "Error",
-                description: "Could not initialize payment. Please try again.",
+                description: "Could not initialize payment widget. Please try again.",
                 variant: "destructive"
             });
         }
@@ -97,10 +148,12 @@ export function LencoPayment({ amount, email, className, onSuccess }: LencoPayme
 
     const verifyPayment = async (reference: string) => {
         try {
+            console.log("[LencoPayment] Verifying reference:", reference);
             const res = await fetch(`/api/payments/verify?reference=${reference}`);
             const data = await res.json();
 
             if (res.ok && data.success) {
+                console.log("[LencoPayment] Verification successful");
                 toast({
                     title: "Subscription Active!",
                     description: "Thank you for your payment. You now have full access.",
@@ -112,7 +165,7 @@ export function LencoPayment({ amount, email, className, onSuccess }: LencoPayme
                 throw new Error(data.message || "Verification failed");
             }
         } catch (error) {
-            console.error("Verification error:", error);
+            console.error("[LencoPayment] Verification error:", error);
             toast({
                 title: "Verification Failed",
                 description: "Payment succeeded but verification failed. Please contact support.",
@@ -126,9 +179,15 @@ export function LencoPayment({ amount, email, className, onSuccess }: LencoPayme
     return (
         <>
             <Script
-                src="https://pay.lenco.co/js/v1/inline.js"
-                strategy="lazyOnload"
-                onLoad={() => setScriptLoaded(true)}
+                src={scriptUrl}
+                strategy="afterInteractive"
+                onLoad={() => {
+                    console.log("[LencoPayment] LencoPay script loaded successfully");
+                    setScriptLoaded(true);
+                }}
+                onError={(e) => {
+                    console.error("[LencoPayment] LencoPay script failed to load:", e);
+                }}
             />
 
             <Button

@@ -13,29 +13,23 @@ import { SubscriptionPaywallModal } from '@/components/subscription/subscription
 
 export function BillingSettings() {
     const { user } = useUser();
-    const { subscription, loading } = useSubscription();
+    const { subscription, isLoading } = useSubscription();
     const [showPaywall, setShowPaywall] = React.useState(false);
 
-    if (loading) {
+    if (isLoading) {
         return <div className="flex justify-center p-6"><Loader2 className="h-6 w-6 animate-spin" /></div>;
     }
 
-    // Calculate Trial Status if no active subscription
+    // Use state from hook
+    const isAdmin = subscription.isAdmin;
+    const isTrialing = subscription.isTrial;
     let trialDaysLeft = 0;
-    let isTrialing = false;
 
-    if (!subscription || subscription.status !== 'active') {
-        if (user?.metadata.creationTime) {
-            const created = new Date(user.metadata.creationTime).getTime();
-            const now = Date.now();
-            const diff = (now - created) / (1000 * 3600 * 24);
-            trialDaysLeft = Math.max(0, 30 - Math.ceil(diff));
-            isTrialing = trialDaysLeft > 0;
-        }
+    if (isTrialing && subscription.trial_end_date) {
+        const trialEnd = new Date(subscription.trial_end_date).getTime();
+        const now = Date.now();
+        trialDaysLeft = Math.max(0, Math.ceil((trialEnd - now) / (1000 * 3600 * 24)));
     }
-
-    const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim());
-    const isAdmin = user?.email && adminEmails.includes(user.email);
 
     return (
         <div className="space-y-6">
@@ -60,9 +54,9 @@ export function BillingSettings() {
                             <p className="font-medium">Current Plan</p>
                             <div className="flex items-center gap-2">
                                 <span className="text-2xl font-bold">
-                                    {subscription?.status === 'active' ? 'Assetta Pro' : 'Free Trial'}
+                                    {subscription.status === 'ACTIVE' ? 'Assetta Pro' : 'Free Trial'}
                                 </span>
-                                {subscription?.status === 'active' || isAdmin ? (
+                                {subscription.status === 'ACTIVE' || isAdmin ? (
                                     <Badge className="bg-green-600">Active {isAdmin ? '(Admin)' : ''}</Badge>
                                 ) : isTrialing ? (
                                     <Badge variant="secondary" className="bg-blue-100 text-blue-700">{trialDaysLeft} Days Left</Badge>
@@ -77,7 +71,7 @@ export function BillingSettings() {
                         </div>
                     </div>
 
-                    {!subscription || subscription.status !== 'active' ? (
+                    {subscription.status !== 'ACTIVE' && !isAdmin ? (
                         <div className="bg-yellow-50 border-yellow-200 border p-4 rounded-md text-sm text-yellow-800">
                             <p className="font-semibold mb-1">Upgrade to Pro</p>
                             <p>Unlock unlimited properties, ZRA Tax Hub, and Lease Generation.</p>
@@ -87,7 +81,7 @@ export function BillingSettings() {
                         </div>
                     ) : (
                         <div className="text-sm text-muted-foreground">
-                            Next billing date: <span className="font-medium text-foreground">{format(new Date(subscription.currentPeriodEnd), 'PPP')}</span>
+                            Next billing date: <span className="font-medium text-foreground">{subscription.current_period_end ? format(new Date(subscription.current_period_end), 'PPP') : 'N/A'}</span>
                         </div>
                     )}
                 </CardContent>

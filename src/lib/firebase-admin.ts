@@ -48,7 +48,7 @@ export async function findUserByPhoneNumber(db: Firestore, phoneNumber: string):
     const normalizedNumber = normalizePhoneNumber(phoneNumber);
 
     // We need to query across all 'tenants' subcollections.
-    const tenantsQuery = db.collectionGroup('tenants') as Query<Tenant>;
+    const tenantsQuery = db.collectionGroup('tenants') as unknown as Query<Tenant>;
     const snapshot = await tenantsQuery.get();
 
     if (snapshot.empty) {

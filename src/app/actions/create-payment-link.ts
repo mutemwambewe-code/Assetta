@@ -1,17 +1,19 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import type { UserProfile } from '@/hooks/use-subscription';
+import { UserProfile } from '@/lib/types';
 
-const LENCO_API_URL = 'https://api.broadpay.io/gateway/api/v1/payment/charge';
+const IS_SANDBOX = process.env.LENCO_IS_SANDBOX === 'true';
+const LENCO_API_URL = IS_SANDBOX
+  ? 'https://sandbox.lenco.co/access/v2/checkout'
+  : 'https://api.lenco.co/access/v2/checkout';
 
 interface LencoPaymentResponse {
-  status: 'success' | 'error';
-  data?: {
-    link: string;
-  };
+  status: boolean;
   message?: string;
-  'status-code'?: number;
+  data?: {
+    url: string;
+  };
 }
 
 export async function createLencoPaymentLink(
@@ -19,11 +21,12 @@ export async function createLencoPaymentLink(
   amount: number,
   plan: 'monthly' | 'yearly'
 ): Promise<{ error?: string } | void> {
-  if (!process.env.LENCO_API_KEY || !process.env.LENCO_API_SECRET) {
-    console.error('Lenco API credentials are not set in environment variables.');
+  const secretKey = process.env.LENCO_SECRET_KEY;
+  if (!secretKey) {
+    console.error('Lenco secret key is not set in environment variables.');
     return { error: 'Payment service is not configured. Please contact support.' };
   }
-  
+
   const userEmail = user.email;
   if (!userEmail) {
     return { error: 'An email address is required to make a payment. Please add one in your settings.' };
@@ -31,38 +34,42 @@ export async function createLencoPaymentLink(
   const userName = user.name || 'Assetta User';
 
   const payload = {
-    "api-key": process.env.LENCO_API_KEY,
-    "api-secret": process.env.LENCO_API_SECRET,
-    "first-name": userName.split(' ')[0],
-    "last-name": userName.split(' ').slice(1).join(' ') || userName.split(' ')[0],
-    "phone-number": user.phone || '',
-    "contact-email": userEmail,
-    "payment-amount": amount,
-    "payment-currency": "ZMW",
-    "payment-reason": `Assetta Subscription - ${plan}`,
-    "customer-reference": user.uid, // Crucial for webhook matching
-    "return-url": process.env.LENCO_REDIRECT_URL || 'http://localhost:9003/billing'
+    amount: amount.toString(),
+    currency: "ZMW",
+    reference: `SUB-${Date.now()}-${user.uid}`,
+    description: `Assetta Subscription - ${plan === 'monthly' ? 'Monthly' : 'Yearly'}`,
+    customer: {
+      name: userName,
+      email: userEmail,
+      phone: user.phone || ''
+    },
+    successUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9003'}/billing?success=true`,
+    cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9003'}/billing?cancel=true`
   };
 
   try {
     const response = await fetch(LENCO_API_URL, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${secretKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
     const result: LencoPaymentResponse = await response.json();
-    
-    if (result.status === 'success' && result.data?.link) {
+
+    if (result.status === true && result.data?.url) {
       // Redirect to Lenco's payment page
-      redirect(result.data.link);
+      redirect(result.data.url);
     } else {
       console.error('Lenco API Error:', result);
       return { error: result.message || 'Could not initiate payment. Please try again.' };
     }
   } catch (error) {
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error;
+    }
     console.error('Failed to create Lenco payment link:', error);
     return { error: 'An unexpected error occurred with the payment service.' };
   }

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const LENCO_BASE_URL = 'https://api.lencopay.com/v1/payments/mobile-money';
+const IS_SANDBOX = process.env.LENCO_IS_SANDBOX === 'true';
+const LENCO_BASE_URL = IS_SANDBOX
+    ? 'https://sandbox.lenco.co/v1/payments/mobile-money'
+    : 'https://api.lencopay.com/v1/payments/mobile-money';
 const TIMEOUT_MS = 20000;
 
 function generateReference() {

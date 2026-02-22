@@ -1,12 +1,12 @@
 
 import jsPDF from 'jspdf';
-import { Lease, Property, Tenant, User } from '@/lib/types';
+import { Lease, Property, Tenant, UserProfile } from '@/lib/types';
 import { format } from 'date-fns';
 
 /**
  * Generates a Residential Tenancy Agreement PDF adapted for Zambia context.
  */
-export const generateLeasePdf = (lease: Lease, tenant: Tenant, property: Property, landlord: User) => {
+export const generateLeasePdf = (lease: Lease, tenant: Tenant, property: Property, landlord: UserProfile) => {
     const doc = new jsPDF();
     const lineHeight = 10;
     let y = 20;
@@ -28,7 +28,7 @@ export const generateLeasePdf = (lease: Lease, tenant: Tenant, property: Propert
     doc.text('BETWEEN (LANDLORD):', 20, y);
     y += 7;
     doc.setFont('helvetica', 'normal');
-    doc.text(`${landlord.displayName || 'Landlord Name'}`, 20, y);
+    doc.text(`${landlord.name || 'Landlord Name'}`, 20, y);
     // doc.text(`Contact: ${landlord.email}`, 20, y + 5);
     y += 15;
 

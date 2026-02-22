@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ success: false, message: 'Server configuration error' }, { status: 500 });
         }
 
-        const lencoUrl = `https://api.lenco.co/access/v2/collections/status/${reference}`;
+        const isSandbox = process.env.LENCO_IS_SANDBOX === 'true';
+        const lencoUrl = isSandbox
+            ? `https://sandbox.lenco.co/access/v2/collections/status/${reference}`
+            : `https://api.lenco.co/access/v2/collections/status/${reference}`;
 
         const response = await fetch(lencoUrl, {
             method: 'GET',
@@ -48,13 +51,10 @@ export async function GET(req: NextRequest) {
         // Extract User ID from reference
         // Format: SUB-timestamp-uid
         const parts = reference.split('-');
-        // We expect parts to be ["SUB", timestamp, ...uid_parts]
-        // Since UID might contain hyphens, we need to join the rest
-        if (parts.length < 3) {
+        if (parts.length < 3 || !reference.startsWith('SUB-')) {
             return NextResponse.json({ success: false, message: 'Invalid reference format' }, { status: 400 });
         }
 
-        const timestamp = parts[1];
         const userId = parts.slice(2).join('-');
 
         if (!userId || userId === 'guest') {
