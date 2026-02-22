@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,16 +18,22 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
-    // Stable reference for the session
-    const paymentReference = React.useMemo(() =>
-        `SUB-${Math.floor(Date.now() / 1000)}-manual-${Math.random().toString(36).substring(7)}`,
-        [isOpen] // Re-generate only if modal re-opens
-    );
+    // Lock the reference in state so it doesn't change on re-renders
+    const [paymentReference, setPaymentReference] = useState(`SUB-${Math.floor(Date.now() / 1000)}-manual-${Math.random().toString(36).substring(7)}`);
+
+    // Reset reference and loading when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setPaymentReference(`SUB-${Math.floor(Date.now() / 1000)}-manual-${Math.random().toString(36).substring(7)}`);
+            setLoading(false);
+        }
+    }, [isOpen]);
 
     const handlePayment = async () => {
         if (loading) return; // Prevent double trigger
         setLoading(true);
         try {
+            console.log("[SubscriptionPaywallModal] Initiating payment with reference:", paymentReference);
             const res = await fetch('/api/payments/initiate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -50,10 +56,12 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
                 description: 'Please complete the PIN prompt on your phone.',
             });
 
-            // Ideally start polling for status or wait for webhook
-            // For now, we might close or show a "Waiting" state
+            // Keep loading as true while waiting for confirmation
+            // In a better version, we'd poll or wait for webhook
+            // setLoading(true); // This is redundant as loading is already true
 
         } catch (error: any) {
+            console.error("[SubscriptionPaywallModal] Initiation error:", error);
             toast({
                 title: 'Error',
                 description: error.message,

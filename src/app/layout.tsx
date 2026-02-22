@@ -3,6 +3,7 @@ import './globals.css';
 import { ClientProviders } from '@/components/providers/client-providers';
 import { AppLogo } from '@/components/layout/app-logo';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'Assetta',
@@ -15,6 +16,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isSandbox = process.env.NEXT_PUBLIC_LENCO_IS_SANDBOX === 'true';
+  const lencoUrl = isSandbox
+    ? "https://sandbox.lenco.co/js/v1/inline.js"
+    : "https://pay.lenco.co/js/v1/inline.js";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -25,6 +31,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#3F51B5" />
       </head>
       <body className="font-body antialiased">
+        <Script src={lencoUrl} strategy="afterInteractive" />
         <ClientProviders>
           {children}
         </ClientProviders>

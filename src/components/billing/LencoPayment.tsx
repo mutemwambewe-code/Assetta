@@ -36,7 +36,7 @@ export function LencoPayment({
     amount,
     email,
     className,
-    reference,
+    reference: initialReference,
     firstName,
     lastName,
     phone,
@@ -46,32 +46,19 @@ export function LencoPayment({
     const { user } = useUser();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const [scriptLoaded, setScriptLoaded] = useState(false);
 
-    // Determine script URL based on environment
-    const isSandbox = process.env.NEXT_PUBLIC_LENCO_IS_SANDBOX === 'true';
-    const scriptUrl = isSandbox
-        ? "https://sandbox.lenco.co/js/v1/inline.js"
-        : "https://pay.lenco.co/js/v1/inline.js";
+    // Lock the reference in state so it doesn't change on re-renders
+    const [currentReference, setCurrentReference] = useState(initialReference);
 
     useEffect(() => {
-        console.log(`[LencoPayment] Environment: ${isSandbox ? 'Sandbox' : 'Production'}`);
-        console.log(`[LencoPayment] Script URL: ${scriptUrl}`);
-        console.log(`[LencoPayment] Public Key present: ${!!process.env.NEXT_PUBLIC_LENCO_PUBLIC_KEY}`);
-    }, [isSandbox, scriptUrl]);
+        // Sync reference once if it changes from props but only if not loading
+        if (!loading) {
+            setCurrentReference(initialReference);
+        }
+    }, [initialReference, loading]);
 
     const handlePayment = () => {
         const publicKey = process.env.NEXT_PUBLIC_LENCO_PUBLIC_KEY;
-
-        if (!scriptLoaded) {
-            console.warn("[LencoPayment] Attempted payment before script loaded.");
-            toast({
-                title: "System Loading",
-                description: "Payment system is initializing. Please try again in a moment.",
-                variant: "destructive"
-            });
-            return;
-        }
 
         if (!publicKey) {
             console.error("[LencoPayment] Missing NEXT_PUBLIC_LENCO_PUBLIC_KEY");
@@ -95,15 +82,21 @@ export function LencoPayment({
         setLoading(true);
 
         try {
-            if (typeof window.LencoPay === 'undefined') {
-                throw new Error("LencoPay SDK not found on window object");
+            // Check if global LencoPay exists
+            if (typeof window === 'undefined' || !window.LencoPay) {
+                console.warn("[LencoPayment] LencoPay SDK not found on window object. It might still be loading.");
+
+                // Fallback attempt: if script just finished loading but wasn't assigned yet
+                if (typeof (window as any).LencoPay === 'undefined') {
+                    throw new Error("LencoPay SDK is not available yet. Please wait a moment.");
+                }
             }
 
-            console.log("[LencoPayment] Opening widget with reference:", reference);
+            console.log("[LencoPayment] Opening widget with reference:", currentReference);
 
             window.LencoPay.getPaid({
                 key: publicKey,
-                reference: reference || `SUB-${Date.now()}-${user?.uid || 'guest'}`,
+                reference: currentReference,
                 email: email || user?.email,
                 amount: amount,
                 currency: "ZMW",
@@ -121,14 +114,15 @@ export function LencoPayment({
                 onClose: function () {
                     console.log("[LencoPayment] Widget closed by user");
                     setLoading(false);
+                    // Generate a NEW reference for the next attempt if they want to try again
+                    setCurrentReference(`${initialReference.split('-').slice(0, 2).join('-')}-${Date.now()}`);
                     toast({
-                        title: "Payment Cancelled",
-                        description: "You cancelled the payment process.",
+                        title: "Payment Closed",
+                        description: "The payment window was closed.",
                     });
                 },
                 onConfirmationPending: function () {
                     console.log("[LencoPayment] Payment confirmation pending");
-                    // Keep loading as true to prevent repeat clicks during USSD session
                     setLoading(true);
                     toast({
                         title: "Processing",
@@ -136,12 +130,12 @@ export function LencoPayment({
                     });
                 },
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error("[LencoPayment] Widget initialization error:", error);
             setLoading(false);
             toast({
                 title: "Error",
-                description: "Could not initialize payment widget. Please try again.",
+                description: error.message || "Could not initialize payment widget. Please try again.",
                 variant: "destructive"
             });
         }
@@ -178,33 +172,19 @@ export function LencoPayment({
     }
 
     return (
-        <>
-            <Script
-                src={scriptUrl}
-                strategy="afterInteractive"
-                onLoad={() => {
-                    console.log("[LencoPayment] LencoPay script loaded successfully");
-                    setScriptLoaded(true);
-                }}
-                onError={(e) => {
-                    console.error("[LencoPayment] LencoPay script failed to load:", e);
-                }}
-            />
-
-            <Button
-                onClick={handlePayment}
-                disabled={loading || !scriptLoaded}
-                className={className}
-            >
-                {loading ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                    </>
-                ) : (
-                    `Pay K${amount}`
-                )}
-            </Button>
-        </>
+        <Button
+            onClick={handlePayment}
+            disabled={loading}
+            className={className}
+        >
+            {loading ? (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                </>
+            ) : (
+                `Pay K${amount}`
+            )}
+        </Button>
     );
 }
