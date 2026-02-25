@@ -46,84 +46,61 @@ export function LencoPayment({
     onClose
 }: LencoPaymentProps) {
     const { user } = useUser();
-    const [loading, setLoading] = useState(false);
-    const [checkingStatus, setCheckingStatus] = useState(false);
-    const [pendingPayment, setPendingPayment] = useState<any>(null);
     const router = useRouter();
 
-    // Lock the reference in state so it doesn't change on re-renders
-    const [currentReference, setCurrentReference] = useState(initialReference);
+    // UI States
+    const [status, setStatus] = useState<'idle' | 'initiating' | 'pending' | 'verifying' | 'success' | 'failed'>('idle');
+    const [currentReference, setCurrentReference] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
+    // Sync reference only if idle
     useEffect(() => {
-        // Sync reference once if it changes from props but only if not loading
-        if (!loading && !pendingPayment) {
+        if (status === 'idle') {
             setCurrentReference(initialReference);
         }
-    }, [initialReference, loading, pendingPayment]);
+    }, [initialReference, status]);
 
-    // Check for pending on mount
+    // Check status on mount
     useEffect(() => {
         if (user?.uid) {
-            checkExistingPayment();
+            checkStatus();
         }
     }, [user?.uid]);
 
-    const checkExistingPayment = async () => {
+    const checkStatus = async () => {
         if (!user?.uid) return;
-        setCheckingStatus(true);
         try {
             const res = await fetch(`/api/payments/status?userId=${user.uid}`);
-            if (!res.ok) {
-                const text = await res.text();
-                console.error("[LencoPayment] Status check error:", res.status, text.substring(0, 100));
-                return;
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === 'pending' || data.status === 'initiated') {
+                    setCurrentReference(data.payment.reference);
+                    setStatus('pending');
+                }
             }
-            const data = await res.json();
-            if (data.status === 'pending') {
-                setPendingPayment(data.payment);
-                setCurrentReference(data.payment.reference);
-            } else {
-                setPendingPayment(null);
-            }
-        } catch (error) {
-            console.error("[LencoPayment] Status check parsing error:", error);
-        } finally {
-            setCheckingStatus(false);
+        } catch (err) {
+            console.error("[LencoPayment] Status check failed:", err);
         }
     };
 
     const handlePayment = async () => {
-        if (pendingPayment) {
-            await verifyPayment(pendingPayment.reference);
+        // Reset state for new attempt
+        setError(null);
+
+        if (status === 'pending') {
+            await verifyPayment(currentReference!);
             return;
         }
 
         const publicKey = process.env.NEXT_PUBLIC_LENCO_PUBLIC_KEY;
-
         if (!publicKey) {
-            console.error("[LencoPayment] Missing NEXT_PUBLIC_LENCO_PUBLIC_KEY");
-            toast({
-                title: "Configuration Error",
-                description: "Payment system public key is missing. Please contact support.",
-                variant: "destructive"
-            });
+            toast({ title: "Config Error", description: "Public key missing", variant: "destructive" });
             return;
         }
 
-        if (!user?.email && !email) {
-            toast({
-                title: "Missing Information",
-                description: "Email is required for payment. Please update your profile.",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        setLoading(true);
-
+        setStatus('initiating');
         try {
-            // 1. Initiate with our backend first to log to Firestore
-            // The backend NO LONGER triggers its own STK push, it just gives us a reference.
+            // 1. CREATE TRANSACTION IN DB
             const initRes = await fetch('/api/payments/initiate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -137,132 +114,120 @@ export function LencoPayment({
             });
 
             const initData = await initRes.json();
-            if (!initRes.ok) throw new Error(initData.error || "Failed to initiate payment");
+            if (!initRes.ok) throw new Error(initData.error || "Failed to start payment");
 
             const refToUse = initData.reference;
             setCurrentReference(refToUse);
 
-            // 2. Open the Lenco Widget
-            // Check if global LencoPay exists
+            // 2. OPEN WIDGET
             if (typeof window === 'undefined' || !window.LencoPay) {
-                console.error("[LencoPayment] LencoPay SDK not found on window object.");
-                throw new Error("Payment system is still loading. Please try again in a few seconds.");
+                throw new Error("Payment SDK not loaded. Try refreshing.");
             }
 
-            console.log("[LencoPayment] Opening Lenco widget with ref:", refToUse);
-            setLoading(true); // Keep loading state until widget callbacks trigger
+            console.log("[LencoPayment] Initializing widget with ref:", refToUse);
 
+            // ENSURE FRESH OBJECT ON EVERY CALL
             window.LencoPay.getPaid({
                 key: publicKey,
                 reference: refToUse,
                 email: email || user?.email,
                 amount: amount,
                 currency: "ZMW",
-                channels: ["card", "mobile-money"],
                 customer: {
                     firstName: firstName || user?.displayName?.split(' ')[0] || 'Customer',
                     lastName: lastName || user?.displayName?.split(' ').slice(1).join(' ') || '',
                     phone: phone || "0970000000",
                 },
-                billing: billing,
-                onSuccess: function (response: any) {
-                    console.log("[LencoPayment] Payment success response:", response);
+                onSuccess: (response: any) => {
+                    console.log("[LencoPayment] onSuccess:", response);
+                    setStatus('verifying');
                     verifyPayment(response.reference);
                 },
-                onClose: function () {
-                    console.log("[LencoPayment] Widget closed by user");
-                    setLoading(false);
+                onClose: () => {
+                    console.log("[LencoPayment] onClose");
+                    setStatus('idle');
                     if (onClose) onClose();
-                    // We don't automatically refresh here anymore because our backend handles the state
                 },
-                onConfirmationPending: function () {
-                    console.log("[LencoPayment] Payment confirmation pending");
-                    setLoading(true);
-                    setPendingPayment({ reference: refToUse });
+                onConfirmationPending: () => {
+                    console.log("[LencoPayment] onConfirmationPending");
+                    setStatus('pending');
                 },
             });
-        } catch (error: any) {
-            console.error("[LencoPayment] Widget initialization error:", error);
-            setLoading(false);
-            toast({
-                title: "Error",
-                description: error.message || "Could not initialize payment widget. Please try again.",
-                variant: "destructive"
-            });
+
+        } catch (err: any) {
+            console.error("[LencoPayment] handlePayment error:", err);
+            setStatus('idle');
+            setError(err.message);
+            toast({ title: "Error", description: err.message, variant: "destructive" });
         }
     };
 
-    const verifyPayment = async (reference: string) => {
-        setLoading(true);
+    const verifyPayment = async (ref: string) => {
+        setStatus('verifying');
         try {
-            console.log("[LencoPayment] Verifying reference:", reference);
-            const res = await fetch(`/api/payments/verify?reference=${reference}`);
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`Verification service error: ${res.status} - ${text.substring(0, 100)}`);
-            }
+            const res = await fetch(`/api/payments/verify?reference=${ref}`);
             const data = await res.json();
 
             if (res.ok && data.success) {
-                console.log("[LencoPayment] Verification successful");
-                toast({
-                    title: "Subscription Active!",
-                    description: "Thank you for your payment. You now have full access.",
-                });
+                setStatus('success');
+                toast({ title: "Success!", description: "Subscription activated." });
                 if (onSuccess) onSuccess();
-                router.push('/');
                 router.refresh();
             } else {
-                throw new Error(data.message || "Payment not yet verified. Please complete the prompt on your phone.");
+                setStatus('pending');
+                toast({
+                    title: "Still Pending",
+                    description: data.message || "Still waiting for confirmation.",
+                    variant: "default"
+                });
             }
-        } catch (error: any) {
-            console.error("[LencoPayment] Verification error:", error);
-            toast({
-                title: "Status Update",
-                description: error.message,
-                variant: "destructive"
-            });
-        } finally {
-            setLoading(false);
+        } catch (err) {
+            setStatus('pending');
+            console.error("[LencoPayment] verify error:", err);
         }
-    }
+    };
+
+    const isProcessing = status === 'initiating' || status === 'verifying';
 
     return (
         <div className="flex flex-col gap-2 w-full">
-            {pendingPayment && (
-                <p className="text-[10px] text-primary font-medium flex items-center gap-1">
-                    <Loader2 className="h-2 w-2 animate-spin" />
-                    Transaction Pending...
-                </p>
-            )}
             <Button
                 onClick={handlePayment}
-                disabled={loading || checkingStatus}
+                disabled={isProcessing}
                 className={className}
-                variant={pendingPayment ? "outline" : "default"}
+                variant={status === 'pending' ? "outline" : "default"}
             >
-                {loading || checkingStatus ? (
+                {isProcessing ? (
                     <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {checkingStatus ? 'Syncing...' : 'Processing...'}
+                        {status === 'verifying' ? 'Verifying...' : 'Starting...'}
                     </>
-                ) : pendingPayment ? (
-                    'Check Payment Status'
+                ) : status === 'pending' ? (
+                    'Re-check Payment'
                 ) : (
                     `Pay K${amount}`
                 )}
             </Button>
-            {pendingPayment && (
-                <button
-                    onClick={() => {
-                        setPendingPayment(null);
-                        setCurrentReference(initialReference + '-' + Date.now());
-                    }}
-                    className="text-[10px] text-muted-foreground underline text-center"
-                >
-                    Cancel & Start New
-                </button>
+
+            {status === 'pending' && (
+                <div className="flex flex-col gap-1 items-center">
+                    <p className="text-[10px] text-primary flex items-center gap-1">
+                        <Loader2 className="h-2 w-2 animate-spin" />
+                        Prompt sent to phone. Check your phone.
+                    </p>
+                    <button
+                        onClick={() => {
+                            setStatus('idle');
+                            setCurrentReference(`${initialReference}-${Date.now()}`); // Force new intent next time
+                        }}
+                        className="text-[10px] text-muted-foreground underline"
+                    >
+                        Try with different number
+                    </button>
+                </div>
             )}
+
+            {error && <p className="text-[10px] text-destructive text-center">{error}</p>}
         </div>
     );
 }

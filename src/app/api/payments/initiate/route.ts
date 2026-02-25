@@ -11,7 +11,8 @@ const EXPIRY_MINUTES = 15;
 
 function generateReference(userId?: string) {
     const timestamp = Math.floor(Date.now() / 1000);
-    return `SUB-${timestamp}-${userId || 'unknown'}-${crypto.randomBytes(4).toString('hex')}`;
+    const cleanUserId = (userId || 'unknown').replace(/[^a-zA-Z0-9]/g, '');
+    return `SUB-${timestamp}-${cleanUserId}-${crypto.randomBytes(4).toString('hex')}`;
 }
 
 function validateZambianNumber(number: string) {
@@ -52,65 +53,49 @@ export async function POST(req: NextRequest) {
         if (!provider)
             return NextResponse.json({ error: 'Provider required' }, { status: 400 });
 
-        // 1. Check for existing pending transaction for this user
-        let pendingQuery;
+        // 1. Check for existing UNEXPIRED pending transaction for this user
+        // We look for 'pending' or 'initiated' or 'awaiting_user_action'
+        const activeStatuses = ['initiated', 'pending', 'awaiting_user_action'];
+        let activeQuery;
         try {
-            pendingQuery = await adminDb.collection('payments')
+            activeQuery = await adminDb.collection('payments')
                 .where('userId', '==', userId)
-                .where('status', '==', 'pending')
+                .where('status', 'in', activeStatuses)
                 .where('amount', '==', amount)
+                .orderBy('createdAt', 'desc')
+                .limit(1)
                 .get();
         } catch (dbError: any) {
             console.error('[Initiate API] Firestore query failed:', dbError);
-            // Fallback: Continue without reusing if query fails (likely index issue)
         }
 
-        if (pendingQuery && !pendingQuery.empty) {
-            const existing = pendingQuery.docs[0].data();
-            // Filter by mobileNumber manually to avoid complex composite index requirement
-            if (existing.mobileNumber === mobileNumber) {
-                const createdAtStr = existing.createdAt;
-                const createdAt = new Date(createdAtStr);
-                const now = new Date();
-                const diffMins = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+        if (activeQuery && !activeQuery.empty) {
+            const existing = activeQuery.docs[0].data();
+            const createdAt = new Date(existing.createdAt);
+            const now = new Date();
+            const diffMins = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
-                if (diffMins < EXPIRY_MINUTES) {
-                    console.log(`[Initiate] Reusing pending transaction ${existing.reference} for user ${userId}`);
-                    return NextResponse.json({
-                        status: 'pending',
-                        message: 'A payment is already in progress.',
-                        reference: existing.reference,
-                        reused: true
-                    });
-                }
-
-                await pendingQuery.docs[0].ref.update({ status: 'expired', updatedAt: new Date().toISOString() });
+            if (diffMins < EXPIRY_MINUTES) {
+                console.log(`[Initiate] IDEMPOTENCY: Reusing active transaction ${existing.reference} for user ${userId}`);
+                return NextResponse.json({
+                    status: existing.status,
+                    message: 'Existing payment session found',
+                    reference: existing.reference,
+                    reused: true
+                });
+            } else {
+                // Expire the old one
+                console.log(`[Initiate] Expiring old transaction ${existing.reference}`);
+                await activeQuery.docs[0].ref.update({ status: 'expired', updatedAt: new Date().toISOString() });
             }
         }
 
-        const mappedProvider = normalizeProvider(provider);
-
-        const apiKey = process.env.LENCO_SECRET_KEY;
-        if (!apiKey) {
-            console.error('[Initiate API] LENCO_SECRET_KEY is missing');
-            return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
-        }
-
-        // Generate normalized reference if missing or manual
+        // 2. Generate a fresh reference if none found
         if (!reference || reference.includes('-manual-')) {
             reference = generateReference(userId);
         }
 
-        const payload = {
-            amount: amount.toString(),
-            currency: 'ZMW',
-            mobileNumber: mobileNumber,
-            provider: mappedProvider,
-            reference: reference,
-            description: 'Assetta Subscription Payment'
-        };
-
-        // 2. Log initiation intent to Firestore
+        // 3. Log initiation intent to Firestore
         const paymentDocRef = adminDb.collection('payments').doc(reference);
         try {
             await paymentDocRef.set({
@@ -119,7 +104,7 @@ export async function POST(req: NextRequest) {
                 currency: 'ZMW',
                 mobileNumber,
                 provider: provider,
-                status: 'initiated',
+                status: 'initiated', // Initial State
                 reference: reference,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -129,20 +114,17 @@ export async function POST(req: NextRequest) {
             throw new Error(`Database error: ${setErr.message}`);
         }
 
-        // 3. Return the reference to the frontend.
-        // We NO LONGER call Lenco's STK push API here because the frontend widget will handle it.
-        // This prevents double prompts.
-        await paymentDocRef.update({
-            status: 'pending',
-            updatedAt: new Date().toISOString()
-        });
+        // 4. Return the reference to the frontend.
+        // The frontend WIDGET will handle the actual getPaid() call.
+        // We do NOT call Lenco's STK push API here to prevent dual prompts.
 
-        console.log(`[Initiate API] Reference created and pending: ${reference}`);
+        console.log(`[Initiate API] Reference created and ready: ${reference}`);
 
         return NextResponse.json({
-            status: 'pending',
-            message: 'Payment session initialized',
-            reference: reference
+            status: 'initiated',
+            message: 'Payment session created',
+            reference: reference,
+            reused: false
         });
 
     } catch (error: any) {

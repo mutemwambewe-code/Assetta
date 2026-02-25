@@ -34,72 +34,76 @@ export async function GET(req: NextRequest) {
 
         const data = await response.json();
 
-        if (!response.ok || data.status === false) { // Lenco sometimes returns status: false in body
-            console.error('Lenco verification failed:', data);
-            return NextResponse.json({ success: false, message: 'Payment verification failed with provider' }, { status: 400 });
+        if (!response.ok) {
+            console.error('[Verify API] Lenco fetch failed:', data);
+            return NextResponse.json({ success: false, message: 'Could not reach payment provider' }, { status: 502 });
         }
 
-        // Check actual payment status
-        // The data structure based on docs: data.data.status
+        // Lenco Access V2 Statuses: 'pending', 'successful', 'failed'
+        const lencoStatus = data.data?.status;
         const paymentData = data.data;
-        if (paymentData.status !== 'successful') {
-            return NextResponse.json({ success: false, message: `Payment status is ${paymentData.status}` }, { status: 400 });
-        }
 
-        // Check currency and amount if needed (Optional but recommended)
-        // const expectedAmount = ...
-
-        // Extract User ID from reference
-        // Format: SUB-timestamp-uid
-        const parts = reference.split('-');
-        if (parts.length < 3 || !reference.startsWith('SUB-')) {
-            return NextResponse.json({ success: false, message: 'Invalid reference format' }, { status: 400 });
-        }
-
-        const userId = parts.slice(2).join('-');
-
-        if (!userId || userId === 'guest') {
-            return NextResponse.json({ success: false, message: 'Invalid user in reference' }, { status: 400 });
-        }
-
-        // Update Firestore
-        // Update the payment record status
         const paymentDocRef = adminDb.collection('payments').doc(reference);
+        const paymentDoc = await paymentDocRef.get();
+
+        if (!paymentDoc.exists) {
+            return NextResponse.json({ success: false, message: 'Transaction record not found' }, { status: 404 });
+        }
+
+        const currentData = paymentDoc.data();
+
+        // Mapping Lenco status to our State Machine
+        let nextStatus = currentData?.status;
+        if (lencoStatus === 'successful') nextStatus = 'successful';
+        else if (lencoStatus === 'failed') nextStatus = 'failed';
+        else if (lencoStatus === 'pending') nextStatus = 'pending';
+
+        // Update the payment record
         await paymentDocRef.update({
-            status: 'successful',
+            status: nextStatus,
+            providerReference: paymentData.id || null,
             updatedAt: new Date().toISOString()
         });
 
-        // Add 30 days to current date
+        if (nextStatus !== 'successful') {
+            return NextResponse.json({
+                success: false,
+                status: nextStatus,
+                message: `Payment is ${nextStatus}. Please complete the prompt on your phone.`
+            });
+        }
+
+        // Double check: If already successful in our DB, we might have already activated subscription (via webhook)
+        // But for redundancy, we activate here too if not already done.
+
+        const userId = currentData?.userId;
+        if (!userId || userId === 'unknown') {
+            return NextResponse.json({ success: false, message: 'User ID missing in record' }, { status: 400 });
+        }
+
+        // Activate Subscription
         const startDate = new Date();
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 30);
+
+        // Update user's subscription status
+        await adminDb.collection('users').doc(userId).set({
+            subscriptionStatus: 'active',
+            subscriptionEndDate: endDate.toISOString(),
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
 
         await adminDb.collection('users').doc(userId).collection('subscriptions').add({
             status: 'active',
             plan: 'pro',
             currentPeriodStart: startDate.toISOString(),
             currentPeriodEnd: endDate.toISOString(),
-            providerId: paymentData.id, // Lenco transaction ID
-            reference: reference, // Lenco Reference
-            paymentMethod: paymentData.type, // 'mobile-money', 'card'
+            providerId: paymentData.id,
+            reference: reference,
             amount: paymentData.amount,
             currency: paymentData.currency,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            createdAt: new Date().toISOString()
         });
-
-        // Also add to payments history
-        await adminDb.collection('users').doc(userId).collection('payments').add({
-            amount: parseFloat(paymentData.amount),
-            date: new Date().toISOString(),
-            status: 'completed',
-            method: paymentData.type === 'mobile-money' ? 'Mobile Money' : 'Bank Transfer', // Mapping based on 'type'
-            reference: reference,
-            providerReference: paymentData.lencoReference
-        });
-
-        return NextResponse.json({ success: true, message: 'Subscription activated' });
 
     } catch (error) {
         console.error('Verification error:', error);
