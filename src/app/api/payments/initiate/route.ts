@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const IS_SANDBOX = process.env.LENCO_IS_SANDBOX === 'true';
 const LENCO_BASE_URL = IS_SANDBOX
-    ? 'https://sandbox.lenco.co/v1/payments/mobile-money'
-    : 'https://api.lencopay.com/v1/payments/mobile-money';
+    ? 'https://sandbox.lenco.co/access/v2/collections/mobile-money'
+    : 'https://api.lenco.co/access/v2/collections/mobile-money';
 const TIMEOUT_MS = 20000;
 const EXPIRY_MINUTES = 15;
 
@@ -33,19 +33,15 @@ function normalizeProvider(provider: string) {
 
 export async function POST(req: NextRequest) {
     try {
+        const adminDb = getAdminDb();
         const body = await req.json();
+        console.log('[Initiate API] Received body:', JSON.stringify(body));
 
         const amount = Number(body.amount);
         const mobileNumber = String(body.mobileNumber || '');
         const provider = String(body.provider || '');
         let reference = body.reference;
-
-        // Extract UID from reference or fallback
-        let userId = 'unknown';
-        if (reference && reference.startsWith('SUB-')) {
-            const parts = reference.split('-');
-            userId = parts.slice(2, 3).join('-'); // Usually the UID is here
-        }
+        const userId = body.userId || 'unknown'; // Support passing userId directly
 
         if (!amount || amount <= 0)
             return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
@@ -57,50 +53,58 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Provider required' }, { status: 400 });
 
         // 1. Check for existing pending transaction for this user
-        // We only want to reuse if the mobile number and amount are the same
-        const pendingQuery = await adminDb.collection('payments')
-            .where('userId', '==', userId)
-            .where('status', '==', 'pending')
-            .where('amount', '==', amount)
-            .where('mobileNumber', '==', mobileNumber)
-            .limit(1)
-            .get();
+        let pendingQuery;
+        try {
+            pendingQuery = await adminDb.collection('payments')
+                .where('userId', '==', userId)
+                .where('status', '==', 'pending')
+                .where('amount', '==', amount)
+                .get();
+        } catch (dbError: any) {
+            console.error('[Initiate API] Firestore query failed:', dbError);
+            // Fallback: Continue without reusing if query fails (likely index issue)
+        }
 
-        if (!pendingQuery.empty) {
+        if (pendingQuery && !pendingQuery.empty) {
             const existing = pendingQuery.docs[0].data();
-            const createdAt = existing.createdAt.toDate ? existing.createdAt.toDate() : new Date(existing.createdAt);
-            const now = new Date();
-            const diffMins = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+            // Filter by mobileNumber manually to avoid complex composite index requirement
+            if (existing.mobileNumber === mobileNumber) {
+                const createdAtStr = existing.createdAt;
+                const createdAt = new Date(createdAtStr);
+                const now = new Date();
+                const diffMins = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
-            if (diffMins < EXPIRY_MINUTES) {
-                console.log(`[Initiate] Reusing pending transaction ${existing.reference} for user ${userId}`);
-                return NextResponse.json({
-                    status: 'pending',
-                    message: 'A payment is already in progress. Please check your phone for the prompt.',
-                    reference: existing.reference,
-                    reused: true
-                });
+                if (diffMins < EXPIRY_MINUTES) {
+                    console.log(`[Initiate] Reusing pending transaction ${existing.reference} for user ${userId}`);
+                    return NextResponse.json({
+                        status: 'pending',
+                        message: 'A payment is already in progress.',
+                        reference: existing.reference,
+                        reused: true
+                    });
+                }
+
+                await pendingQuery.docs[0].ref.update({ status: 'expired', updatedAt: new Date().toISOString() });
             }
-
-            // If expired, we should ideally mark it as expired, but for now we'll just create a new one
-            await pendingQuery.docs[0].ref.update({ status: 'expired', updatedAt: new Date().toISOString() });
         }
 
         const mappedProvider = normalizeProvider(provider);
 
         const apiKey = process.env.LENCO_SECRET_KEY;
-        if (!apiKey)
+        if (!apiKey) {
+            console.error('[Initiate API] LENCO_SECRET_KEY is missing');
             return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+        }
 
-        // Use the provided reference or generate a new one if it's "manual" or missing
+        // Generate normalized reference if missing or manual
         if (!reference || reference.includes('-manual-')) {
             reference = generateReference(userId);
         }
 
         const payload = {
-            amount,
+            amount: amount.toString(),
             currency: 'ZMW',
-            mobileNumber,
+            mobileNumber: mobileNumber,
             provider: mappedProvider,
             reference: reference,
             description: 'Assetta Subscription Payment'
@@ -108,61 +112,42 @@ export async function POST(req: NextRequest) {
 
         // 2. Log initiation intent to Firestore
         const paymentDocRef = adminDb.collection('payments').doc(reference);
-        await paymentDocRef.set({
-            userId,
-            amount,
-            currency: 'ZMW',
-            mobileNumber,
-            provider: provider,
-            status: 'initiated',
-            reference: reference,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        });
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-        console.log(`[Initiate] Calling Lenco for reference: ${reference}`);
-
-        const response = await fetch(LENCO_BASE_URL, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'Idempotency-Key': reference
-            },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-
-        clearTimeout(timeout);
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            console.error('Lenco Payment Error:', data);
-            await paymentDocRef.update({ status: 'failed', error: data.error || 'Lenco initiation failed', updatedAt: new Date().toISOString() });
-            return NextResponse.json(
-                { error: data.error || 'Payment initiation failed' },
-                { status: 502 }
-            );
+        try {
+            await paymentDocRef.set({
+                userId,
+                amount,
+                currency: 'ZMW',
+                mobileNumber,
+                provider: provider,
+                status: 'initiated',
+                reference: reference,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+        } catch (setErr: any) {
+            console.error('[Initiate API] Firestore set failed:', setErr);
+            throw new Error(`Database error: ${setErr.message}`);
         }
 
-        // 3. Update status to pending
+        // 3. Return the reference to the frontend.
+        // We NO LONGER call Lenco's STK push API here because the frontend widget will handle it.
+        // This prevents double prompts.
         await paymentDocRef.update({
             status: 'pending',
-            providerReference: data.reference, // Store provider's internal ref if any
             updatedAt: new Date().toISOString()
         });
+
+        console.log(`[Initiate API] Reference created and pending: ${reference}`);
 
         return NextResponse.json({
             status: 'pending',
-            message: 'Payment prompt sent to customer phone',
+            message: 'Payment session initialized',
             reference: reference
         });
 
     } catch (error: any) {
+        console.error('[Initiate API] Global Error:', error);
+
         if (error.name === 'AbortError') {
             return NextResponse.json(
                 { error: 'Payment provider timeout' },
@@ -170,10 +155,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        console.error('Payment Route Error:', error);
-
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: 'Internal server error', details: error.message },
             { status: 500 }
         );
     }

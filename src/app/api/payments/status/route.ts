@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+        const adminDb = getAdminDb();
         console.log('[Status API] Checking status for user:', userId);
         const pendingQuery = await adminDb.collection('payments')
             .where('userId', '==', userId)

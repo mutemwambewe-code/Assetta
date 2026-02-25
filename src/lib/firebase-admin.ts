@@ -2,18 +2,32 @@ import { initializeApp, getApps, cert, getApp } from 'firebase-admin/app';
 import { getFirestore, Firestore, DocumentData, Query } from 'firebase-admin/firestore';
 import type { Tenant } from './types';
 
-// Initialize Firebase Admin
-const serviceAccount = JSON.parse(
-    process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'
-);
+// Initialize Firebase Admin lazily
+function getAdminApp() {
+    if (getApps().length) return getApp();
 
-if (!getApps().length) {
-    initializeApp({
-        credential: cert(serviceAccount),
-    });
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKey) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is missing.');
+    }
+
+    try {
+        const serviceAccount = JSON.parse(serviceAccountKey);
+        if (serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
+        return initializeApp({
+            credential: cert(serviceAccount),
+        });
+    } catch (error: any) {
+        throw new Error(`Firebase Admin initialization failed: ${error.message}`);
+    }
 }
 
-export const adminDb = getFirestore();
+export function getAdminDb(): Firestore {
+    getAdminApp();
+    return getFirestore();
+}
 
 // This file contains server-side helper functions for interacting with Firestore using the Admin SDK.
 

@@ -122,48 +122,35 @@ export function LencoPayment({
         setLoading(true);
 
         try {
-            // 1. Initiate with our backend first to log to Firestore and check for idempotency
+            // 1. Initiate with our backend first to log to Firestore
+            // The backend NO LONGER triggers its own STK push, it just gives us a reference.
             const initRes = await fetch('/api/payments/initiate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     amount,
                     mobileNumber: phone || "0970000000",
-                    provider: "MTN", // Default if not provided
-                    reference: currentReference
+                    provider: "MTN",
+                    reference: currentReference,
+                    userId: user?.uid
                 })
             });
 
-            if (!initRes.ok) {
-                const text = await initRes.text();
-                throw new Error(`Initiation error (${initRes.status})`);
-            }
             const initData = await initRes.json();
             if (!initRes.ok) throw new Error(initData.error || "Failed to initiate payment");
 
-            // Update reference if backend gave us a new one (or reused one)
             const refToUse = initData.reference;
             setCurrentReference(refToUse);
 
-            if (initData.reused) {
-                setPendingPayment({ reference: refToUse });
-                setLoading(false);
-                toast({
-                    title: "Pending Prompt",
-                    description: "Reusing existing payment session. Please check your phone.",
-                });
-                return;
-            }
-
+            // 2. Open the Lenco Widget
             // Check if global LencoPay exists
             if (typeof window === 'undefined' || !window.LencoPay) {
-                console.warn("[LencoPayment] LencoPay SDK not found on window object.");
-                if (typeof (window as any).LencoPay === 'undefined') {
-                    throw new Error("LencoPay SDK is not available yet. Please wait a moment.");
-                }
+                console.error("[LencoPayment] LencoPay SDK not found on window object.");
+                throw new Error("Payment system is still loading. Please try again in a few seconds.");
             }
 
-            console.log("[LencoPayment] Opening widget with reference:", refToUse);
+            console.log("[LencoPayment] Opening Lenco widget with ref:", refToUse);
+            setLoading(true); // Keep loading state until widget callbacks trigger
 
             window.LencoPay.getPaid({
                 key: publicKey,

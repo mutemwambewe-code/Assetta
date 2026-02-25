@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: false, message: 'Missing reference' }, { status: 400 });
     }
 
+    const adminDb = getAdminDb();
     try {
         // verify with Lenco
         // Use secret key for server-to-server verification

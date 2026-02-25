@@ -97,14 +97,15 @@ export function SubscriptionPaywallModal({ isOpen, onClose }: SubscriptionPaywal
                     amount: 150, // ZMW
                     mobileNumber: phone,
                     provider: provider,
-                    reference: paymentReference
+                    reference: paymentReference,
+                    userId: user?.uid
                 })
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                throw new Error(data.error || 'Payment failed');
+                throw new Error(data.details || data.error || 'Payment failed');
             }
 
             if (data.reused) {

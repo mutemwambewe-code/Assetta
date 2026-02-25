@@ -1,9 +1,9 @@
-
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
     try {
+        const adminDb = getAdminDb();
         const signature = req.headers.get('x-lenco-signature') || '';
         // Verify signature here (omitted for MVP, but should be added for production)
 
