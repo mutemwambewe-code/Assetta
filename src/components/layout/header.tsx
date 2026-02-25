@@ -1,10 +1,9 @@
-
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { PanelLeft, Settings, Sun, Moon, LogOut, CreditCard } from 'lucide-react';
+import { PanelLeft, Settings, Sun, Moon, LogOut } from 'lucide-react';
 import { useTheme } from '@/components/providers/app-providers';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +15,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { navLinks, settingsLink, billingLink } from './nav-links';
+import { navLinks, settingsLink } from './nav-links';
 import { cn } from '@/lib/utils';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -25,7 +24,6 @@ import React from 'react';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
 import { AppWordmark } from './app-wordmark';
-import { AppLogo } from './app-logo';
 
 interface HeaderProps {
   pageTitle: string;
@@ -107,17 +105,6 @@ export function Header({ pageTitle }: HeaderProps) {
             </ScrollArea>
             <div className="mt-auto border-t border-sidebar-border p-4 space-y-2">
               <Link
-                href={billingLink.href}
-                className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
-                  pathname.startsWith(billingLink.href)
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <billingLink.icon className="h-5 w-5" />
-                {billingLink.label}
-              </Link>
-              <Link
                 href={settingsLink.href}
                 className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
                   pathname.startsWith(settingsLink.href)
@@ -161,12 +148,6 @@ export function Header({ pageTitle }: HeaderProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/billing" className="flex items-center gap-2 cursor-pointer">
-              <CreditCard className="w-4 h-4" />
-              <span>Billing</span>
-            </Link>
-          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
               <Settings className="w-4 h-4" />
