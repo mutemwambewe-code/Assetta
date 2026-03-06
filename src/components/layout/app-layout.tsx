@@ -26,14 +26,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const isBillingPage = pathname === '/billing';
 
   useEffect(() => {
-    if (isUserLoading || subLoading) return;
+    if (isUserLoading) return;
 
-    if (!user && !isAuthPage) {
-      router.push('/login');
-    } else if (user && !canAccess('core') && !isBillingPage && !isAuthPage) {
-      router.push('/billing');
+    if (!user) {
+      if (!isAuthPage) router.push('/login');
+      return;
     }
-  }, [isUserLoading, subLoading, user, isAuthPage, isBillingPage, router, canAccess]);
+  }, [isUserLoading, user, isAuthPage, router]);
 
   let pageTitle = '';
   if (Children.only(children) && React.isValidElement(children)) {
@@ -58,15 +57,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-background">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-16 flex-col border-r bg-sidebar text-sidebar-foreground sm:flex">
-        <nav className="flex flex-col items-center gap-4 px-2 py-4">
-          <Link
-            href="/dashboard"
-            className="group flex h-14 w-14 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
-          >
-            <AppLogo className="h-10 w-10 text-accent" />
-            <span className="sr-only">Assetta</span>
-          </Link>
-          <TooltipProvider>
+        <TooltipProvider delayDuration={400}>
+          <nav className="flex flex-col items-center gap-4 px-2 py-4">
+            <Link
+              href="/dashboard"
+              className="group flex h-14 w-14 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
+            >
+              <AppLogo className="h-10 w-10 text-accent" />
+              <span className="sr-only">Assetta</span>
+            </Link>
             {navLinks.map(({ href, label, icon: Icon, isPrimary }, index) => (
               <React.Fragment key={href}>
                 {index === 2 && <Separator className="my-2" />}
@@ -89,25 +88,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </Tooltip>
               </React.Fragment>
             ))}
-          </TooltipProvider>
-        </nav>
-        <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
-          <Separator className="my-2" />
-          <TooltipProvider>
+          </nav>
+          <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
+            <Separator className="my-2" />
             <Tooltip>
-                <TooltipTrigger asChild>
+              <TooltipTrigger asChild>
                 <Link
-                    href={billingLink.href}
-                    className={cn(
+                  href={billingLink.href}
+                  className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                     pathname.startsWith(billingLink.href) && 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    )}
+                  )}
                 >
-                    <billingLink.icon className="h-5 w-5" />
-                    <span className="sr-only">{billingLink.label}</span>
+                  <billingLink.icon className="h-5 w-5" />
+                  <span className="sr-only">{billingLink.label}</span>
                 </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">{billingLink.label}</TooltipContent>
+              </TooltipTrigger>
+              <TooltipContent side="right">{billingLink.label}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -124,8 +121,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </TooltipTrigger>
               <TooltipContent side="right">{settingsLink.label}</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        </nav>
+          </nav>
+        </TooltipProvider>
       </aside>
       <div className="flex flex-1 flex-col sm:pl-16">
         <Header

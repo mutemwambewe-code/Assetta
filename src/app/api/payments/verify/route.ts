@@ -86,10 +86,12 @@ export async function GET(req: NextRequest) {
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 30);
 
-        // Update user's subscription status
+        // Update user's subscription status - write to both for safety or clear old one
         await adminDb.collection('users').doc(userId).set({
-            subscriptionStatus: 'active',
-            subscriptionEndDate: endDate.toISOString(),
+            subscription_status: 'ACTIVE',
+            subscriptionStatus: 'ACTIVE', // Also set the camelCase variant for safety
+            current_period_end: endDate.toISOString(),
+            subscriptionEndDate: endDate.toISOString(), // Also set for safety
             updatedAt: new Date().toISOString()
         }, { merge: true });
 

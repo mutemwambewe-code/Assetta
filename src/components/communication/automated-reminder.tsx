@@ -77,6 +77,7 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
   const [isTextareaHighlighted, setIsTextareaHighlighted] = useState(false);
   const [editableRecipients, setEditableRecipients] = useState<Tenant[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [tenantPopoverOpen, setTenantPopoverOpen] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -284,24 +285,51 @@ export function AutomatedReminder({ message, setMessage }: AutomatedReminderProp
                   name="tenantId"
                   control={control}
                   render={({ field }) => (
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                      }}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <SelectTrigger id="tenantId">
-                        <SelectValue placeholder="Select a tenant" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tenants.map((tenant) => (
-                          <SelectItem key={tenant.id} value={tenant.id}>
-                            {tenant.name} ({tenant.property} - {tenant.unit})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={tenantPopoverOpen} onOpenChange={setTenantPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={tenantPopoverOpen}
+                          className="w-full justify-between"
+                        >
+                          {field.value
+                            ? tenants.find((tenant) => tenant.id === field.value)?.name
+                            : "Select a tenant"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search tenants..." />
+                          <CommandList>
+                            <CommandEmpty>No tenant found.</CommandEmpty>
+                            <CommandGroup>
+                              <ScrollArea className="h-72">
+                                {tenants.map((tenant) => (
+                                  <CommandItem
+                                    key={tenant.id}
+                                    value={`${tenant.name} ${tenant.property} ${tenant.unit}`}
+                                    onSelect={() => {
+                                      field.onChange(tenant.id);
+                                      setTenantPopoverOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === tenant.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {tenant.name} ({tenant.property} - {tenant.unit})
+                                  </CommandItem>
+                                ))}
+                              </ScrollArea>
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   )}
                 />
                 {errors.tenantId && <p className="text-sm text-destructive">{errors.tenantId.message}</p>}

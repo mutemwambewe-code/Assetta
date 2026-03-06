@@ -15,72 +15,72 @@ import { AddTenant } from './add-tenant';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 
-type FilterStatus = 'Paid' | 'Pending' | 'Overdue';
-const ALL_STATUSES: FilterStatus[] = ['Paid', 'Pending', 'Overdue'];
+type FilterStatus = 'Paid' | 'Pending' | 'Overdue' | 'Expired';
+const ALL_STATUSES: FilterStatus[] = ['Paid', 'Pending', 'Overdue', 'Expired'];
 
 function TenantListSkeleton() {
-    return (
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                <Skeleton className="h-10 w-full sm:w-64" />
-                <div className="flex items-center gap-2 flex-wrap">
-                    <Skeleton className="h-10 w-24" />
-                    <Skeleton className="h-10 w-24" />
-                    <Skeleton className="h-10 w-28" />
-                    <Skeleton className="h-10 w-32" />
-                </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
-                    <CardSkeleton key={i} />
-                ))}
-            </div>
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <Skeleton className="h-10 w-full sm:w-64" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-28" />
+          <Skeleton className="h-10 w-32" />
         </div>
-    )
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function CardSkeleton() {
-    return (
-      <div className="p-4 border rounded-lg space-y-3">
-        <div className="flex items-start gap-4">
-            <Skeleton className="h-14 w-14 rounded-full" />
-            <div className='flex-1 space-y-2'>
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-            </div>
-        </div>
-        <div className="space-y-3">
-            <Skeleton className="h-5 w-1/2" />
-            <Skeleton className="h-5 w-2/3" />
-        </div>
-        <div className='flex items-center justify-between pt-2'>
-            <div className='space-y-2'>
-                <Skeleton className="h-4 w-10" />
-                <Skeleton className="h-5 w-20" />
-            </div>
-            <Skeleton className="h-6 w-16 rounded-full" />
-        </div>
-        <div className="flex gap-2 pt-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-10" />
+  return (
+    <div className="p-4 border rounded-lg space-y-3">
+      <div className="flex items-start gap-4">
+        <Skeleton className="h-14 w-14 rounded-full" />
+        <div className='flex-1 space-y-2'>
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
         </div>
       </div>
-    );
-  }
+      <div className="space-y-3">
+        <Skeleton className="h-5 w-1/2" />
+        <Skeleton className="h-5 w-2/3" />
+      </div>
+      <div className='flex items-center justify-between pt-2'>
+        <div className='space-y-2'>
+          <Skeleton className="h-4 w-10" />
+          <Skeleton className="h-5 w-20" />
+        </div>
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+      <div className="flex gap-2 pt-2">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-10" />
+      </div>
+    </div>
+  );
+}
 
 export function TenantList() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const { tenants, isInitialized } = useTenants();
-  
+
   const getFiltersFromURL = (): FilterStatus[] => {
     const filterParam = searchParams.get('filter');
     if (!filterParam) return [];
     const filters = filterParam.split(',') as FilterStatus[];
     return filters.filter(f => ALL_STATUSES.includes(f));
   };
-  
+
   const [activeFilters, setActiveFilters] = useState<FilterStatus[]>(getFiltersFromURL());
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -92,7 +92,7 @@ export function TenantList() {
     const newFilters = activeFilters.includes(status)
       ? activeFilters.filter(f => f !== status)
       : [...activeFilters, status];
-      
+
     setActiveFilters(newFilters);
 
     const params = new URLSearchParams(searchParams.toString());
@@ -114,16 +114,16 @@ export function TenantList() {
     );
 
   if (!isInitialized) {
-      return <TenantListSkeleton />;
+    return <TenantListSkeleton />;
   }
 
   if (!tenants.length) {
     return (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-            <h2 className="text-xl font-semibold">No tenants yet</h2>
-            <p className="text-muted-foreground mt-2">Add your first tenant to get started.</p>
-            <AddTenant />
-        </div>
+      <div className="text-center py-16 border-2 border-dashed rounded-lg">
+        <h2 className="text-xl font-semibold">No tenants yet</h2>
+        <p className="text-muted-foreground mt-2">Add your first tenant to get started.</p>
+        <AddTenant />
+      </div>
     )
   }
 
@@ -145,23 +145,24 @@ export function TenantList() {
             (status) => {
               const isSelected = activeFilters.includes(status);
               return (
-              <div key={status} className="flex items-center">
-                <Button
-                  variant={isSelected ? 'default' : 'outline'}
-                  onClick={() => handleFilterToggle(status)}
-                  className="capitalize h-10 pl-3 pr-4 rounded-md text-xs sm:text-sm"
-                  aria-pressed={isSelected}
-                >
+                <div key={status} className="flex items-center">
+                  <Button
+                    variant={isSelected ? 'default' : 'outline'}
+                    onClick={() => handleFilterToggle(status)}
+                    className="capitalize h-10 pl-3 pr-4 rounded-md text-xs sm:text-sm"
+                    aria-pressed={isSelected}
+                  >
                     <div className={cn(
-                        "w-4 h-4 mr-2 border border-primary-foreground rounded-sm flex items-center justify-center",
-                        isSelected ? "bg-primary-foreground" : "bg-transparent"
+                      "w-4 h-4 mr-2 border border-primary-foreground rounded-sm flex items-center justify-center",
+                      isSelected ? "bg-primary-foreground" : "bg-transparent"
                     )}>
-                       {isSelected && <CheckIcon className="h-3 w-3 text-primary" />}
+                      {isSelected && <CheckIcon className="h-3 w-3 text-primary" />}
                     </div>
-                  {status}
-                </Button>
-              </div>
-            )}
+                    {status}
+                  </Button>
+                </div>
+              )
+            }
           )}
           <AddTenant className='h-10' />
         </div>
@@ -175,8 +176,8 @@ export function TenantList() {
         </div>
       ) : (
         <div className="text-center py-16 border-2 border-dashed rounded-lg col-span-full">
-            <h2 className="text-xl font-semibold">No matching tenants</h2>
-            <p className="text-muted-foreground mt-2">Try adjusting your search or filter.</p>
+          <h2 className="text-xl font-semibold">No matching tenants</h2>
+          <p className="text-muted-foreground mt-2">Try adjusting your search or filter.</p>
         </div>
       )}
     </div>

@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
                 endDate.setDate(endDate.getDate() + 30);
 
                 await adminDb.collection('users').doc(userId).set({
-                    subscriptionStatus: 'active',
+                    subscription_status: 'ACTIVE',
+                    subscriptionStatus: 'ACTIVE',
+                    current_period_end: endDate.toISOString(),
                     subscriptionEndDate: endDate.toISOString(),
                     updatedAt: new Date().toISOString()
                 }, { merge: true });

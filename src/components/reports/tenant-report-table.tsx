@@ -21,6 +21,7 @@ const statusStyles = {
   Paid: 'success',
   Pending: 'warning',
   Overdue: 'destructive',
+  Expired: 'secondary',
 } as const;
 
 export function TenantReportTable({ tenants }: TenantReportTableProps) {
@@ -34,7 +35,7 @@ export function TenantReportTable({ tenants }: TenantReportTableProps) {
         if (statusFilter === 'All') return true;
         return tenant.rentStatus === statusFilter;
       })
-      .filter(tenant => 
+      .filter(tenant =>
         tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tenant.property.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -48,70 +49,70 @@ export function TenantReportTable({ tenants }: TenantReportTableProps) {
     <Card className="mt-4">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <CardTitle>Tenant Details</CardTitle>
-                <CardDescription>A comprehensive list of all your tenants.</CardDescription>
+          <div>
+            <CardTitle>Tenant Details</CardTitle>
+            <CardDescription>A comprehensive list of all your tenants.</CardDescription>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search by name or property..."
+                className="pl-8 w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="Search by name or property..."
-                        className="pl-8 w-full"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className='w-full sm:w-[140px]'>
-                        <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="All">All Statuses</SelectItem>
-                        <SelectItem value="Paid">Paid</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Overdue">Overdue</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className='w-full sm:w-[140px]'>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Statuses</SelectItem>
+                <SelectItem value="Paid">Paid</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Overdue">Overdue</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="hidden sm:table-cell">Property & Unit</TableHead>
-                  <TableHead className="hidden md:table-cell">Contact</TableHead>
-                  <TableHead className="hidden lg:table-cell">Lease End</TableHead>
-                  <TableHead>Rent</TableHead>
-                  <TableHead>Status</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="hidden sm:table-cell">Property & Unit</TableHead>
+                <TableHead className="hidden md:table-cell">Contact</TableHead>
+                <TableHead className="hidden lg:table-cell">Lease End</TableHead>
+                <TableHead>Rent</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTenants.map((tenant) => (
+                <TableRow key={tenant.id} onClick={() => handleRowClick(tenant.id)} className="cursor-pointer">
+                  <TableCell className="font-medium">{tenant.name}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{tenant.property} - {tenant.unit}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className='flex flex-col'>
+                      <span>{tenant.phone}</span>
+                      {tenant.email && <span className='text-muted-foreground text-xs'>{tenant.email}</span>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">{format(new Date(tenant.leaseEndDate), 'PPP')}</TableCell>
+                  <TableCell>ZMW {tenant.rentAmount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusStyles[tenant.rentStatus]} className="text-xs">
+                      {tenant.rentStatus}
+                    </Badge>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTenants.map((tenant) => (
-                  <TableRow key={tenant.id} onClick={() => handleRowClick(tenant.id)} className="cursor-pointer">
-                    <TableCell className="font-medium">{tenant.name}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{tenant.property} - {tenant.unit}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                        <div className='flex flex-col'>
-                            <span>{tenant.phone}</span>
-                            {tenant.email && <span className='text-muted-foreground text-xs'>{tenant.email}</span>}
-                        </div>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">{format(new Date(tenant.leaseEndDate), 'PPP')}</TableCell>
-                    <TableCell>ZMW {tenant.rentAmount.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusStyles[tenant.rentStatus]} className="text-xs">
-                        {tenant.rentStatus}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>

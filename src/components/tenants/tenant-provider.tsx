@@ -16,6 +16,7 @@ type TenantContextType = {
   updateTenant: (tenant: Tenant) => void;
   deleteTenant: (tenantId: string) => void;
   logPayment: (tenantId: string, payment: Omit<Payment, 'id'>) => void;
+  deletePayment: (tenantId: string, paymentId: string) => void;
   addInvoice: (invoice: Omit<Invoice, 'id'>) => Promise<Invoice | undefined>;
   getInvoicesForTenant: (tenantId: string) => Promise<Invoice[]>;
   isInitialized: boolean;
@@ -79,6 +80,12 @@ const calculateRentDetails = (tenant: Tenant): { rentStatus: Tenant['rentStatus'
     // If balance < 0 (credit), they might have paid for months in future.
     // But usually next due is just the next chronological one.
     nextDueDate = addMonths(leaseStart, fullyPaidMonths);
+  }
+
+  // 5. Override status if lease has expired
+  const leaseEnd = startOfDay(parseISO(tenant.leaseEndDate));
+  if (isAfter(today, leaseEnd)) {
+    rentStatus = 'Expired';
   }
 
   return {
@@ -189,6 +196,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     await updateTenant(updatedTenant);
   }, [tenants, tenantsCollection, updateTenant]);
 
+  const deletePayment = useCallback(async (tenantId: string, paymentId: string) => {
+    const tenant = tenants.find(t => t.id === tenantId);
+    if (!tenant || !tenantsCollection) return;
+
+    const updatedTenant: Tenant = {
+      ...tenant,
+      paymentHistory: (tenant.paymentHistory || []).filter(p => p.id !== paymentId),
+    }
+    await updateTenant(updatedTenant);
+  }, [tenants, tenantsCollection, updateTenant]);
+
   const addInvoice = useCallback(async (invoiceData: Omit<Invoice, 'id'>) => {
     if (!invoicesCollection) {
       console.error("Invoices collection not available. Cannot add invoice.");
@@ -219,6 +237,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     updateTenant,
     deleteTenant,
     logPayment,
+    deletePayment,
     addInvoice,
     getInvoicesForTenant,
     isInitialized

@@ -32,14 +32,15 @@ const statusStyles = {
   Paid: 'success',
   Pending: 'warning',
   Overdue: 'destructive',
+  Expired: 'secondary',
 } as const;
 
 function TenantDetailPage({ title }: { title?: string }) {
   const params = useParams();
-  const { tenants, deleteTenant } = useTenants();
+  const { tenants, deleteTenant, deletePayment } = useTenants();
   const { toast } = useToast();
   const router = useRouter();
-  
+
   const tenantId = params.tenantId as string;
   const tenant = tenants.find((t) => t.id === tenantId);
 
@@ -47,16 +48,16 @@ function TenantDetailPage({ title }: { title?: string }) {
     return (
       <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-full">
         <div className="flex flex-col items-center gap-1 text-center">
-            <h3 className="text-2xl font-bold tracking-tight">Tenant not found</h3>
-            <p className="text-sm text-muted-foreground">
-                The tenant you are looking for does not exist.
-            </p>
-            <Link href="/tenants">
-                <Button variant="outline" className="mt-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Tenants
-                </Button>
-            </Link>
+          <h3 className="text-2xl font-bold tracking-tight">Tenant not found</h3>
+          <p className="text-sm text-muted-foreground">
+            The tenant you are looking for does not exist.
+          </p>
+          <Link href="/tenants">
+            <Button variant="outline" className="mt-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Tenants
+            </Button>
+          </Link>
         </div>
       </div>
     );
@@ -65,32 +66,32 @@ function TenantDetailPage({ title }: { title?: string }) {
   const handleDelete = () => {
     deleteTenant(tenant.id);
     toast({
-        title: "Tenant Deleted",
-        description: `${tenant.name} has been removed from your records.`,
+      title: "Tenant Deleted",
+      description: `${tenant.name} has been removed from your records.`,
     });
     router.push('/tenants');
   }
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-       <div className='flex justify-start items-start gap-4 flex-col sm:flex-row sm:items-center'>
-            <div className='flex-1'>
-                <h1 className="text-2xl font-bold tracking-tight">{tenant.name}</h1>
-                <p className="text-muted-foreground">
-                    Tenant details, payment history, and communications.
-                </p>
-            </div>
-            <Button variant="outline" onClick={() => router.back()}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-            </Button>
+      <div className='flex justify-start items-start gap-4 flex-col sm:flex-row sm:items-center'>
+        <div className='flex-1'>
+          <h1 className="text-2xl font-bold tracking-tight">{tenant.name}</h1>
+          <p className="text-muted-foreground">
+            Tenant details, payment history, and communications.
+          </p>
         </div>
+        <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 flex flex-col gap-6">
           <Card>
             <CardHeader className="items-center text-center">
               <Avatar className="h-24 w-24 mb-2">
-                  <AvatarImage src={tenant.avatarUrl} alt={tenant.name} />
+                <AvatarImage src={tenant.avatarUrl} alt={tenant.name} />
                 <AvatarFallback className="text-3xl">
                   {tenant.name.split(' ').map((n) => n[0]).join('')}
                 </AvatarFallback>
@@ -99,93 +100,93 @@ function TenantDetailPage({ title }: { title?: string }) {
               <CardDescription>
                 {tenant.property} - Unit {tenant.unit}
               </CardDescription>
-               <Badge variant={statusStyles[tenant.rentStatus]} className="text-sm mt-2">
+              <Badge variant={statusStyles[tenant.rentStatus]} className="text-sm mt-2">
                 {tenant.rentStatus}
               </Badge>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <div className="flex items-center gap-3 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{tenant.phone}</span>
+              <div className="flex items-center gap-3 text-sm">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <span>{tenant.phone}</span>
+              </div>
+              {tenant.email && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span>{tenant.email}</span>
                 </div>
-                {tenant.email && (
-                  <div className="flex items-center gap-3 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span>{tenant.email}</span>
+              )}
+              <div className="border-t pt-4 space-y-2">
+                <div className='flex justify-between items-center text-sm'>
+                  <span className='text-muted-foreground'>Rent Amount:</span>
+                  <span className='font-semibold'>ZMW {tenant.rentAmount.toLocaleString()}</span>
+                </div>
+                {tenant.balance && tenant.balance > 0 && (
+                  <div className='flex justify-between items-center text-sm'>
+                    <span className='text-muted-foreground'>Outstanding Balance:</span>
+                    <span className='font-semibold text-destructive'>ZMW {tenant.balance.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="border-t pt-4 space-y-2">
-                     <div className='flex justify-between items-center text-sm'>
-                        <span className='text-muted-foreground'>Rent Amount:</span>
-                        <span className='font-semibold'>ZMW {tenant.rentAmount.toLocaleString()}</span>
-                     </div>
-                      {tenant.balance && tenant.balance > 0 && (
-                        <div className='flex justify-between items-center text-sm'>
-                            <span className='text-muted-foreground'>Outstanding Balance:</span>
-                            <span className='font-semibold text-destructive'>ZMW {tenant.balance.toLocaleString()}</span>
-                        </div>
-                      )}
-                      {tenant.nextDueDate && (
-                       <div className='flex justify-between items-center text-sm'>
-                          <span className='text-muted-foreground'>Next Due Date:</span>
-                          <span className='font-semibold'>{format(new Date(tenant.nextDueDate), 'PPP')}</span>
-                       </div>
-                      )}
-                     <div className='flex justify-between items-center text-sm'>
-                        <span className='text-muted-foreground'>Lease End:</span>
-                        <span className='font-semibold'>{format(new Date(tenant.leaseEndDate), 'PPP')}</span>
-                     </div>
+                {tenant.nextDueDate && (
+                  <div className='flex justify-between items-center text-sm'>
+                    <span className='text-muted-foreground'>Next Due Date:</span>
+                    <span className='font-semibold'>{format(new Date(tenant.nextDueDate), 'PPP')}</span>
+                  </div>
+                )}
+                <div className='flex justify-between items-center text-sm'>
+                  <span className='text-muted-foreground'>Lease End:</span>
+                  <span className='font-semibold'>{format(new Date(tenant.leaseEndDate), 'PPP')}</span>
                 </div>
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-                <CardTitle>Actions</CardTitle>
+              <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2">
-                <LogPayment tenant={tenant}>
-                    <Button variant="outline" className="w-full">
-                        Log Payment
-                    </Button>
-                </LogPayment>
-                <Link href={`/communication?tenantId=${tenant.id}`} className='w-full'>
-                    <Button className="w-full">
-                        <MessageSquare className="mr-2" />
-                        Send Reminder
-                    </Button>
-                </Link>
-                <Link href={`/communication?tab=invoice&tenantId=${tenant.id}`} className="w-full col-span-2">
-                    <Button variant='outline' className='w-full'>
-                        <Send className='mr-2' /> Send Invoice
-                    </Button>
-                </Link>
-                <EditTenant tenant={tenant}>
-                    <Button variant='outline' className='w-full col-span-2'>
-                        <Edit className='mr-2' /> Edit Tenant Details
-                    </Button>
-                </EditTenant>
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="w-full col-span-2">
-                            <Trash2 className="mr-2" />
-                            Delete Tenant
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete {tenant.name} and all associated data from our servers.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                            Yes, delete tenant
-                        </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+              <LogPayment tenant={tenant}>
+                <Button variant="outline" className="w-full">
+                  Log Payment
+                </Button>
+              </LogPayment>
+              <Link href={`/communication?tenantId=${tenant.id}`} className='w-full'>
+                <Button className="w-full">
+                  <MessageSquare className="mr-2" />
+                  Send Reminder
+                </Button>
+              </Link>
+              <Link href={`/communication?tab=invoice&tenantId=${tenant.id}`} className="w-full col-span-2">
+                <Button variant='outline' className='w-full'>
+                  <Send className='mr-2' /> Send Invoice
+                </Button>
+              </Link>
+              <EditTenant tenant={tenant}>
+                <Button variant='outline' className='w-full col-span-2'>
+                  <Edit className='mr-2' /> Edit Tenant Details
+                </Button>
+              </EditTenant>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full col-span-2">
+                    <Trash2 className="mr-2" />
+                    Delete Tenant
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete {tenant.name} and all associated data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                      Yes, delete tenant
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
@@ -206,6 +207,7 @@ function TenantDetailPage({ title }: { title?: string }) {
                       <TableHead>Date</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Method</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -214,14 +216,47 @@ function TenantDetailPage({ title }: { title?: string }) {
                         <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
                         <TableCell>ZMW {payment.amount.toLocaleString()}</TableCell>
                         <TableCell>{payment.method}</TableCell>
+                        <TableCell className="text-right">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Delete payment</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this payment of ZMW {payment.amount.toLocaleString()}? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => {
+                                    deletePayment(tenant.id, payment.id);
+                                    toast({
+                                      title: 'Payment Deleted',
+                                      description: 'The payment has been removed from records.',
+                                    });
+                                  }}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                    <h2 className="text-xl font-semibold">No Payments Recorded</h2>
-                    <p className="text-muted-foreground mt-2">Log a payment to see the history here.</p>
+                  <h2 className="text-xl font-semibold">No Payments Recorded</h2>
+                  <p className="text-muted-foreground mt-2">Log a payment to see the history here.</p>
                 </div>
               )}
             </CardContent>

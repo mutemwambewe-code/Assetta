@@ -97,18 +97,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    let status = userProfile.subscription_status;
+    // Use a case-insensitive status and check both camelCase and snake_case for legacy support
+    let status = userProfile.subscription_status || (userProfile as any).subscriptionStatus;
+    const normalizedStatus = status?.toString().toUpperCase();
 
     // If user is in trial, check if it has expired
-    if (status === 'TRIAL') {
+    if (normalizedStatus === 'TRIAL') {
       const trialEndDate = userProfile.trial_end_date ? new Date(userProfile.trial_end_date) : new Date(0);
       if (isAfter(new Date(), trialEndDate)) {
-        status = 'INACTIVE'; // Trial has expired
+        status = 'INACTIVE';
       }
     }
 
-    const isTrial = status === 'TRIAL';
-    const isActive = status === 'ACTIVE';
+    const isTrial = status?.toString().toUpperCase() === 'TRIAL';
+    const isActive = status?.toString().toUpperCase() === 'ACTIVE';
     // Gated if not admin, not in trial, and not active
     const isGated = !isTrial && !isActive;
 
