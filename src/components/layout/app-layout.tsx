@@ -13,6 +13,8 @@ import { Separator } from '../ui/separator';
 import { IntroTutorial } from '../tutorial/intro-tutorial';
 import { AppLogo } from './app-logo';
 
+import { Sidebar } from './sidebar';
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
@@ -23,9 +25,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isUserLoading) return;
 
-    if (!user) {
-      if (!isAuthPage) router.push('/login');
-      return;
+    if (!user && !isAuthPage) {
+      router.push('/login');
     }
   }, [isUserLoading, user, isAuthPage, router]);
 
@@ -39,8 +40,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (isUserLoading && !isAuthPage) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -50,67 +51,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-16 flex-col border-r bg-sidebar text-sidebar-foreground sm:flex">
-        <TooltipProvider delayDuration={400}>
-          <nav className="flex flex-col items-center gap-4 px-2 py-4">
-            <Link
-              href="/dashboard"
-              className="group flex h-14 w-14 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary"
-            >
-              <AppLogo className="h-10 w-10 text-accent" />
-              <span className="sr-only">Assetta</span>
-            </Link>
-            {navLinks.map(({ href, label, icon: Icon, isPrimary }, index) => (
-              <React.Fragment key={href}>
-                {index === 2 && <Separator className="my-2" />}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={href}
-                      className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        pathname.startsWith(href)
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-muted-foreground'
-                      )}
-                    >
-                      <Icon className={cn("h-5 w-5", isPrimary && "h-6 w-6")} />
-                      <span className="sr-only">{label}</span>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{label}</TooltipContent>
-                </Tooltip>
-              </React.Fragment>
-            ))}
-          </nav>
-          <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-4">
-            <Separator className="my-2" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href={settingsLink.href}
-                  className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                    pathname.startsWith(settingsLink.href) && 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  )}
-                >
-                  <settingsLink.icon className="h-5 w-5" />
-                  <span className="sr-only">{settingsLink.label}</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">{settingsLink.label}</TooltipContent>
-            </Tooltip>
-          </nav>
-        </TooltipProvider>
-      </aside>
-      <div className="flex flex-1 flex-col sm:pl-16">
-        <Header
-          pageTitle={pageTitle}
-        />
-        <main className="flex-1 overflow-y-auto p-4 sm:px-6 sm:py-6">{children}</main>
+    <div className="flex min-h-screen w-full bg-background/50">
+      <Sidebar />
+      <div className="flex flex-1 flex-col sm:pl-20 transition-all duration-300">
+        <Header pageTitle={pageTitle} />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 animate-in fade-in duration-500">
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
+        </main>
         <IntroTutorial />
       </div>
     </div>
   );
 }
+

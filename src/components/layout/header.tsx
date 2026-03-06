@@ -24,6 +24,7 @@ import React from 'react';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
 import { AppWordmark } from './app-wordmark';
+import { UserNav } from './user-nav';
 
 interface HeaderProps {
   pageTitle: string;
@@ -32,8 +33,6 @@ interface HeaderProps {
 export function Header({ pageTitle }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
-  const auth = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
   const [showTitle, setShowTitle] = React.useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -56,114 +55,88 @@ export function Header({ pageTitle }: HeaderProps) {
     }
   }, [pathname]);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
-
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 header-glass sm:px-6"
+      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/60 px-4 backdrop-blur-md transition-all duration-300 sm:px-6"
     >
       <div className='flex items-center gap-4'>
         <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="sm:hidden">
+            <Button size="icon" variant="ghost" className="sm:hidden hover:bg-accent/50">
               <PanelLeft className="h-5 w-5" />
               <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border flex flex-col p-0">
-            <SheetHeader className="p-4 border-b border-sidebar-border">
+          <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border flex flex-col p-0 glass-card">
+            <SheetHeader className="p-6 border-b border-sidebar-border/50">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <Link
                 href="/dashboard"
-                className="group flex h-auto shrink-0 items-center justify-start gap-2 text-lg font-semibold text-primary md:text-base"
+                className="group flex h-auto shrink-0 items-center justify-start gap-2"
               >
-                <AppWordmark className="h-20" />
+                <AppWordmark className="h-12 w-auto" />
               </Link>
             </SheetHeader>
             <ScrollArea className="flex-1">
-              <nav className="grid gap-4 text-lg font-medium p-4">
-                {navLinks.map(({ href, label, icon: Icon }, index) => (
-                  <React.Fragment key={href}>
-                    {index === 2 && <Separator className="my-2 bg-sidebar-border" />}
-                    <Link
-                      href={href}
-                      className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
-                        pathname.startsWith(href)
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {label}
-                    </Link>
-                  </React.Fragment>
-                ))}
+              <nav className="grid gap-2 p-4">
+                {navLinks.map(({ href, label, icon: Icon }, index) => {
+                  const isActive = pathname.startsWith(href);
+                  return (
+                    <React.Fragment key={href}>
+                      {index === 2 && <Separator className="my-4 bg-sidebar-border/30 mx-2" />}
+                      <Link
+                        href={href}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
+                          isActive
+                            ? 'bg-primary text-primary-foreground shadow-md'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {label}
+                      </Link>
+                    </React.Fragment>
+                  );
+                })}
               </nav>
             </ScrollArea>
-            <div className="mt-auto border-t border-sidebar-border p-4 space-y-2">
+            <div className="mt-auto border-t border-sidebar-border/50 p-4">
               <Link
                 href={settingsLink.href}
-                className={cn("flex items-center gap-4 px-2.5 rounded-lg py-2",
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
                   pathname.startsWith(settingsLink.href)
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 )}
               >
-                <settingsLink.icon className="h-5 w-5" />
+                <settingsLink.icon className="h-5 w-5 transition-transform group-hover:rotate-45" />
                 {settingsLink.label}
               </Link>
             </div>
           </SheetContent>
         </Sheet>
-        <Link href="/dashboard" className="hidden h-auto items-center gap-2 text-primary sm:flex">
-          <AppWordmark className="h-20" />
+        <Link href="/dashboard" className="hidden items-center gap-2 sm:flex">
+          <AppWordmark className="h-12 w-auto transition-transform hover:scale-105 duration-300" />
         </Link>
       </div>
 
       <div className="flex-1">
         <div className={cn(
-          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform transition-all duration-300",
-          showTitle ? "opacity-100" : "opacity-0 -translate-y-4 pointer-events-none"
+          "flex justify-center transition-all duration-300",
+          showTitle ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
         )}>
-          <h1 className="font-semibold text-lg">{pageTitle}</h1>
+          <h1 className="font-bold text-lg tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            {pageTitle}
+          </h1>
         </div>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="overflow-hidden rounded-full">
-            <Avatar>
-              <AvatarImage asChild src={user?.photoURL || ''}>
-                <Image src={user?.photoURL || ''} alt={user?.displayName || 'User'} width={36} height={36} />
-              </AvatarImage>
-              <AvatarFallback>
-                {user?.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
-            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="mr-2" /> Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <UserNav />
+      </div>
     </header>
   );
 }
+
