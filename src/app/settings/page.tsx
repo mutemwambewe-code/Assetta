@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +15,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BillingSettings } from '@/components/settings/billing-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -45,9 +43,6 @@ function SettingsPage({ title }: { title?: string }) {
     },
   });
 
-  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim());
-  const isAdmin = user?.email && adminEmails.includes(user.email);
-
   useEffect(() => {
     if (user) {
       form.reset({ displayName: user.displayName || '' });
@@ -56,8 +51,8 @@ function SettingsPage({ title }: { title?: string }) {
 
   const handleReplayTutorial = () => {
     toast({
-      title: "Feature coming soon!",
-      description: "The tutorial feature is not yet implemented.",
+      title: "Coming soon",
+      description: "Tutorial replay will be available in a future update.",
     });
   };
 
@@ -115,7 +110,7 @@ function SettingsPage({ title }: { title?: string }) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your account settings, billing, and preferences.</p>
+          <p className="text-muted-foreground">Manage your account details and app preferences.</p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -124,9 +119,8 @@ function SettingsPage({ title }: { title?: string }) {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
 
@@ -205,13 +199,9 @@ function SettingsPage({ title }: { title?: string }) {
                       <div className="flex flex-col gap-1">
                         <Label htmlFor='role'>Account Status</Label>
                         <div className='flex items-center gap-2'>
-                          {isAdmin ? (
-                            <Badge variant="success" className='gap-1'>
-                              <ShieldCheck className="h-3 w-3" /> Administrator
-                            </Badge>
-                          ) : (
-                            <p id='role' className='text-muted-foreground'>Standard User</p>
-                          )}
+                          <Badge variant="success" className='gap-1'>
+                            <ShieldCheck className="h-3 w-3" /> Pro Access Active
+                          </Badge>
                         </div>
                       </div>
                     </div>
@@ -222,10 +212,6 @@ function SettingsPage({ title }: { title?: string }) {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="billing" className="mt-4">
-          <BillingSettings />
         </TabsContent>
 
         <TabsContent value="preferences" className="space-y-6 mt-4">
@@ -249,7 +235,7 @@ function SettingsPage({ title }: { title?: string }) {
           <Card>
             <CardHeader>
               <CardTitle>Notifications</CardTitle>
-              <CardDescription>Manage how you receive notifications. (Coming soon)</CardDescription>
+              <CardDescription>Manage how you receive notifications.</CardDescription>
             </CardHeader>
             <CardContent className='opacity-50'>
               <div className="flex items-center justify-between">

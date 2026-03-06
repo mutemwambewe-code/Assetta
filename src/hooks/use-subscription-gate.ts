@@ -1,10 +1,7 @@
-
-import { useUser } from '@/firebase/provider';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useCallback } from 'react';
 
 export const useSubscriptionGate = () => {
-    const { user } = useUser();
     const { subscription, isLoading: loading } = useSubscription();
 
     const checkAccess = useCallback((feature: 'tax' | 'leases' | 'reports' | 'core') => {
